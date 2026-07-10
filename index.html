@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<!-- Today's Status — Lesson 1 build-along app - single file PWA -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Today's Status</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e293b">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Status">
+
+<style>
+  :root{
+    --bg:#f9fafb;
+    --card:#ffffff;
+    --ink:#1f2937;
+    --sub:#6b7280;
+    --line:#e5e7eb;
+    --pill-off:#e5e7eb;
+    --pill-off-ink:#6b7280;
+    --pill-on:#d1fae5;
+    --pill-on-ink:#047857;
+  }
+  [hidden]{display:none !important}
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    padding:16px 16px 40px 16px;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:17px;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  header{ padding:8px 4px 16px 4px; }
+  header h1{ margin:0; font-size:22px; font-weight:700; }
+  header p{ margin:2px 0 0 0; color:var(--sub); font-size:14px; }
+
+  .status-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.04);
+  }
+  .status-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .status-label{ font-size:13px; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .status-pill{
+    font-size:13px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:999px;
+    background:var(--pill-off);
+    color:var(--pill-off-ink);
+  }
+  .status-pill.on{ background:var(--pill-on); color:var(--pill-on-ink); }
+  .status-main{ display:flex; align-items:baseline; gap:8px; }
+  .status-number{ font-size:40px; font-weight:800; line-height:1; }
+  .status-unit{ font-size:16px; color:var(--sub); font-weight:600; }
+  .status-sub{ margin-top:8px; font-size:14px; color:var(--sub); }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .btn{
+    border:none;
+    border-radius:14px;
+    padding:16px 10px;
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    text-align:center;
+    line-height:1.3;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    min-height:84px;
+    justify-content:center;
+    cursor:pointer;
+    opacity:1;
+  }
+  .btn .emoji{ font-size:24px; }
+  .btn.inert{ opacity:0.92; }
+
+  footer{
+    margin-top:20px;
+    text-align:center;
+    color:var(--sub);
+    font-size:13px;
+    line-height:1.5;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(15,23,42,0.5);
+    display:flex; align-items:flex-end;
+    justify-content:center;
+    z-index:50;
+    padding:0;
+  }
+  @media (min-width:520px){
+    .overlay{ align-items:center; }
+  }
+  .modal{
+    background:#fff;
+    width:100%;
+    max-width:440px;
+    border-radius:20px 20px 0 0;
+    padding:22px 20px 26px 20px;
+    box-shadow:0 -4px 24px rgba(0,0,0,0.2);
+  }
+  @media (min-width:520px){
+    .modal{ border-radius:20px; }
+  }
+  .modal-title{
+    display:flex; align-items:center; gap:10px;
+    font-size:19px; font-weight:800; margin-bottom:10px;
+  }
+  .modal-dot{ width:14px; height:14px; border-radius:4px; flex-shrink:0; }
+  .modal-body{ font-size:15.5px; line-height:1.55; color:#374151; margin-bottom:18px; }
+  .modal-tag{
+    display:inline-block; font-size:12px; font-weight:700; color:#92400e;
+    background:#fef3c7; padding:3px 9px; border-radius:999px; margin-bottom:12px;
+  }
+  .modal-actions{ display:flex; gap:10px; }
+  .modal-btn{
+    flex:1; border:none; border-radius:12px; padding:13px; font-size:15px;
+    font-weight:700; cursor:pointer;
+  }
+  .modal-btn.primary{ background:#1e293b; color:#fff; }
+  .modal-btn.secondary{ background:#f3f4f6; color:#374151; }
+  .quick-row{ display:flex; gap:10px; margin-bottom:12px; }
+  .quick-row button{
+    flex:1; border:none; border-radius:12px; padding:14px 6px;
+    background:#eff6ff; color:#1d4ed8; font-weight:800; font-size:15px; cursor:pointer;
+  }
+  .custom-row{ display:flex; gap:8px; margin-bottom:16px; }
+  .custom-row input{
+    flex:1; border:1.5px solid var(--line); border-radius:10px; padding:11px 12px; font-size:15px;
+  }
+  .custom-row button{
+    border:none; border-radius:10px; padding:0 16px; background:#3b82f6; color:#fff;
+    font-weight:700; font-size:14px; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Today's Status</h1>
+  <p id="todayDate"></p>
+</header>
+
+<section class="status-card">
+  <div class="status-top">
+    <span class="status-label">Fluid Today</span>
+    <span class="status-pill" id="statusPill">Nothing logged yet</span>
+  </div>
+  <div class="status-main">
+    <span class="status-number" id="fluidTotal">0</span>
+    <span class="status-unit">oz</span>
+  </div>
+  <div class="status-sub" id="lastLogged">No entries yet today</div>
+</section>
+
+<div class="grid" id="buttonGrid"></div>
+
+<footer>
+  Lesson 1 of the build-along series.<br>
+  One more button comes online every lesson.
+</footer>
+
+<!-- Fluid quick-add modal -->
+<div class="overlay" id="fluidOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#3b82f6"></span>
+      Log Fluid
+    </div>
+    <div class="quick-row">
+      <button onclick="window.quickAddFluid(8)">+8 oz</button>
+      <button onclick="window.quickAddFluid(16)">+16 oz</button>
+    </div>
+    <div class="custom-row">
+      <input type="number" id="customFluidInput" placeholder="Custom amount (oz)" inputmode="numeric">
+      <button onclick="window.submitCustomFluid()">Add</button>
+    </div>
+    <button class="modal-btn secondary" style="width:100%" onclick="window.closeFluidModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- Inert button disclosure modal -->
+<div class="overlay" id="disclosureOverlay" hidden>
+  <div class="modal">
+    <span class="modal-tag">Coming in a future lesson</span>
+    <div class="modal-title">
+      <span class="modal-dot" id="disclosureDot"></span>
+      <span id="disclosureTitle"></span>
+    </div>
+    <div class="modal-body" id="disclosureBody"></div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" style="width:100%" onclick="window.closeDisclosure()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Block 1: all interactive functions live on window, defined up front ----
+  // (Lesson-taught rule: functions wired to onclick must exist in global scope
+  // before the button markup can call them.)
+
+  const BUTTONS = [
+    { key:'bp',          label:'Log BP',          emoji:'📊', color:'#10b981', active:false },
+    { key:'meal',         label:'Log Meal',        emoji:'🍽️', color:'#9333ea', active:false },
+    { key:'fluid',        label:'Log Fluid',       emoji:'💧', color:'#3b82f6', active:true  },
+    { key:'medicine',     label:'Log Medicine',    emoji:'💊', color:'#f59e0b', active:false },
+    { key:'weight',       label:'Log Weight',      emoji:'⚖️', color:'#f97316', active:false },
+    { key:'symptoms',     label:'Log Symptoms',    emoji:'🤒', color:'#ec4899', active:false },
+    { key:'activity',     label:'Log Activity',    emoji:'🏃', color:'#14b8a6', active:false },
+    { key:'appointment',  label:'Log Appointment', emoji:'🩺', color:'#6366f1', active:false },
+    { key:'planday',      label:'Plan My Day',     emoji:'📅', color:'#06b6d4', active:false },
+    { key:'note',         label:'Add Note',        emoji:'📝', color:'#8b5cf6', active:false },
+  ];
+
+  const DISCLOSURES = {
+    bp: {
+      title:'Log BP',
+      body:"This button will log your blood pressure and heart rate. By the time you finish this course, it'll show you touch-responsive trend charts, flag patterns your doctor's single-visit snapshot can't catch, and warn you when readings are drifting — before it becomes an emergency."
+    },
+    meal: {
+      title:'Log Meal',
+      body:"This button will log what and when you eat. By the time you finish this course, it'll cross-reference meals against your BP and symptom timing, catching food-triggered patterns most people never think to connect."
+    },
+    medicine: {
+      title:'Log Medicine',
+      body:"This button will log your medications and doses. By the time you finish this course, it'll track effectiveness over time and flag when a medication may be losing its impact — before your next appointment, not after."
+    },
+    weight: {
+      title:'Log Weight',
+      body:"This button will log your weight. By the time you finish this course, it'll watch for sudden shifts that can signal fluid retention, days before it's visible or uncomfortable."
+    },
+    symptoms: {
+      title:'Log Symptoms',
+      body:"This button will log how you're feeling, in your own words. By the time you finish this course, it'll surface which symptoms cluster together and when — patterns a single office visit is too short to ever catch."
+    },
+    activity: {
+      title:'Log Activity',
+      body:"This button will log your movement and exertion. By the time you finish this course, it'll connect activity to how your body actually responds afterward, not just how many steps you took."
+    },
+    appointment: {
+      title:'Log Appointment',
+      body:"This button will log your upcoming and past appointments. By the time you finish this course, it'll pull together everything logged since your last visit into one summary you can hand your doctor — nothing forgotten."
+    },
+    planday: {
+      title:'Plan My Day',
+      body:"This button will set reminders and events for today. By the time you finish this course, it'll actively watch your day unfold and change color if something gets missed — so nothing important slips through."
+    },
+    note: {
+      title:'Add Note',
+      body:"This button will log a free-text note, timestamped. By the time you finish this course, it'll be searchable and linked to everything else logged that same day, giving you real context when the app catches something later."
+    }
+  };
+
+  function todayKey(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function loadFluidData(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_fluid_' + todayKey());
+      if(!raw) return { total:0, lastLogged:null };
+      return JSON.parse(raw);
+    }catch(e){ return { total:0, lastLogged:null }; }
+  }
+
+  function saveFluidData(data){
+    localStorage.setItem('todaysStatus_fluid_' + todayKey(), JSON.stringify(data));
+  }
+
+  function renderStatus(){
+    const data = loadFluidData();
+    document.getElementById('fluidTotal').textContent = data.total;
+    const pill = document.getElementById('statusPill');
+    const lastLoggedEl = document.getElementById('lastLogged');
+    if(data.total > 0 && data.lastLogged){
+      pill.textContent = 'Logged';
+      pill.classList.add('on');
+      const mins = Math.max(0, Math.round((Date.now() - data.lastLogged) / 60000));
+      lastLoggedEl.textContent = mins < 1 ? 'Last logged just now' :
+        mins === 1 ? 'Last logged 1 minute ago' :
+        mins < 60 ? ('Last logged ' + mins + ' minutes ago') :
+        'Last logged ' + Math.round(mins/60) + ' hr ago';
+    } else {
+      pill.textContent = 'Nothing logged yet';
+      pill.classList.remove('on');
+      lastLoggedEl.textContent = 'No entries yet today';
+    }
+  }
+
+  window.openFluidModal = function(){
+    document.getElementById('customFluidInput').value = '';
+    document.getElementById('fluidOverlay').hidden = false;
+  };
+
+  window.closeFluidModal = function(){
+    document.getElementById('fluidOverlay').hidden = true;
+  };
+
+  window.quickAddFluid = function(amount){
+    const data = loadFluidData();
+    data.total = (data.total || 0) + amount;
+    data.lastLogged = Date.now();
+    saveFluidData(data);
+    renderStatus();
+    window.closeFluidModal();
+  };
+
+  window.submitCustomFluid = function(){
+    const input = document.getElementById('customFluidInput');
+    const val = parseFloat(input.value);
+    if(!val || val <= 0){
+      input.focus();
+      return;
+    }
+    window.quickAddFluid(Math.round(val));
+  };
+
+  window.openDisclosure = function(key){
+    const info = DISCLOSURES[key];
+    if(!info) return;
+    const btnConfig = BUTTONS.find(b => b.key === key);
+    document.getElementById('disclosureDot').style.background = btnConfig ? btnConfig.color : '#6b7280';
+    document.getElementById('disclosureTitle').textContent = info.title;
+    document.getElementById('disclosureBody').textContent = info.body;
+    document.getElementById('disclosureOverlay').hidden = false;
+  };
+
+  window.closeDisclosure = function(){
+    document.getElementById('disclosureOverlay').hidden = true;
+  };
+
+  window.handleButtonTap = function(key){
+    if(key === 'fluid'){
+      window.openFluidModal();
+    } else {
+      window.openDisclosure(key);
+    }
+  };
+
+  function renderGrid(){
+    const grid = document.getElementById('buttonGrid');
+    grid.innerHTML = BUTTONS.map(b => `
+      <button class="btn${b.active ? '' : ' inert'}" style="background:${b.color}" onclick="window.handleButtonTap('${b.key}')">
+        <span class="emoji">${b.emoji}</span>
+        <span>${b.label}</span>
+      </button>
+    `).join('');
+  }
+
+  function renderDate(){
+    const d = new Date();
+    document.getElementById('todayDate').textContent = d.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+  }
+
+  // ---- Init ----
+  renderDate();
+  renderGrid();
+  renderStatus();
+
+  // ---- Register service worker ----
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
