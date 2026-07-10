@@ -93,7 +93,8 @@
     cursor:pointer;
     opacity:1;
   }
-  .btn .emoji{ font-size:24px; }
+  .btn .icon{ width:26px; height:26px; color:#fff; }
+  .btn .icon svg{ width:100%; height:100%; display:block; }
   .btn.inert{ opacity:0.92; }
 
   footer{
@@ -224,17 +225,32 @@
   // (Lesson-taught rule: functions wired to onclick must exist in global scope
   // before the button markup can call them.)
 
+  // Consistent 24x24 line-icon set (stroke=currentColor) so every button renders
+  // identically across devices — no dependence on the OS's emoji font.
+  const ICONS = {
+    bp: '<path d="M3 12h4l2-7 4 14 2-7h6"/>',
+    meal: '<path d="M7 2v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V2M9 11v11M17 2c-2 2-2 6-2 8a2 2 0 0 0 2 2v9"/>',
+    fluid: '<path d="M12 2c4 5 7 9 7 13a7 7 0 1 1-14 0c0-4 3-8 7-13z"/>',
+    medicine: '<rect x="3.5" y="9" width="17" height="6" rx="3" transform="rotate(-45 12 12)"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    weight: '<path d="M12 3v18M4 7h16M6 7l-3 8a4 4 0 0 0 8 0zM18 7l-3 8a4 4 0 0 0 8 0z"/>',
+    symptoms: '<path d="M11 2a2 2 0 0 1 2 2v9.3a4 4 0 1 1-4 0V4a2 2 0 0 1 2-2z"/><circle cx="11" cy="18" r="2.6"/>',
+    activity: '<circle cx="15" cy="5" r="2"/><path d="M11.5 22l1.7-5.8 2.8-1.7-.8-4.5-3.7.9-1.7 3.6M8 14.5l-2.5 2.5M13 8.5l3.5 1.5"/>',
+    appointment: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    planday: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M7.5 9l1.5 1.5L12 7M8 14h8M8 17.5h5"/>',
+    note: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'
+  };
+
   const BUTTONS = [
-    { key:'bp',          label:'Log BP',          emoji:'📊', color:'#10b981', active:false },
-    { key:'meal',         label:'Log Meal',        emoji:'🍽️', color:'#9333ea', active:false },
-    { key:'fluid',        label:'Log Fluid',       emoji:'💧', color:'#3b82f6', active:true  },
-    { key:'medicine',     label:'Log Medicine',    emoji:'💊', color:'#f59e0b', active:false },
-    { key:'weight',       label:'Log Weight',      emoji:'⚖️', color:'#f97316', active:false },
-    { key:'symptoms',     label:'Log Symptoms',    emoji:'🤒', color:'#ec4899', active:false },
-    { key:'activity',     label:'Log Activity',    emoji:'🏃', color:'#14b8a6', active:false },
-    { key:'appointment',  label:'Log Appointment', emoji:'🩺', color:'#6366f1', active:false },
-    { key:'planday',      label:'Plan My Day',     emoji:'📅', color:'#06b6d4', active:false },
-    { key:'note',         label:'Add Note',        emoji:'📝', color:'#8b5cf6', active:false },
+    { key:'bp',          label:'Log BP',          color:'#10b981', active:false },
+    { key:'meal',         label:'Log Meal',        color:'#9333ea', active:false },
+    { key:'fluid',        label:'Log Fluid',       color:'#3b82f6', active:true  },
+    { key:'medicine',     label:'Log Medicine',    color:'#f59e0b', active:false },
+    { key:'weight',       label:'Log Weight',      color:'#f97316', active:false },
+    { key:'symptoms',     label:'Log Symptoms',    color:'#ec4899', active:false },
+    { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:false },
+    { key:'appointment',  label:'Log Appointment', color:'#6366f1', active:false },
+    { key:'planday',      label:'Plan My Day',     color:'#06b6d4', active:false },
+    { key:'note',         label:'Add Note',        color:'#8b5cf6', active:false },
   ];
 
   const DISCLOSURES = {
@@ -367,7 +383,7 @@
     const grid = document.getElementById('buttonGrid');
     grid.innerHTML = BUTTONS.map(b => `
       <button class="btn${b.active ? '' : ' inert'}" style="background:${b.color}" onclick="window.handleButtonTap('${b.key}')">
-        <span class="emoji">${b.emoji}</span>
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.key]}</svg></span>
         <span>${b.label}</span>
       </button>
     `).join('');
