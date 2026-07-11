@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 1 build-along app - single file PWA -->
+<!-- Today's Status — Lesson 2 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -41,34 +41,53 @@
   header h1{ margin:0; font-size:22px; font-weight:700; }
   header p{ margin:2px 0 0 0; color:var(--sub); font-size:14px; }
 
+  .status-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:18px;
+  }
   .status-card{
+    position:relative;
     background:var(--card);
     border:1px solid var(--line);
-    border-radius:16px;
-    padding:18px;
-    margin-bottom:18px;
+    border-radius:14px;
+    padding:14px 12px;
     box-shadow:0 1px 2px rgba(0,0,0,0.04);
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:background-color .12s ease;
+  }
+  .status-card:active{ background:#f3f4f6; }
+  .status-chevron{
+    position:absolute; top:14px; right:12px;
+    color:#cbd5e1; font-size:17px; font-weight:700; line-height:1;
   }
   .status-top{
     display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:10px;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+    margin-bottom:8px;
   }
-  .status-label{ font-size:13px; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .status-label{ font-size:11px; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:0.03em; }
   .status-pill{
-    font-size:13px;
+    font-size:11px;
     font-weight:600;
-    padding:4px 10px;
+    padding:3px 8px;
     border-radius:999px;
     background:var(--pill-off);
     color:var(--pill-off-ink);
+    white-space:nowrap;
   }
   .status-pill.on{ background:var(--pill-on); color:var(--pill-on-ink); }
-  .status-main{ display:flex; align-items:baseline; gap:8px; }
-  .status-number{ font-size:40px; font-weight:800; line-height:1; }
-  .status-unit{ font-size:16px; color:var(--sub); font-weight:600; }
-  .status-sub{ margin-top:8px; font-size:14px; color:var(--sub); }
+  .status-main{ display:flex; align-items:baseline; gap:5px; flex-wrap:wrap; }
+  .status-number{ font-size:24px; font-weight:800; line-height:1.1; }
+  .status-unit{ font-size:11.5px; color:var(--sub); font-weight:600; }
+  .status-sub{ margin-top:6px; font-size:11.5px; line-height:1.35; color:var(--sub); }
+  .status-hr-row{ display:flex; align-items:baseline; gap:4px; margin-top:3px; }
+  .status-hr-number{ font-size:14px; font-weight:700; color:var(--ink); }
+  .status-hr-unit{ font-size:10px; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:0.02em; }
 
   .grid{
     display:grid;
@@ -158,6 +177,146 @@
     border:none; border-radius:10px; padding:0 16px; background:#3b82f6; color:#fff;
     font-weight:700; font-size:14px; cursor:pointer;
   }
+
+  .bp-input-row{ display:flex; gap:8px; margin-bottom:12px; }
+  .bp-field{ flex:1; display:flex; flex-direction:column; gap:4px; }
+  .bp-field label{ font-size:12px; color:var(--sub); font-weight:600; }
+  .bp-field input{
+    border:1.5px solid var(--line); border-radius:10px; padding:11px 6px;
+    font-size:16px; text-align:center; width:100%;
+  }
+  .bp-error{
+    background:#fef2f2; color:#b91c1c; font-size:13px; font-weight:600;
+    padding:9px 12px; border-radius:10px; margin-bottom:12px;
+  }
+  .bp-history-label{
+    font-size:12px; color:var(--sub); font-weight:700; text-transform:uppercase;
+    letter-spacing:0.04em; margin:2px 0 8px 0;
+  }
+  .bp-history-list{
+    max-height:180px; overflow-y:auto; display:flex; flex-direction:column;
+    gap:6px; margin-bottom:16px;
+  }
+  .bp-history-empty{ font-size:14px; color:var(--sub); padding:6px 0; }
+  .bp-entry{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#f9fafb; border:1px solid var(--line); border-radius:10px;
+    padding:9px 10px;
+  }
+  .bp-entry-reading{ font-weight:800; font-size:15px; }
+  .bp-entry-time{ color:var(--sub); font-size:12.5px; margin-left:6px; }
+  .bp-entry-del{
+    border:none; background:none; color:#9ca3af; font-size:17px;
+    line-height:1; cursor:pointer; padding:4px 8px;
+  }
+  .bp-edit-row{ display:flex; flex-direction:column; gap:8px; width:100%; }
+  .bp-edit-fields{ display:flex; gap:6px; }
+  .bp-edit-fields input{
+    flex:1; min-width:0; border:1.5px solid var(--line); border-radius:8px;
+    padding:8px 6px; font-size:14px; text-align:center;
+  }
+  .bp-edit-actions{ display:flex; gap:8px; }
+  .bp-edit-actions button{ flex:1; }
+
+  .sort-row{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .sort-label{ font-size:12px; color:var(--sub); font-weight:600; }
+  .sort-btn{
+    border:1px solid var(--line); background:#fff; color:var(--sub);
+    font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px; cursor:pointer;
+  }
+  .sort-btn.active{ background:#1e293b; color:#fff; border-color:#1e293b; }
+
+  .history-label{
+    font-size:12px; color:var(--sub); font-weight:700; text-transform:uppercase;
+    letter-spacing:0.04em; margin:2px 0 8px 0;
+  }
+  .history-list{
+    max-height:200px; overflow-y:auto; display:flex; flex-direction:column;
+    gap:6px; margin-bottom:16px;
+  }
+  .history-empty{ font-size:14px; color:var(--sub); padding:6px 0; }
+  .entry-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#f9fafb; border:1px solid var(--line); border-radius:10px;
+    padding:9px 10px;
+  }
+  .entry-reading{ font-weight:800; font-size:15px; }
+  .entry-time{ color:var(--sub); font-size:12.5px; margin-left:6px; }
+  .entry-actions{ display:flex; align-items:center; gap:0px; flex-shrink:0; }
+  .entry-edit-btn, .entry-del-btn{
+    border:none; background:none; color:#9ca3af; font-size:15px;
+    line-height:1; cursor:pointer; padding:5px 7px;
+  }
+  .entry-edit-row{ display:flex; align-items:center; gap:8px; width:100%; }
+  .entry-edit-row input{
+    flex:1; min-width:0; border:1.5px solid var(--line); border-radius:8px;
+    padding:8px 10px; font-size:15px;
+  }
+  .entry-save-btn, .entry-cancel-btn{
+    border:none; border-radius:8px; padding:8px 12px; font-size:13px;
+    font-weight:700; cursor:pointer; flex-shrink:0;
+  }
+  .entry-save-btn{ background:#1e293b; color:#fff; }
+  .entry-cancel-btn{ background:#f3f4f6; color:#374151; }
+
+  .graph-overlay{
+    position:fixed; inset:0; background:#fff; z-index:70;
+    display:flex; flex-direction:column;
+  }
+  .graph-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .graph-header-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .graph-back{
+    display:flex; align-items:center; gap:2px;
+    border:none; background:none; color:#1e293b; font-size:15px; font-weight:700;
+    cursor:pointer; padding:4px 4px 4px 0; white-space:nowrap; flex-shrink:0;
+  }
+  .graph-title{ font-size:18px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .graph-close{
+    border:none; background:none; font-size:24px; color:var(--sub);
+    cursor:pointer; padding:2px 8px; line-height:1; flex-shrink:0;
+  }
+  .graph-range-row{
+    display:flex; gap:8px; padding:12px 16px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .range-btn{
+    border:1px solid var(--line); background:#fff; color:var(--sub);
+    font-size:13px; font-weight:700; padding:7px 14px; border-radius:999px; cursor:pointer;
+  }
+  .range-btn.active{ background:#1e293b; color:#fff; border-color:#1e293b; }
+  .graph-custom-row{
+    display:flex; align-items:center; gap:8px; padding:10px 16px;
+    border-bottom:1px solid var(--line); flex-wrap:wrap; flex-shrink:0;
+  }
+  .graph-custom-row input[type=date]{
+    border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px;
+  }
+  .graph-custom-row button{
+    border:none; border-radius:8px; padding:8px 14px; background:#1e293b; color:#fff;
+    font-weight:700; font-size:13px; cursor:pointer;
+  }
+  .graph-legend{
+    display:flex; gap:16px; padding:10px 16px; flex-wrap:wrap; flex-shrink:0;
+  }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink); font-weight:600; }
+  .legend-swatch{ width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+  .legend-swatch.dashed{ width:16px; height:0; border-top:2px dashed; border-radius:0; }
+  .chart-row{ display:flex; flex:1; overflow:hidden; min-height:0; }
+  .chart-axis{ flex-shrink:0; }
+  .chart-scroll{ flex:1; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+  .chart-empty{ padding:40px 20px; text-align:center; color:var(--sub); font-size:14px; line-height:1.5; }
+  .graph-readout{
+    padding:12px 16px; border-top:1px solid var(--line); flex-shrink:0;
+    font-size:14px; font-weight:600; color:var(--ink); min-height:20px;
+  }
+  .graph-readout .readout-sub{ font-weight:500; color:var(--sub); font-size:12.5px; }
+  .graph-disclaimer{
+    padding:0 16px 10px 16px; font-size:11px; color:var(--sub);
+    line-height:1.4; font-style:italic;
+  }
 </style>
 </head>
 <body>
@@ -167,7 +326,9 @@
   <p id="todayDate"></p>
 </header>
 
-<section class="status-card">
+<div class="status-grid">
+<section class="status-card" onclick="window.openFluidModal()" role="button" tabindex="0" aria-label="View fluid log" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openFluidModal();}">
+  <span class="status-chevron">&rsaquo;</span>
   <div class="status-top">
     <span class="status-label">Fluid Today</span>
     <span class="status-pill" id="statusPill">Nothing logged yet</span>
@@ -179,10 +340,28 @@
   <div class="status-sub" id="lastLogged">No entries yet today</div>
 </section>
 
+<section class="status-card" onclick="window.openBPModal()" role="button" tabindex="0" aria-label="View blood pressure log" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openBPModal();}">
+  <span class="status-chevron">&rsaquo;</span>
+  <div class="status-top">
+    <span class="status-label">Blood Pressure Today</span>
+    <span class="status-pill" id="bpStatusPill">Nothing logged yet</span>
+  </div>
+  <div class="status-main">
+    <span class="status-number" id="bpAverage">--/--</span>
+    <span class="status-unit">avg mmHg</span>
+  </div>
+  <div class="status-hr-row">
+    <span class="status-hr-number" id="bpHrAvg">--</span>
+    <span class="status-hr-unit">avg bpm</span>
+  </div>
+  <div class="status-sub" id="bpSub">No readings yet today</div>
+</section>
+</div>
+
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 1 of the build-along series.<br>
+  Lesson 2 of the build-along series.<br>
   One more button comes online every lesson.
 </footer>
 
@@ -201,8 +380,94 @@
       <input type="number" id="customFluidInput" placeholder="Custom amount (oz)" inputmode="numeric">
       <button onclick="window.submitCustomFluid()">Add</button>
     </div>
-    <button class="modal-btn secondary" style="width:100%" onclick="window.closeFluidModal()">Cancel</button>
+
+    <div class="sort-row">
+      <span class="sort-label">Sort:</span>
+      <button class="sort-btn" id="fluidSortDesc" onclick="window.setFluidSortOrder('desc')">Newest</button>
+      <button class="sort-btn" id="fluidSortAsc" onclick="window.setFluidSortOrder('asc')">Oldest</button>
+    </div>
+    <div class="history-label">Today's Entries</div>
+    <div class="history-list" id="fluidHistoryList"></div>
+
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openFluidGraph()">View Fluid Trends</button>
+    <button class="modal-btn secondary" style="width:100%" onclick="window.closeFluidModal()">Close</button>
   </div>
+</div>
+
+<!-- BP entry modal -->
+<div class="overlay" id="bpOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#10b981"></span>
+      Log BP
+    </div>
+    <div class="bp-input-row">
+      <div class="bp-field">
+        <label for="bpSystolic">Systolic</label>
+        <input type="number" id="bpSystolic" inputmode="numeric" placeholder="120">
+      </div>
+      <div class="bp-field">
+        <label for="bpDiastolic">Diastolic</label>
+        <input type="number" id="bpDiastolic" inputmode="numeric" placeholder="80">
+      </div>
+      <div class="bp-field">
+        <label for="bpPulse">Pulse (optional)</label>
+        <input type="number" id="bpPulse" inputmode="numeric" placeholder="72">
+      </div>
+    </div>
+    <div class="bp-error" id="bpError" hidden></div>
+    <button class="modal-btn primary" style="width:100%; margin-bottom:18px;" onclick="window.submitBP()">Save Reading</button>
+
+    <div class="sort-row">
+      <span class="sort-label">Sort:</span>
+      <button class="sort-btn" id="bpSortDesc" onclick="window.setBPSortOrder('desc')">Newest</button>
+      <button class="sort-btn" id="bpSortAsc" onclick="window.setBPSortOrder('asc')">Oldest</button>
+    </div>
+    <div class="bp-history-label">Today's Readings</div>
+    <div class="bp-history-list" id="bpHistoryList"></div>
+
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openBPGraph()">View BP Trends</button>
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openHRGraph()">View HR Trends</button>
+    <button class="modal-btn secondary" style="width:100%" onclick="window.closeBPModal()">Close</button>
+  </div>
+</div>
+
+<!-- Trend graph — full-screen, shared by Fluid and BP so both cards behave identically -->
+<div class="graph-overlay" id="graphOverlay" hidden>
+  <div class="graph-header">
+    <div class="graph-header-left">
+      <button class="graph-back" onclick="window.goBackFromGraph()" aria-label="Back">&lsaquo; Back</button>
+      <span class="graph-title" id="graphTitle">Trend</span>
+    </div>
+    <button class="graph-close" onclick="window.closeGraph()" aria-label="Close trend graph">&times;</button>
+  </div>
+
+  <div class="graph-range-row">
+    <button class="range-btn" id="range30" onclick="window.setGraphRange(30)">30D</button>
+    <button class="range-btn" id="range60" onclick="window.setGraphRange(60)">60D</button>
+    <button class="range-btn" id="range90" onclick="window.setGraphRange(90)">90D</button>
+    <button class="range-btn" id="rangeCustom" onclick="window.setGraphRange('custom')">Custom</button>
+  </div>
+
+  <div class="graph-custom-row" id="graphCustomRow" hidden>
+    <input type="date" id="graphCustomStart">
+    <span>to</span>
+    <input type="date" id="graphCustomEnd">
+    <button onclick="window.applyCustomRange()">Apply</button>
+  </div>
+
+  <div class="graph-legend" id="graphLegend"></div>
+  <div class="graph-disclaimer" id="graphDisclaimer" hidden></div>
+
+  <div class="chart-row" id="chartRow">
+    <svg class="chart-axis" id="chartAxisSvg" width="34" height="220"></svg>
+    <div class="chart-scroll" id="chartScroll">
+      <svg id="chartPlotSvg" height="220"></svg>
+    </div>
+  </div>
+  <div class="chart-empty" id="chartEmptyMsg" hidden></div>
+
+  <div class="graph-readout" id="graphReadout">Tap a point to see its value.</div>
 </div>
 
 <!-- Inert button disclosure modal -->
@@ -241,7 +506,7 @@
   };
 
   const BUTTONS = [
-    { key:'bp',          label:'Log BP',          color:'#10b981', active:false },
+    { key:'bp',          label:'Log BP',          color:'#10b981', active:true  },
     { key:'meal',         label:'Log Meal',        color:'#9333ea', active:false },
     { key:'fluid',        label:'Log Fluid',       color:'#3b82f6', active:true  },
     { key:'medicine',     label:'Log Medicine',    color:'#f59e0b', active:false },
@@ -254,10 +519,6 @@
   ];
 
   const DISCLOSURES = {
-    bp: {
-      title:'Log BP',
-      body:"This button will log your blood pressure and heart rate. By the time you finish this course, it'll show you touch-responsive trend charts, flag patterns your doctor's single-visit snapshot can't catch, and warn you when readings are drifting — before it becomes an emergency."
-    },
     meal: {
       title:'Log Meal',
       body:"This button will log what and when you eat. By the time you finish this course, it'll cross-reference meals against your BP and symptom timing, catching food-triggered patterns most people never think to connect."
@@ -292,32 +553,56 @@
     }
   };
 
-  function todayKey(){
-    const d = new Date();
+  function formatDateKey(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function todayKey(){
+    return formatDateKey(new Date());
   }
 
   function loadFluidData(){
     try{
       const raw = localStorage.getItem('todaysStatus_fluid_' + todayKey());
-      if(!raw) return { total:0, lastLogged:null };
-      return JSON.parse(raw);
-    }catch(e){ return { total:0, lastLogged:null }; }
+      if(!raw) return { entries:[] };
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed.entries)){
+        // Migrate legacy {total, lastLogged} shape from earlier lessons into one entry.
+        if(typeof parsed.total === 'number' && parsed.total > 0){
+          const migrated = { entries:[{
+            id: parsed.lastLogged || Date.now(),
+            amount: parsed.total,
+            timestamp: parsed.lastLogged || Date.now()
+          }] };
+          saveFluidData(migrated);
+          return migrated;
+        }
+        return { entries:[] };
+      }
+      return parsed;
+    }catch(e){ return { entries:[] }; }
   }
 
   function saveFluidData(data){
     localStorage.setItem('todaysStatus_fluid_' + todayKey(), JSON.stringify(data));
   }
 
+  function fluidEntriesTotal(entries){
+    return entries.reduce((s,e) => s + e.amount, 0);
+  }
+
+  let fluidSortOrder = (typeof localStorage !== 'undefined' && localStorage.getItem('todaysStatus_fluidSort')) || 'desc';
+
   function renderStatus(){
-    const data = loadFluidData();
-    document.getElementById('fluidTotal').textContent = data.total;
+    const entries = loadFluidData().entries;
+    document.getElementById('fluidTotal').textContent = fluidEntriesTotal(entries);
     const pill = document.getElementById('statusPill');
     const lastLoggedEl = document.getElementById('lastLogged');
-    if(data.total > 0 && data.lastLogged){
-      pill.textContent = 'Logged';
+    if(entries.length){
+      pill.textContent = entries.length === 1 ? '1 entry' : entries.length + ' entries';
       pill.classList.add('on');
-      const mins = Math.max(0, Math.round((Date.now() - data.lastLogged) / 60000));
+      const last = entries[entries.length - 1];
+      const mins = Math.max(0, Math.round((Date.now() - last.timestamp) / 60000));
       lastLoggedEl.textContent = mins < 1 ? 'Last logged just now' :
         mins === 1 ? 'Last logged 1 minute ago' :
         mins < 60 ? ('Last logged ' + mins + ' minutes ago') :
@@ -329,8 +614,163 @@
     }
   }
 
+  function updateFluidSortButtons(){
+    document.getElementById('fluidSortDesc').classList.toggle('active', fluidSortOrder === 'desc');
+    document.getElementById('fluidSortAsc').classList.toggle('active', fluidSortOrder === 'asc');
+  }
+
+  function renderFluidHistory(){
+    const entries = loadFluidData().entries;
+    const list = document.getElementById('fluidHistoryList');
+
+    if(!entries.length){
+      list.innerHTML = '<div class="history-empty">No fluid logged yet today.</div>';
+      return;
+    }
+
+    const sorted = entries.slice().sort((a,b) =>
+      fluidSortOrder === 'desc' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp
+    );
+    list.innerHTML = sorted.map(e => {
+      const t = new Date(e.timestamp);
+      const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      return `<div class="entry-row" data-id="${e.id}">
+        <div>
+          <span class="entry-reading">${e.amount} oz</span>
+          <span class="entry-time">${timeStr}</span>
+        </div>
+        <div class="entry-actions">
+          <button class="entry-edit-btn" onclick="window.startEditFluidEntry(${e.id})" aria-label="Edit entry">&#9998;</button>
+          <button class="entry-del-btn" onclick="window.deleteFluidEntry(${e.id})" aria-label="Delete entry">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function loadBPData(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_bp_' + todayKey());
+      if(!raw) return { entries:[] };
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed.entries)) parsed.entries = [];
+      return parsed;
+    }catch(e){ return { entries:[] }; }
+  }
+
+  function saveBPData(data){
+    localStorage.setItem('todaysStatus_bp_' + todayKey(), JSON.stringify(data));
+  }
+
+  let bpSortOrder = (typeof localStorage !== 'undefined' && localStorage.getItem('todaysStatus_bpSort')) || 'desc';
+
+  // Shared by both "log a new reading" and "edit an existing reading" so the
+  // rules can never drift apart between the two flows.
+  function validateBPReading(systolic, diastolic, pulseRaw){
+    const pulse = pulseRaw ? parseInt(pulseRaw, 10) : null;
+    if(!systolic || systolic < 70 || systolic > 250){
+      return { error:'Enter a systolic reading between 70 and 250.', field:'sys' };
+    }
+    if(!diastolic || diastolic < 40 || diastolic > 150){
+      return { error:'Enter a diastolic reading between 40 and 150.', field:'dia' };
+    }
+    if(diastolic >= systolic){
+      return { error:'Diastolic should be lower than systolic.', field:'dia' };
+    }
+    if(pulseRaw && (isNaN(pulse) || pulse < 30 || pulse > 220)){
+      return { error:'Enter a pulse between 30 and 220, or leave it blank.', field:'pulse' };
+    }
+    return { error:null, field:null, pulse:pulse };
+  }
+
+  function bpAverage(entries){
+    if(!entries.length) return null;
+    const sysSum = entries.reduce((s,e) => s + e.systolic, 0);
+    const diaSum = entries.reduce((s,e) => s + e.diastolic, 0);
+    return {
+      systolic: Math.round(sysSum / entries.length),
+      diastolic: Math.round(diaSum / entries.length)
+    };
+  }
+
+  function bpHRAverage(entries){
+    const withPulse = entries.filter(e => typeof e.pulse === 'number' && !isNaN(e.pulse));
+    if(!withPulse.length) return null;
+    const sum = withPulse.reduce((s,e) => s + e.pulse, 0);
+    return Math.round(sum / withPulse.length);
+  }
+
+  function renderBPStatus(){
+    const entries = loadBPData().entries;
+    const avgEl = document.getElementById('bpAverage');
+    const hrEl = document.getElementById('bpHrAvg');
+    const pill = document.getElementById('bpStatusPill');
+    const subEl = document.getElementById('bpSub');
+
+    if(entries.length){
+      const avg = bpAverage(entries);
+      avgEl.textContent = avg.systolic + '/' + avg.diastolic;
+      pill.textContent = entries.length === 1 ? '1 reading' : entries.length + ' readings';
+      pill.classList.add('on');
+
+      const hrAvg = bpHRAverage(entries);
+      hrEl.textContent = hrAvg !== null ? hrAvg : '--';
+
+      const last = entries[entries.length - 1];
+      const mins = Math.max(0, Math.round((Date.now() - last.timestamp) / 60000));
+      const lastText = mins < 1 ? 'just now' :
+        mins === 1 ? '1 minute ago' :
+        mins < 60 ? (mins + ' minutes ago') :
+        Math.round(mins / 60) + ' hr ago';
+      subEl.textContent = (entries.length === 1 ? '1 reading today' : entries.length + ' readings today') +
+        ' · last logged ' + lastText;
+    } else {
+      avgEl.textContent = '--/--';
+      hrEl.textContent = '--';
+      pill.textContent = 'Nothing logged yet';
+      pill.classList.remove('on');
+      subEl.textContent = 'No readings yet today';
+    }
+  }
+
+  function updateBPSortButtons(){
+    document.getElementById('bpSortDesc').classList.toggle('active', bpSortOrder === 'desc');
+    document.getElementById('bpSortAsc').classList.toggle('active', bpSortOrder === 'asc');
+  }
+
+  function renderBPHistory(){
+    const entries = loadBPData().entries;
+    const list = document.getElementById('bpHistoryList');
+
+    if(!entries.length){
+      list.innerHTML = '<div class="bp-history-empty">No readings logged yet today.</div>';
+      return;
+    }
+
+    const sorted = entries.slice().sort((a,b) =>
+      bpSortOrder === 'desc' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp
+    );
+    list.innerHTML = sorted.map(e => {
+      const t = new Date(e.timestamp);
+      const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      const pulseStr = e.pulse ? ' · ' + e.pulse + ' bpm' : '';
+      return `<div class="bp-entry" data-id="${e.id}">
+        <div>
+          <span class="bp-entry-reading">${e.systolic}/${e.diastolic}</span>
+          <span class="bp-entry-time">${timeStr}${pulseStr}</span>
+        </div>
+        <div class="entry-actions">
+          <button class="entry-edit-btn" onclick="window.startEditBPEntry(${e.id})" aria-label="Edit reading">&#9998;</button>
+          <button class="bp-entry-del" onclick="window.deleteBPEntry(${e.id})" aria-label="Delete reading">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   window.openFluidModal = function(){
     document.getElementById('customFluidInput').value = '';
+    updateFluidSortButtons();
+    renderStatus();
+    renderFluidHistory();
     document.getElementById('fluidOverlay').hidden = false;
   };
 
@@ -340,11 +780,10 @@
 
   window.quickAddFluid = function(amount){
     const data = loadFluidData();
-    data.total = (data.total || 0) + amount;
-    data.lastLogged = Date.now();
+    data.entries.push({ id: Date.now(), amount: amount, timestamp: Date.now() });
     saveFluidData(data);
     renderStatus();
-    window.closeFluidModal();
+    renderFluidHistory();
   };
 
   window.submitCustomFluid = function(){
@@ -355,6 +794,790 @@
       return;
     }
     window.quickAddFluid(Math.round(val));
+    input.value = '';
+  };
+
+  window.setFluidSortOrder = function(order){
+    fluidSortOrder = order;
+    localStorage.setItem('todaysStatus_fluidSort', order);
+    updateFluidSortButtons();
+    renderFluidHistory();
+  };
+
+  window.deleteFluidEntry = function(id){
+    const data = loadFluidData();
+    data.entries = data.entries.filter(e => e.id !== id);
+    saveFluidData(data);
+    renderStatus();
+    renderFluidHistory();
+  };
+
+  window.startEditFluidEntry = function(id){
+    const entries = loadFluidData().entries;
+    const entry = entries.find(e => e.id === id);
+    if(!entry) return;
+    const row = document.querySelector('.entry-row[data-id="' + id + '"]');
+    if(!row) return;
+    row.innerHTML = `<div class="entry-edit-row">
+      <input type="number" id="fluidEditInput_${id}" value="${entry.amount}" inputmode="numeric">
+      <button class="entry-save-btn" onclick="window.saveEditFluidEntry(${id})">Save</button>
+      <button class="entry-cancel-btn" onclick="window.cancelEditFluidEntry()">Cancel</button>
+    </div>`;
+    const input = document.getElementById('fluidEditInput_' + id);
+    input.focus();
+    input.select();
+  };
+
+  window.saveEditFluidEntry = function(id){
+    const input = document.getElementById('fluidEditInput_' + id);
+    const val = parseFloat(input.value);
+    if(!val || val <= 0){
+      input.focus();
+      return;
+    }
+    const data = loadFluidData();
+    const entry = data.entries.find(e => e.id === id);
+    if(entry){
+      entry.amount = Math.round(val);
+      saveFluidData(data);
+    }
+    renderStatus();
+    renderFluidHistory();
+  };
+
+  window.cancelEditFluidEntry = function(){
+    renderFluidHistory();
+  };
+
+  window.openBPModal = function(){
+    document.getElementById('bpSystolic').value = '';
+    document.getElementById('bpDiastolic').value = '';
+    document.getElementById('bpPulse').value = '';
+    document.getElementById('bpError').hidden = true;
+    updateBPSortButtons();
+    renderBPStatus();
+    renderBPHistory();
+    document.getElementById('bpOverlay').hidden = false;
+  };
+
+  window.closeBPModal = function(){
+    document.getElementById('bpOverlay').hidden = true;
+  };
+
+  window.setBPSortOrder = function(order){
+    bpSortOrder = order;
+    localStorage.setItem('todaysStatus_bpSort', order);
+    updateBPSortButtons();
+    renderBPHistory();
+  };
+
+  window.submitBP = function(){
+    const sysInput = document.getElementById('bpSystolic');
+    const diaInput = document.getElementById('bpDiastolic');
+    const pulseInput = document.getElementById('bpPulse');
+    const errorEl = document.getElementById('bpError');
+
+    const systolic = parseInt(sysInput.value, 10);
+    const diastolic = parseInt(diaInput.value, 10);
+    const pulseRaw = pulseInput.value.trim();
+
+    const result = validateBPReading(systolic, diastolic, pulseRaw);
+    if(result.error){
+      errorEl.textContent = result.error;
+      errorEl.hidden = false;
+      const focusMap = { sys:sysInput, dia:diaInput, pulse:pulseInput };
+      (focusMap[result.field] || sysInput).focus();
+      return;
+    }
+
+    errorEl.hidden = true;
+    const data = loadBPData();
+    data.entries.push({
+      id: Date.now(),
+      systolic: systolic,
+      diastolic: diastolic,
+      pulse: result.pulse,
+      timestamp: Date.now()
+    });
+    saveBPData(data);
+
+    sysInput.value = '';
+    diaInput.value = '';
+    pulseInput.value = '';
+    renderBPStatus();
+    renderBPHistory();
+    sysInput.focus();
+  };
+
+  window.deleteBPEntry = function(id){
+    const data = loadBPData();
+    data.entries = data.entries.filter(e => e.id !== id);
+    saveBPData(data);
+    renderBPStatus();
+    renderBPHistory();
+  };
+
+  window.startEditBPEntry = function(id){
+    const entries = loadBPData().entries;
+    const entry = entries.find(e => e.id === id);
+    if(!entry) return;
+    const row = document.querySelector('.bp-entry[data-id="' + id + '"]');
+    if(!row) return;
+    row.innerHTML = `<div class="bp-edit-row">
+      <div class="bp-edit-fields">
+        <input type="number" id="bpEditSys_${id}" value="${entry.systolic}" inputmode="numeric" placeholder="Sys">
+        <input type="number" id="bpEditDia_${id}" value="${entry.diastolic}" inputmode="numeric" placeholder="Dia">
+        <input type="number" id="bpEditPulse_${id}" value="${entry.pulse != null ? entry.pulse : ''}" inputmode="numeric" placeholder="Pulse">
+      </div>
+      <div class="bp-edit-actions">
+        <button class="entry-save-btn" onclick="window.saveEditBPEntry(${id})">Save</button>
+        <button class="entry-cancel-btn" onclick="window.cancelEditBPEntry()">Cancel</button>
+      </div>
+    </div>`;
+    document.getElementById('bpEditSys_' + id).focus();
+  };
+
+  window.saveEditBPEntry = function(id){
+    const sysInput = document.getElementById('bpEditSys_' + id);
+    const diaInput = document.getElementById('bpEditDia_' + id);
+    const pulseInput = document.getElementById('bpEditPulse_' + id);
+    const errorEl = document.getElementById('bpError');
+
+    const systolic = parseInt(sysInput.value, 10);
+    const diastolic = parseInt(diaInput.value, 10);
+    const pulseRaw = pulseInput.value.trim();
+
+    const result = validateBPReading(systolic, diastolic, pulseRaw);
+    if(result.error){
+      errorEl.textContent = result.error;
+      errorEl.hidden = false;
+      const focusMap = { sys:sysInput, dia:diaInput, pulse:pulseInput };
+      (focusMap[result.field] || sysInput).focus();
+      return;
+    }
+
+    errorEl.hidden = true;
+    const data = loadBPData();
+    const entry = data.entries.find(e => e.id === id);
+    if(entry){
+      // Systolic, diastolic, and pulse are updated together on the same
+      // record — they stay linked to one reading/timestamp for the
+      // per-field trend analysis planned in later lessons.
+      entry.systolic = systolic;
+      entry.diastolic = diastolic;
+      entry.pulse = result.pulse;
+      saveBPData(data);
+    }
+    renderBPStatus();
+    renderBPHistory();
+  };
+
+  window.cancelEditBPEntry = function(){
+    document.getElementById('bpError').hidden = true;
+    renderBPHistory();
+  };
+
+  // ---- Trend graphs: shared by Fluid and BP so both cards behave identically ----
+
+  let graphType = null;       // 'fluid' | 'bp'
+  let graphRangeDays = 30;    // 30 | 60 | 90 | 'custom'
+  let graphCustomRange = null; // { start:'YYYY-MM-DD', end:'YYYY-MM-DD' } | null
+
+  function getFluidDailyTotal(dateStr){
+    try{
+      const raw = localStorage.getItem('todaysStatus_fluid_' + dateStr);
+      if(!raw) return null;
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed.entries)){
+        if(!parsed.entries.length) return null;
+        return fluidEntriesTotal(parsed.entries);
+      }
+      // Legacy {total, lastLogged} shape — read for the graph without triggering
+      // a migration write (migration happens naturally when that day is opened).
+      if(typeof parsed.total === 'number' && parsed.total > 0) return parsed.total;
+      return null;
+    }catch(e){ return null; }
+  }
+
+  function getGraphDateList(){
+    let start, end;
+    if(graphRangeDays === 'custom' && graphCustomRange){
+      start = new Date(graphCustomRange.start + 'T00:00:00');
+      end = new Date(graphCustomRange.end + 'T00:00:00');
+    } else {
+      end = new Date();
+      start = new Date();
+      const days = (typeof graphRangeDays === 'number') ? graphRangeDays : 30;
+      start.setDate(end.getDate() - (days - 1));
+    }
+    const list = [];
+    const cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    while(cur <= last){
+      list.push(formatDateKey(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return list;
+  }
+
+  function updateRangeButtons(){
+    document.getElementById('range30').classList.toggle('active', graphRangeDays === 30);
+    document.getElementById('range60').classList.toggle('active', graphRangeDays === 60);
+    document.getElementById('range90').classList.toggle('active', graphRangeDays === 90);
+    document.getElementById('rangeCustom').classList.toggle('active', graphRangeDays === 'custom');
+  }
+
+  // Generic line-chart renderer used by both Fluid and BP. Draws a fixed
+  // (non-scrolling) Y-axis alongside a horizontally scrollable plot, so axis
+  // labels stay readable no matter how far the reader has scrolled.
+  // ---- Shared chart-drawing helpers (used by both the BP line chart and the Fluid bar chart) ----
+
+  function makeYScale(yMin, yMax, topPad, plotHeight){
+    return function(val){
+      const clamped = Math.max(yMin, Math.min(yMax, val));
+      const ratio = (clamped - yMin) / ((yMax - yMin) || 1);
+      return topPad + (1 - ratio) * plotHeight;
+    };
+  }
+
+  function drawAxisAndGrid(yMin, yMax, width, height, yFor){
+    const axisSvg = document.getElementById('chartAxisSvg');
+    axisSvg.setAttribute('height', height);
+    const gridCount = 4;
+    let axisMarkup = '';
+    let gridMarkup = '';
+    for(let g = 0; g <= gridCount; g++){
+      const val = yMin + (yMax - yMin) * (g / gridCount);
+      const y = yFor(val);
+      axisMarkup += `<text x="30" y="${y + 4}" font-size="10" fill="#94a3b8" text-anchor="end">${Math.round(val)}</text>`;
+      gridMarkup += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+    }
+    axisSvg.innerHTML = axisMarkup;
+    return gridMarkup;
+  }
+
+  function scrollChartToRight(){
+    const scrollContainer = document.getElementById('chartScroll');
+    setTimeout(() => {
+      scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+    }, 0);
+  }
+
+  // Every individual BP reading in the given dates, flattened and sorted
+  // chronologically — this is what makes each reading its own dot, not a
+  // once-a-day average.
+  function getBPEntriesInRange(dates){
+    const all = [];
+    dates.forEach(d => {
+      try{
+        const raw = localStorage.getItem('todaysStatus_bp_' + d);
+        if(!raw) return;
+        const parsed = JSON.parse(raw);
+        const entries = Array.isArray(parsed.entries) ? parsed.entries : [];
+        entries.forEach(e => {
+          all.push({ date:d, systolic:e.systolic, diastolic:e.diastolic, pulse:e.pulse, timestamp:e.timestamp });
+        });
+      }catch(err){}
+    });
+    all.sort((a,b) => a.timestamp - b.timestamp);
+    return all;
+  }
+
+  // Trailing rolling average over the last `windowSize` data points (gaps —
+  // days with no entry — are skipped rather than counted as zero).
+  function computeRollingAverage(points, key, windowSize){
+    const result = new Array(points.length).fill(null);
+    const buffer = [];
+    points.forEach((p, i) => {
+      const v = p[key];
+      if(v !== null && v !== undefined){
+        buffer.push(v);
+        if(buffer.length > windowSize) buffer.shift();
+        if(buffer.length >= 2){
+          result[i] = buffer.reduce((s,x) => s + x, 0) / buffer.length;
+        }
+      }
+    });
+    return result;
+  }
+
+  // Splits the data-bearing points into an earlier and more-recent half and
+  // compares their averages — a simple, robust trend signal that works
+  // regardless of which range (30/60/90/custom) is selected.
+  function computeTrendSplit(points, key){
+    const withData = points.filter(p => p[key] !== null && p[key] !== undefined);
+    if(withData.length < 4) return null;
+    const half = Math.floor(withData.length / 2);
+    const older = withData.slice(0, half);
+    const recent = withData.slice(withData.length - half);
+    const olderAvg = older.reduce((s,p) => s + p[key], 0) / older.length;
+    const recentAvg = recent.reduce((s,p) => s + p[key], 0) / recent.length;
+    return { olderAvg:olderAvg, recentAvg:recentAvg, diff:recentAvg - olderAvg };
+  }
+
+  function trendPhrase(trend, noun){
+    if(!trend || !trend.olderAvg) return null;
+    const pct = (trend.diff / trend.olderAvg) * 100;
+    if(Math.abs(pct) < 8) return 'Holding steady — no clear trend yet in this range.';
+    const dir = trend.diff > 0 ? 'up' : 'down';
+    const cmp = trend.diff > 0 ? 'higher' : 'lower';
+    return `Trending ${dir}: your more recent ${noun} run about ${Math.abs(Math.round(pct))}% ${cmp} than earlier in this range.`;
+  }
+
+  // BP line chart — one dot per individual reading (not a daily average),
+  // with a shaded reference band and out-of-band readings visually flagged.
+  function drawLineChart(cfg){
+    const pointWidth = 30;
+    const height = 220;
+    const topPad = 14;
+    const bottomPad = 26;
+    const plotHeight = height - topPad - bottomPad;
+    const n = cfg.points.length;
+    const width = Math.max(n * pointWidth, 260);
+
+    const yFor = makeYScale(cfg.yMin, cfg.yMax, topPad, plotHeight);
+    function xFor(i){ return pointWidth / 2 + i * pointWidth; }
+
+    const gridMarkup = drawAxisAndGrid(cfg.yMin, cfg.yMax, width, height, yFor);
+
+    // Background reference band(s) — general orientation only, not a diagnosis.
+    let bandMarkup = '';
+    (cfg.bands || []).forEach(b => {
+      const bandTop = yFor(Math.min(b.max, cfg.yMax));
+      const bandBottom = yFor(Math.max(b.min, cfg.yMin));
+      if(bandBottom <= bandTop) return;
+      bandMarkup += `<rect x="0" y="${bandTop}" width="${width}" height="${bandBottom - bandTop}" fill="${b.color}"/>`;
+    });
+
+    // Date labels only where the date changes, so several same-day readings
+    // don't repeat the label.
+    let xLabelMarkup = '';
+    let lastLabelDate = null;
+    cfg.points.forEach((p, i) => {
+      if(p.date !== lastLabelDate){
+        lastLabelDate = p.date;
+        const dt = new Date(p.date + 'T00:00:00');
+        const label = dt.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+        xLabelMarkup += `<text x="${xFor(i)}" y="${height - 8}" font-size="9.5" fill="#94a3b8" text-anchor="middle">${label}</text>`;
+      }
+    });
+
+    let seriesMarkup = '';
+    cfg.series.forEach(s => {
+      const pathD = cfg.points.map((p, i) => (i === 0 ? 'M' : 'L') + xFor(i) + ',' + yFor(p[s.key])).join(' ');
+      seriesMarkup += `<path d="${pathD}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
+
+      cfg.points.forEach((p, i) => {
+        const v = p[s.key];
+        const outOfBand = (s.normalMin !== undefined) && (v < s.normalMin || v > s.normalMax);
+        const r = outOfBand ? 5.5 : 3.5;
+        seriesMarkup += `<circle cx="${xFor(i)}" cy="${yFor(v)}" r="14" fill="transparent" data-index="${i}" data-timestamp="${p.timestamp}" class="chart-point-hit"/>`;
+        if(outOfBand){
+          seriesMarkup += `<circle cx="${xFor(i)}" cy="${yFor(v)}" r="${r + 2.5}" fill="none" stroke="${s.color}" stroke-width="1.5" opacity="0.4" style="pointer-events:none"/>`;
+        }
+        seriesMarkup += `<circle cx="${xFor(i)}" cy="${yFor(v)}" r="${r}" fill="${s.color}" stroke="#fff" stroke-width="1.5" style="pointer-events:none"/>`;
+      });
+    });
+
+    let avgMarkup = '';
+    (cfg.avgLines || []).forEach(a => {
+      const y = yFor(a.value);
+      avgMarkup += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="${a.color}" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.8"/>`;
+    });
+
+    const plotSvg = document.getElementById('chartPlotSvg');
+    plotSvg.setAttribute('width', width);
+    plotSvg.setAttribute('height', height);
+    plotSvg.innerHTML = gridMarkup + bandMarkup + avgMarkup + seriesMarkup + xLabelMarkup;
+
+    plotSvg.querySelectorAll('.chart-point-hit').forEach(circle => {
+      circle.style.cursor = 'pointer';
+      circle.addEventListener('click', () => {
+        const idx = Number(circle.getAttribute('data-index'));
+        const point = cfg.points[idx];
+        if(point && cfg.onPointTap) cfg.onPointTap(point);
+      });
+    });
+
+    scrollChartToRight();
+  }
+
+  // Fluid bar chart — one bar per day, shaded lighter on below-average days,
+  // with a solid rolling-average trend line overlaid on top.
+  function drawBarChart(cfg){
+    const dayWidth = 32;
+    const height = 220;
+    const topPad = 14;
+    const bottomPad = 26;
+    const plotHeight = height - topPad - bottomPad;
+    const n = cfg.points.length;
+    const width = Math.max(n * dayWidth, 260);
+    const barWidth = dayWidth * 0.62;
+
+    const yFor = makeYScale(cfg.yMin, cfg.yMax, topPad, plotHeight);
+    function xFor(i){ return dayWidth / 2 + i * dayWidth; }
+
+    const gridMarkup = drawAxisAndGrid(cfg.yMin, cfg.yMax, width, height, yFor);
+
+    const labelEvery = n <= 14 ? 2 : n <= 35 ? 5 : n <= 65 ? 10 : 15;
+    let xLabelMarkup = '';
+    cfg.points.forEach((p, i) => {
+      if(i % labelEvery === 0 || i === n - 1){
+        const dt = new Date(p.date + 'T00:00:00');
+        const label = dt.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+        xLabelMarkup += `<text x="${xFor(i)}" y="${height - 8}" font-size="9.5" fill="#94a3b8" text-anchor="middle">${label}</text>`;
+      }
+    });
+
+    const baseY = yFor(cfg.yMin);
+    let barMarkup = '';
+    cfg.points.forEach((p, i) => {
+      if(p.value === null || p.value === undefined) return;
+      const barY = yFor(p.value);
+      const barH = Math.max(1, baseY - barY);
+      const isBelowAvg = (cfg.avgValue !== null) && p.value < cfg.avgValue;
+      const fillColor = isBelowAvg ? cfg.mutedColor : cfg.barColor;
+      barMarkup += `<rect x="${xFor(i) - barWidth / 2}" y="${barY}" width="${barWidth}" height="${barH}" rx="3" fill="${fillColor}" data-index="${i}" data-date="${p.date}" class="chart-bar-hit"/>`;
+    });
+
+    let avgMarkup = '';
+    if(cfg.avgValue !== null && cfg.avgValue !== undefined){
+      const y = yFor(cfg.avgValue);
+      avgMarkup += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.8"/>`;
+    }
+
+    let trendMarkup = '';
+    if(cfg.trendPoints && cfg.trendPoints.length){
+      const segments = [];
+      let current = [];
+      cfg.points.forEach((p, i) => {
+        const tv = cfg.trendPoints[i];
+        if(tv === null || tv === undefined){
+          if(current.length) segments.push(current);
+          current = [];
+        } else {
+          current.push({ i:i, v:tv });
+        }
+      });
+      if(current.length) segments.push(current);
+      segments.forEach(seg => {
+        const d = seg.map((pt, idx) => (idx === 0 ? 'M' : 'L') + xFor(pt.i) + ',' + yFor(pt.v)).join(' ');
+        trendMarkup += `<path d="${d}" fill="none" stroke="${cfg.trendColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      });
+    }
+
+    const plotSvg = document.getElementById('chartPlotSvg');
+    plotSvg.setAttribute('width', width);
+    plotSvg.setAttribute('height', height);
+    plotSvg.innerHTML = gridMarkup + barMarkup + avgMarkup + trendMarkup + xLabelMarkup;
+
+    plotSvg.querySelectorAll('.chart-bar-hit').forEach(bar => {
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('click', () => {
+        const idx = Number(bar.getAttribute('data-index'));
+        const point = cfg.points[idx];
+        if(point && cfg.onBarTap) cfg.onBarTap(point);
+      });
+    });
+
+    scrollChartToRight();
+  }
+
+  function renderFluidChart(dates){
+    const points = dates.map(d => ({ date:d, value:getFluidDailyTotal(d) }));
+    const withData = points.filter(p => p.value !== null);
+    const legend = document.getElementById('graphLegend');
+    const chartRow = document.getElementById('chartRow');
+    const emptyMsg = document.getElementById('chartEmptyMsg');
+    const readout = document.getElementById('graphReadout');
+
+    if(!withData.length){
+      legend.innerHTML = '<span class="legend-item"><span class="legend-swatch" style="background:#3b82f6"></span>Daily Total (oz)</span>';
+      document.getElementById('graphDisclaimer').hidden = true;
+      chartRow.style.display = 'none';
+      emptyMsg.hidden = false;
+      emptyMsg.textContent = 'No fluid data logged in this range yet. Keep logging and this fills in day by day.';
+      readout.textContent = 'Tap a bar to see its value.';
+      return;
+    }
+
+    const avg = Math.round(withData.reduce((s,p) => s + p.value, 0) / withData.length);
+    const maxVal = Math.max(...withData.map(p => p.value), avg);
+    const yMax = Math.max(10, Math.ceil((maxVal * 1.15) / 10) * 10);
+    const rolling = computeRollingAverage(points, 'value', 5);
+    const trend = computeTrendSplit(points, 'value');
+    const trendMsg = trendPhrase(trend, 'fluid totals');
+    const highestDay = withData.reduce((max,p) => p.value > max.value ? p : max, withData[0]);
+
+    legend.innerHTML = `
+      <span class="legend-item"><span class="legend-swatch" style="background:#3b82f6"></span>Daily Total (oz)</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#bfdbfe"></span>Below Average Day</span>
+      <span class="legend-item"><span class="legend-swatch dashed" style="border-color:#64748b"></span>Average (${avg} oz)</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#f97316"></span>5-Reading Trend</span>
+    `;
+    document.getElementById('graphDisclaimer').hidden = true;
+    chartRow.style.display = '';
+    emptyMsg.hidden = true;
+
+    drawBarChart({
+      points: points,
+      yMin: 0,
+      yMax: yMax,
+      barColor: '#3b82f6',
+      mutedColor: '#bfdbfe',
+      avgValue: avg,
+      trendPoints: rolling,
+      trendColor: '#f97316',
+      onBarTap: (p) => {
+        const dt = new Date(p.date + 'T00:00:00');
+        const label = dt.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+        readout.innerHTML = `${label}: <strong>${p.value} oz</strong>`;
+      }
+    });
+
+    let summary = `Average: <strong>${avg} oz/day</strong> <span class="readout-sub">across ${withData.length} day${withData.length === 1 ? '' : 's'} with data</span>`;
+    const highestLabel = new Date(highestDay.date + 'T00:00:00').toLocaleDateString(undefined, { month:'short', day:'numeric' });
+    summary += `<br><span class="readout-sub">Highest day: ${highestDay.value} oz on ${highestLabel}</span>`;
+    if(trendMsg) summary += `<br><span class="readout-sub">${trendMsg}</span>`;
+    readout.innerHTML = summary;
+  }
+
+  function renderBPChart(dates){
+    const points = getBPEntriesInRange(dates);
+    const legend = document.getElementById('graphLegend');
+    const chartRow = document.getElementById('chartRow');
+    const emptyMsg = document.getElementById('chartEmptyMsg');
+    const readout = document.getElementById('graphReadout');
+
+    if(!points.length){
+      legend.innerHTML = `
+        <span class="legend-item"><span class="legend-swatch" style="background:#1d4ed8"></span>Systolic</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:#059669"></span>Diastolic</span>
+      `;
+      document.getElementById('graphDisclaimer').hidden = true;
+      chartRow.style.display = 'none';
+      emptyMsg.hidden = false;
+      emptyMsg.textContent = 'No BP data logged in this range yet. Keep logging and this fills in day by day.';
+      readout.textContent = 'Tap a point to see its value.';
+      return;
+    }
+
+    const sysAvg = Math.round(points.reduce((s,p) => s + p.systolic, 0) / points.length);
+    const diaAvg = Math.round(points.reduce((s,p) => s + p.diastolic, 0) / points.length);
+    const allVals = points.flatMap(p => [p.systolic, p.diastolic]);
+    const yMin = Math.max(0, Math.floor((Math.min(...allVals, 80) - 10) / 10) * 10);
+    const yMax = Math.ceil((Math.max(...allVals, 120) + 10) / 10) * 10;
+    const outOfBandCount = points.filter(p => p.systolic < 80 || p.systolic > 120 || p.diastolic < 80 || p.diastolic > 120).length;
+    const trend = computeTrendSplit(points, 'systolic');
+    const trendMsg = trendPhrase(trend, 'systolic readings');
+
+    legend.innerHTML = `
+      <span class="legend-item"><span class="legend-swatch" style="background:#1d4ed8"></span>Systolic avg ${sysAvg}</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#059669"></span>Diastolic avg ${diaAvg}</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(16,185,129,0.25)"></span>80&ndash;120 reference band</span>
+    `;
+    const disclaimerEl = document.getElementById('graphDisclaimer');
+    disclaimerEl.hidden = false;
+    disclaimerEl.textContent = '80–120 mmHg is a general reference band shown for orientation, not a personalized target. Talk to your doctor about your own numbers.';
+    chartRow.style.display = '';
+    emptyMsg.hidden = true;
+
+    drawLineChart({
+      points: points,
+      yMin: yMin,
+      yMax: yMax,
+      bands: [{ min:80, max:120, color:'rgba(16,185,129,0.06)' }],
+      series: [
+        { key:'systolic', color:'#1d4ed8', normalMin:80, normalMax:120 },
+        { key:'diastolic', color:'#059669', normalMin:80, normalMax:120 }
+      ],
+      avgLines: [
+        { value:sysAvg, color:'#1d4ed8' },
+        { value:diaAvg, color:'#059669' }
+      ],
+      onPointTap: (p) => {
+        const dt = new Date(p.timestamp);
+        const label = dt.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' }) +
+          ' ' + dt.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+        const pulseStr = p.pulse ? ' · ' + p.pulse + ' bpm' : '';
+        readout.innerHTML = `${label}: <strong>${p.systolic}/${p.diastolic}</strong> mmHg${pulseStr}`;
+      }
+    });
+
+    let summary = `Average: <strong>${sysAvg}/${diaAvg}</strong> mmHg <span class="readout-sub">across ${points.length} reading${points.length === 1 ? '' : 's'}</span>`;
+    if(outOfBandCount > 0){
+      summary += `<br><span class="readout-sub">${outOfBandCount} reading${outOfBandCount === 1 ? '' : 's'} outside the 80&ndash;120 reference band</span>`;
+    }
+    if(trendMsg) summary += `<br><span class="readout-sub">${trendMsg}</span>`;
+    readout.innerHTML = summary;
+  }
+
+  // Every individual heart-rate/pulse reading (pulled from BP entries that
+  // logged one) in the given dates, flattened and sorted chronologically.
+  function getHREntriesInRange(dates){
+    const all = [];
+    dates.forEach(d => {
+      try{
+        const raw = localStorage.getItem('todaysStatus_bp_' + d);
+        if(!raw) return;
+        const parsed = JSON.parse(raw);
+        const entries = Array.isArray(parsed.entries) ? parsed.entries : [];
+        entries.forEach(e => {
+          if(typeof e.pulse === 'number' && !isNaN(e.pulse)){
+            all.push({ date:d, pulse:e.pulse, timestamp:e.timestamp });
+          }
+        });
+      }catch(err){}
+    });
+    all.sort((a,b) => a.timestamp - b.timestamp);
+    return all;
+  }
+
+  function renderHRChart(dates){
+    const points = getHREntriesInRange(dates);
+    const legend = document.getElementById('graphLegend');
+    const chartRow = document.getElementById('chartRow');
+    const emptyMsg = document.getElementById('chartEmptyMsg');
+    const readout = document.getElementById('graphReadout');
+    const disclaimerEl = document.getElementById('graphDisclaimer');
+
+    if(!points.length){
+      legend.innerHTML = '<span class="legend-item"><span class="legend-swatch" style="background:#0891b2"></span>Heart Rate (bpm)</span>';
+      disclaimerEl.hidden = true;
+      chartRow.style.display = 'none';
+      emptyMsg.hidden = false;
+      emptyMsg.textContent = 'No heart rate data logged in this range yet. Log a pulse with your BP readings and this fills in day by day.';
+      readout.textContent = 'Tap a point to see its value.';
+      return;
+    }
+
+    const avg = Math.round(points.reduce((s,p) => s + p.pulse, 0) / points.length);
+    const allVals = points.map(p => p.pulse);
+    const yMin = Math.max(0, Math.floor((Math.min(...allVals, 60) - 10) / 10) * 10);
+    const yMax = Math.ceil((Math.max(...allVals, 100) + 10) / 10) * 10;
+    const outOfBandCount = points.filter(p => p.pulse < 60 || p.pulse > 100).length;
+    const trend = computeTrendSplit(points, 'pulse');
+    const trendMsg = trendPhrase(trend, 'heart rate readings');
+
+    legend.innerHTML = `
+      <span class="legend-item"><span class="legend-swatch" style="background:#0891b2"></span>Heart Rate avg ${avg} bpm</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(8,145,178,0.25)"></span>60&ndash;100 reference band</span>
+    `;
+    disclaimerEl.hidden = false;
+    disclaimerEl.textContent = '60–100 bpm is a commonly cited resting heart rate reference band, not a personalized target. Talk to your doctor about your own numbers.';
+    chartRow.style.display = '';
+    emptyMsg.hidden = true;
+
+    drawLineChart({
+      points: points,
+      yMin: yMin,
+      yMax: yMax,
+      bands: [{ min:60, max:100, color:'rgba(8,145,178,0.06)' }],
+      series: [{ key:'pulse', color:'#0891b2', normalMin:60, normalMax:100 }],
+      avgLines: [{ value:avg, color:'#0891b2' }],
+      onPointTap: (p) => {
+        const dt = new Date(p.timestamp);
+        const label = dt.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' }) +
+          ' ' + dt.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+        readout.innerHTML = `${label}: <strong>${p.pulse} bpm</strong>`;
+      }
+    });
+
+    let summary = `Average: <strong>${avg} bpm</strong> <span class="readout-sub">across ${points.length} reading${points.length === 1 ? '' : 's'}</span>`;
+    if(outOfBandCount > 0){
+      summary += `<br><span class="readout-sub">${outOfBandCount} reading${outOfBandCount === 1 ? '' : 's'} outside the 60&ndash;100 reference band</span>`;
+    }
+    if(trendMsg) summary += `<br><span class="readout-sub">${trendMsg}</span>`;
+    readout.innerHTML = summary;
+  }
+
+  function renderGraph(){
+    const dates = getGraphDateList();
+    if(graphType === 'fluid'){
+      document.getElementById('graphTitle').textContent = 'Fluid Trend';
+      renderFluidChart(dates);
+    } else if(graphType === 'hr'){
+      document.getElementById('graphTitle').textContent = 'Heart Rate Trend';
+      renderHRChart(dates);
+    } else {
+      document.getElementById('graphTitle').textContent = 'Blood Pressure Trend';
+      renderBPChart(dates);
+    }
+  }
+
+  function openGraph(type){
+    graphType = type;
+    graphRangeDays = 30;
+    graphCustomRange = null;
+    document.getElementById('graphCustomRow').hidden = true;
+    updateRangeButtons();
+    renderGraph();
+    document.getElementById('graphOverlay').hidden = false;
+  }
+
+  window.openFluidGraph = function(){
+    window.closeFluidModal();
+    openGraph('fluid');
+  };
+
+  window.openBPGraph = function(){
+    window.closeBPModal();
+    openGraph('bp');
+  };
+
+  window.openHRGraph = function(){
+    window.closeBPModal();
+    openGraph('hr');
+  };
+
+  window.closeGraph = function(){
+    document.getElementById('graphOverlay').hidden = true;
+  };
+
+  // Returns to whichever log modal the graph was opened from, rather than
+  // dropping the reader all the way back to the dashboard.
+  window.goBackFromGraph = function(){
+    document.getElementById('graphOverlay').hidden = true;
+    if(graphType === 'fluid'){
+      window.openFluidModal();
+    } else {
+      window.openBPModal();
+    }
+  };
+
+  window.setGraphRange = function(range){
+    if(range === 'custom'){
+      const startInput = document.getElementById('graphCustomStart');
+      const endInput = document.getElementById('graphCustomEnd');
+      if(!endInput.value) endInput.value = todayKey();
+      if(!startInput.value){
+        const d = new Date();
+        d.setDate(d.getDate() - 29);
+        startInput.value = formatDateKey(d);
+      }
+      document.getElementById('graphCustomRow').hidden = false;
+      graphRangeDays = 'custom';
+      if(graphCustomRange) renderGraph();
+    } else {
+      document.getElementById('graphCustomRow').hidden = true;
+      graphRangeDays = range;
+      graphCustomRange = null;
+      renderGraph();
+    }
+    updateRangeButtons();
+  };
+
+  window.applyCustomRange = function(){
+    const startVal = document.getElementById('graphCustomStart').value;
+    const endVal = document.getElementById('graphCustomEnd').value;
+    if(!startVal || !endVal || startVal > endVal){
+      document.getElementById('graphReadout').textContent = 'Pick a start date on or before the end date.';
+      return;
+    }
+    graphCustomRange = { start:startVal, end:endVal };
+    graphRangeDays = 'custom';
+    updateRangeButtons();
+    renderGraph();
   };
 
   window.openDisclosure = function(key){
@@ -374,6 +1597,8 @@
   window.handleButtonTap = function(key){
     if(key === 'fluid'){
       window.openFluidModal();
+    } else if(key === 'bp'){
+      window.openBPModal();
     } else {
       window.openDisclosure(key);
     }
@@ -398,6 +1623,7 @@
   renderDate();
   renderGrid();
   renderStatus();
+  renderBPStatus();
 
   // ---- Register service worker ----
   if('serviceWorker' in navigator){
