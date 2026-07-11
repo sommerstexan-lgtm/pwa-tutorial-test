@@ -264,25 +264,25 @@
     display:flex; flex-direction:column;
   }
   .graph-header{
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; justify-content:center;
     padding:14px 16px; border-bottom:1px solid var(--line); flex-shrink:0;
     padding-top:max(14px, env(safe-area-inset-top));
     padding-left:max(16px, env(safe-area-inset-left));
     padding-right:max(16px, env(safe-area-inset-right));
   }
-  .graph-header-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .graph-title{ font-size:18px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .graph-back{
     display:flex; align-items:center; gap:2px;
-    border:none; background:none; color:#1e293b; font-size:15px; font-weight:700;
-    cursor:pointer; padding:4px 4px 4px 0; white-space:nowrap; flex-shrink:0;
+    border:1px solid var(--line); background:#fff; color:#1e293b; font-size:13px; font-weight:700;
+    cursor:pointer; padding:7px 12px; white-space:nowrap; flex-shrink:0; border-radius:999px;
   }
-  .graph-title{ font-size:18px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .graph-close{
-    border:none; background:none; font-size:24px; color:var(--sub);
-    cursor:pointer; padding:2px 8px; line-height:1; flex-shrink:0;
+    border:1px solid var(--line); background:#fff; font-size:18px; color:var(--sub);
+    cursor:pointer; padding:5px 12px; line-height:1; flex-shrink:0; border-radius:999px;
+    margin-left:auto;
   }
   .graph-range-row{
-    display:flex; gap:8px; padding:12px 16px; flex-wrap:wrap;
+    display:flex; align-items:center; gap:8px; padding:12px 16px; flex-wrap:wrap;
     border-bottom:1px solid var(--line); flex-shrink:0;
   }
   .range-btn{
@@ -439,18 +439,16 @@
 <!-- Trend graph — full-screen, shared by Fluid and BP so both cards behave identically -->
 <div class="graph-overlay" id="graphOverlay" hidden>
   <div class="graph-header">
-    <div class="graph-header-left">
-      <button class="graph-back" onclick="window.goBackFromGraph()" aria-label="Back">&lsaquo; Back</button>
-      <span class="graph-title" id="graphTitle">Trend</span>
-    </div>
-    <button class="graph-close" onclick="window.closeGraph()" aria-label="Close trend graph">&times;</button>
+    <span class="graph-title" id="graphTitle">Trend</span>
   </div>
 
   <div class="graph-range-row">
+    <button class="graph-back" onclick="window.goBackFromGraph()" aria-label="Back">&lsaquo; Back</button>
     <button class="range-btn" id="range30" onclick="window.setGraphRange(30)">30D</button>
     <button class="range-btn" id="range60" onclick="window.setGraphRange(60)">60D</button>
     <button class="range-btn" id="range90" onclick="window.setGraphRange(90)">90D</button>
     <button class="range-btn" id="rangeCustom" onclick="window.setGraphRange('custom')">Custom</button>
+    <button class="graph-close" onclick="window.closeGraph()" aria-label="Close trend graph">&times;</button>
   </div>
 
   <div class="graph-custom-row" id="graphCustomRow" hidden>
