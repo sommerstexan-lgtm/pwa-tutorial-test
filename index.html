@@ -37,8 +37,7 @@
     -webkit-tap-highlight-color:transparent;
     touch-action:manipulation;
   }
-  header{
-    padding:8px 0 16px 0;
+  .sticky-top{
     position:sticky;
     top:0;
     z-index:10;
@@ -48,7 +47,9 @@
     margin-right:-16px;
     padding-left:calc(20px + env(safe-area-inset-left));
     padding-right:calc(20px + env(safe-area-inset-right));
+    padding-bottom:10px;
   }
+  header{ padding:8px 0 16px 0; }
   header h1{ margin:0; font-size:22px; font-weight:700; }
   header p{ margin:2px 0 0 0; color:var(--sub); font-size:14px; }
 
@@ -434,6 +435,7 @@
 </head>
 <body>
 
+<div class="sticky-top">
 <header>
   <div class="header-row">
     <div>
@@ -480,12 +482,14 @@
   <div class="status-sub" id="bpSub">No readings yet today</div>
 </section>
 </div>
+</div>
 
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
   Lesson 3 of the build-along series.<br>
-  One more button comes online every lesson.
+  One more button comes online every lesson.<br>
+  <span style="opacity:0.6;font-size:11px;">Build v13</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
