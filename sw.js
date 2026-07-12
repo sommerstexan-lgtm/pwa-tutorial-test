@@ -1,6 +1,6 @@
 // Today's Status — Lesson 3 service worker
 // Keeps the app installable and usable offline.
-const CACHE_NAME = 'todays-status-v14';
+const CACHE_NAME = 'todays-status-v15';
 const APP_SHELL = [
   './',
   './index.html',

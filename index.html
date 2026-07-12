@@ -489,7 +489,7 @@
 <footer>
   Lesson 3 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v14</span>
+  <span style="opacity:0.6;font-size:11px;">Build v15</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -756,6 +756,10 @@
     githubLinks: {
       title:'GitHub Quick Links',
       body:"How to use it: paste in your GitHub repo path once. What it unlocks: one-tap links to your live app and to GitHub's own web editor for each file, so pasting in a new lesson's code takes one tap to get to the right place instead of hunting for it. If you skip it: everything still works, you'll just navigate to GitHub manually each time."
+    },
+    appUpdates: {
+      title:'App Updates',
+      body:"How to use it: there's nothing to set here — this app checks for a new version automatically every time you open it while online. What it unlocks: you always see the current version without an app store or a manual update step. If you skip reading this: the only thing you might miss is knowing what to do on the rare occasion a new version doesn't show up on the very first reopen — close the app fully and try again, and if it still hasn't shown up after a couple of tries, remove and re-add the Home Screen icon."
     }
   };
 
@@ -2038,6 +2042,22 @@
         <button class="settings-save-btn" onclick="window.saveGithubPath()">Save Repo Path</button>
         <div class="settings-hint">Before pasting in a new lesson's code, export a backup first (Your Data above) — it's not required, but it's a good habit and takes ten seconds.</div>
         <div id="githubLinksBox" style="margin-top:12px;">${renderGithubLinks(s.githubRepoPath)}</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <span>App Updates</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('appUpdates')">i</button>
+        </div>
+        <div class="settings-hint">This app checks for a new version every time you open it, as long as you're online. If a newer version has been pushed to GitHub, you should see it right away — no separate "update" button needed, no app store to check.</div>
+        <div class="settings-hint" style="margin-top:10px;">Occasionally, right after a new version goes live, it can take closing the app fully and reopening it once or twice before the new version actually shows up. That's a known quirk of how phones handle installed web apps, not something wrong with your device — and it should only happen around a fresh update, not every time you open the app.</div>
+        <div class="settings-field-label" style="margin-top:14px;">How to check for updates</div>
+        <ol class="recovery-list">
+          <li>Fully close the app — swipe it away in your app switcher, don't just switch to another app.</li>
+          <li>Reopen it from your Home Screen icon.</li>
+          <li>Scroll to the very bottom of the main screen and check the build number.</li>
+          <li>Still showing the old number after 2-3 tries? Remove the app from your Home Screen and add it again from your GitHub Pages link — that always gets the current version.</li>
+        </ol>
       </div>
 
       <div class="settings-section">
