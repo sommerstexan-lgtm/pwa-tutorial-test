@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 2 build-along app - single file PWA -->
+<!-- Today's Status — Lesson 3 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -321,13 +321,121 @@
     padding:0 16px 10px 16px; font-size:11px; color:var(--sub);
     line-height:1.4; font-style:italic;
   }
+
+  /* Settings */
+  .header-row{ display:flex; align-items:flex-start; justify-content:space-between; }
+  .gear-btn{
+    border:1px solid var(--line); background:#fff; color:#475569;
+    width:38px; height:38px; border-radius:12px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    margin-top:4px;
+  }
+  .gear-btn svg{ width:19px; height:19px; }
+  .settings-header{
+    padding-top:max(14px, env(safe-area-inset-top));
+    padding-left:max(16px, env(safe-area-inset-left));
+    padding-right:max(16px, env(safe-area-inset-right));
+  }
+  .settings-scroll{ flex:1; overflow-y:auto; padding:4px 16px 40px 16px; }
+  .settings-section{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:16px; margin-bottom:14px;
+  }
+  .settings-section-title{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:15px; font-weight:800; margin-bottom:4px;
+  }
+  .info-btn{
+    border:1px solid var(--line); background:#f9fafb; color:#64748b;
+    width:24px; height:24px; border-radius:999px; font-size:13px; font-weight:800;
+    cursor:pointer; flex-shrink:0; line-height:1;
+  }
+  .settings-field-label{ font-size:12.5px; color:var(--sub); font-weight:600; margin:10px 0 5px 0; }
+  .settings-input-row{ display:flex; gap:8px; align-items:center; }
+  .settings-input-row input{
+    flex:1; min-width:0; border:1.5px solid var(--line); border-radius:10px;
+    padding:10px 10px; font-size:15px; text-align:center;
+  }
+  .settings-hint{ font-size:12px; color:var(--sub); line-height:1.4; margin-top:6px; }
+  .settings-save-btn{
+    width:100%; border:none; border-radius:10px; padding:11px; margin-top:12px;
+    background:#1e293b; color:#fff; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .settings-reset-btn{
+    border:none; background:none; color:#1d4ed8; font-size:12.5px; font-weight:700;
+    cursor:pointer; padding:4px 0;
+  }
+  .range-pair-row{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .range-pair-label{ width:64px; flex-shrink:0; font-size:13px; font-weight:700; color:var(--ink); }
+  .data-stat-row{ display:flex; gap:10px; margin:10px 0 14px 0; }
+  .data-stat{
+    flex:1; background:#f9fafb; border:1px solid var(--line); border-radius:10px;
+    padding:10px; text-align:center;
+  }
+  .data-stat-num{ font-size:19px; font-weight:800; }
+  .data-stat-label{ font-size:11px; color:var(--sub); font-weight:600; margin-top:2px; }
+  .settings-btn-row{ display:flex; gap:8px; margin-top:8px; }
+  .settings-btn-row button{
+    flex:1; border:none; border-radius:10px; padding:11px 6px; font-size:13.5px;
+    font-weight:700; cursor:pointer;
+  }
+  .settings-btn-primary{ background:#1e293b; color:#fff; }
+  .settings-btn-secondary{ background:#f3f4f6; color:#374151; }
+  .recovery-list{ font-size:13px; color:#374151; line-height:1.6; padding-left:18px; margin:8px 0 0 0; }
+  .gh-link-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#f9fafb; border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; margin-bottom:6px; font-size:13.5px; font-weight:600;
+  }
+  .gh-link-row a{ color:#1d4ed8; text-decoration:none; font-weight:700; }
+  .import-preview-box{
+    background:#f9fafb; border:1px solid var(--line); border-radius:10px;
+    padding:12px; margin:10px 0; font-size:13.5px; line-height:1.6;
+  }
+  .faq-item{ border-bottom:1px solid var(--line); padding:10px 0; }
+  .faq-item:last-child{ border-bottom:none; }
+  .faq-category{
+    font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;
+    letter-spacing:0.04em; margin:14px 0 4px 0;
+  }
+  .faq-category:first-child{ margin-top:0; }
+  .faq-question{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-size:14.5px; font-weight:700; cursor:pointer; padding:2px 0;
+  }
+  .faq-chevron{ transition:transform .15s ease; color:#94a3b8; flex-shrink:0; }
+  .faq-item.open .faq-chevron{ transform:rotate(90deg); }
+  .faq-answer{
+    font-size:13.5px; color:#4b5563; line-height:1.55; margin-top:6px; display:none;
+  }
+  .faq-item.open .faq-answer{ display:block; }
+  .toast{
+    position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+    background:#059669; color:#fff; padding:13px 20px; border-radius:10px;
+    font-size:14.5px; font-weight:600; z-index:99999; max-width:88%; text-align:center;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  }
+  /* These two popups can open while the full-screen Settings view (z-index 70)
+     is already showing, so they need to sit above it, not at the default
+     small-modal layer (z-index 50) shared with Log Fluid / Log BP / etc. */
+  #settingsInfoOverlay, #importPreviewOverlay{ z-index:80; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Today's Status</h1>
-  <p id="todayDate"></p>
+  <div class="header-row">
+    <div>
+      <h1>Today's Status</h1>
+      <p id="todayDate"></p>
+    </div>
+    <button class="gear-btn" onclick="window.openSettings()" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
 </header>
 
 <div class="status-grid">
@@ -365,7 +473,7 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 2 of the build-along series.<br>
+  Lesson 3 of the build-along series.<br>
   One more button comes online every lesson.
 </footer>
 
@@ -472,6 +580,46 @@
   <div class="graph-readout" id="graphReadout">Tap a point to see its value.</div>
 </div>
 
+<!-- Settings — full-screen, same shell pattern as the trend graph overlay -->
+<div class="graph-overlay" id="settingsOverlay" hidden>
+  <div class="graph-header settings-header">
+    <button class="graph-back" onclick="window.closeSettings()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">Settings</span>
+    <button class="graph-close" onclick="window.closeSettings()" aria-label="Close settings">&times;</button>
+  </div>
+  <div class="settings-scroll" id="settingsScroll"></div>
+</div>
+
+<!-- Settings info popup — reused for every (i) button -->
+<div class="overlay" id="settingsInfoOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" id="settingsInfoDot" style="background:#1e293b"></span>
+      <span id="settingsInfoTitle"></span>
+    </div>
+    <div class="modal-body" id="settingsInfoBody"></div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" style="width:100%" onclick="window.closeSettingsInfo()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import preview — shown before any backup file overwrites local data -->
+<div class="overlay" id="importPreviewOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#f59e0b"></span>
+      Import Preview
+    </div>
+    <div class="modal-body">Importing replaces everything currently on this device. This can't be undone.</div>
+    <div class="import-preview-box" id="importPreviewBox"></div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" style="width:100%" onclick="window.cancelImport()">Cancel</button>
+      <button class="modal-btn primary" style="width:100%" onclick="window.confirmImport()">Import &amp; Replace</button>
+    </div>
+  </div>
+</div>
+
 <!-- Inert button disclosure modal -->
 <div class="overlay" id="disclosureOverlay" hidden>
   <div class="modal">
@@ -555,6 +703,60 @@
     }
   };
 
+  // ---- Settings: defaults, storage, and static info-popup content ----
+  const DEFAULT_SETTINGS = {
+    fluidGoalOz: 64,
+    bpSysMin: 90, bpSysMax: 120,
+    bpDiaMin: 60, bpDiaMax: 80,
+    hrMin: 60, hrMax: 100,
+    githubRepoPath: '',
+    backupEmail: ''
+  };
+
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_settings');
+      if(!raw) return Object.assign({}, DEFAULT_SETTINGS);
+      return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+    }catch(e){ return Object.assign({}, DEFAULT_SETTINGS); }
+  }
+
+  function saveSettingsObj(s){
+    localStorage.setItem('todaysStatus_settings', JSON.stringify(s));
+  }
+
+  const SETTINGS_INFO = {
+    fluidGoal: {
+      title:'Fluid Goal',
+      body:"How to use it: enter your daily fluid target in ounces — use the number your doctor gave you if you have one. What it unlocks: your Fluid card shows progress toward that number instead of just a running total. If you skip it: the app uses 64 oz as a general starting reference, and you'll still see your total, just without a personal target to compare it to."
+    },
+    bpRange: {
+      title:'BP & Heart Rate Ranges',
+      body:"How to use it: set the systolic, diastolic, and heart rate range that's right for you — the defaults come from current AHA guidance, but your doctor's numbers always take priority. What it unlocks: readings outside your range get flagged on the status card and in the trend graphs, so out-of-range days are easy to spot at a glance. If you skip it: the app keeps using the clinical default range shown here, which is a reasonable general reference but isn't personalized to you."
+    },
+    dataManagement: {
+      title:'Your Data',
+      body:"How to use it: export a backup file any time, and optionally email it to yourself for safekeeping. What it unlocks: a way to move your data to a new device or recover it after a reinstall — this is the only recovery option, since nothing is stored anywhere but this device. If you skip it: your data stays perfectly fine right here, but clearing browser data, reinstalling, or switching devices without a backup means it's gone for good."
+    },
+    githubLinks: {
+      title:'GitHub Quick Links',
+      body:"How to use it: paste in your GitHub repo path once. What it unlocks: one-tap links to your live app and to GitHub's own web editor for each file, so pasting in a new lesson's code takes one tap to get to the right place instead of hunting for it. If you skip it: everything still works, you'll just navigate to GitHub manually each time."
+    }
+  };
+
+  // Flat, appendable FAQ list — add a {category, question, answer} entry
+  // here for each future lesson. Rendering reads entirely from this array.
+  const todaysStatusFAQ = [
+    { category:'Getting Started', question:"How do I get this on my Home Screen?",
+      answer:"Open your GitHub Pages link in Safari (iPhone) or Chrome (Chromebook), tap the Share or menu button, then \"Add to Home Screen.\" It'll behave like an installed app from then on." },
+    { category:'Logging & Data', question:"How do I edit a reading I already logged?",
+      answer:"Open the card (Fluid or BP), find the entry in Today's Entries, and tap the pencil icon next to it. Make your change and tap Save." },
+    { category:'Logging & Data', question:"Why didn't today's data show up?",
+      answer:"Each day's readings are stored under that day's date. If you're checking after midnight, you're now on a new day — look at yesterday's trend graph and it'll be there." },
+    { category:'Install & Updates', question:"How do I get a new lesson's update onto my installed app?",
+      answer:"Update the files in your GitHub repo (Settings → GitHub Quick Links makes this one tap), wait about 5 minutes for GitHub Pages to redeploy, then close and reopen the installed app." }
+  ];
+
   function formatDateKey(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
@@ -597,7 +799,9 @@
 
   function renderStatus(){
     const entries = loadFluidData().entries;
-    document.getElementById('fluidTotal').textContent = fluidEntriesTotal(entries);
+    const total = fluidEntriesTotal(entries);
+    const goal = loadSettings().fluidGoalOz;
+    document.getElementById('fluidTotal').textContent = goal ? (total + ' / ' + goal) : total;
     const pill = document.getElementById('statusPill');
     const lastLoggedEl = document.getElementById('lastLogged');
     if(entries.length){
@@ -612,7 +816,10 @@
     } else {
       pill.textContent = 'Nothing logged yet';
       pill.classList.remove('on');
-      lastLoggedEl.textContent = 'No entries yet today';
+      const priorDay = mostRecentPriorDay('todaysStatus_fluid_');
+      lastLoggedEl.textContent = priorDay
+        ? 'No entries today · last logged ' + friendlyDate(priorDay)
+        : 'No entries yet today';
     }
   }
 
@@ -723,14 +930,24 @@
         mins === 1 ? '1 minute ago' :
         mins < 60 ? (mins + ' minutes ago') :
         Math.round(mins / 60) + ' hr ago';
+      const s = loadSettings();
+      const outOfRange = entries.some(e =>
+        e.systolic < s.bpSysMin || e.systolic > s.bpSysMax ||
+        e.diastolic < s.bpDiaMin || e.diastolic > s.bpDiaMax ||
+        (typeof e.pulse === 'number' && (e.pulse < s.hrMin || e.pulse > s.hrMax))
+      );
       subEl.textContent = (entries.length === 1 ? '1 reading today' : entries.length + ' readings today') +
-        ' · last logged ' + lastText;
+        ' · last logged ' + lastText +
+        (outOfRange ? ' · outside your range' : '');
     } else {
       avgEl.textContent = '--/--';
       hrEl.textContent = '--';
       pill.textContent = 'Nothing logged yet';
       pill.classList.remove('on');
-      subEl.textContent = 'No readings yet today';
+      const priorDay = mostRecentPriorDay('todaysStatus_bp_');
+      subEl.textContent = priorDay
+        ? 'No readings today · last logged ' + friendlyDate(priorDay)
+        : 'No readings yet today';
     }
   }
 
@@ -1364,23 +1581,25 @@
       return;
     }
 
+    const rng = loadSettings();
     const sysAvg = Math.round(points.reduce((s,p) => s + p.systolic, 0) / points.length);
     const diaAvg = Math.round(points.reduce((s,p) => s + p.diastolic, 0) / points.length);
     const allVals = points.flatMap(p => [p.systolic, p.diastolic]);
-    const yMin = Math.max(0, Math.floor((Math.min(...allVals, 80) - 10) / 10) * 10);
-    const yMax = Math.ceil((Math.max(...allVals, 120) + 10) / 10) * 10;
-    const outOfBandCount = points.filter(p => p.systolic < 80 || p.systolic > 120 || p.diastolic < 80 || p.diastolic > 120).length;
+    const yMin = Math.max(0, Math.floor((Math.min(...allVals, rng.bpDiaMin) - 10) / 10) * 10);
+    const yMax = Math.ceil((Math.max(...allVals, rng.bpSysMax) + 10) / 10) * 10;
+    const outOfBandCount = points.filter(p => p.systolic < rng.bpSysMin || p.systolic > rng.bpSysMax || p.diastolic < rng.bpDiaMin || p.diastolic > rng.bpDiaMax).length;
     const trend = computeTrendSplit(points, 'systolic');
     const trendMsg = trendPhrase(trend, 'systolic readings');
+    const bandLabel = `Sys ${rng.bpSysMin}&ndash;${rng.bpSysMax} / Dia ${rng.bpDiaMin}&ndash;${rng.bpDiaMax}`;
 
     legend.innerHTML = `
       <span class="legend-item"><span class="legend-swatch" style="background:#1d4ed8"></span>Systolic avg ${sysAvg}</span>
       <span class="legend-item"><span class="legend-swatch" style="background:#059669"></span>Diastolic avg ${diaAvg}</span>
-      <span class="legend-item"><span class="legend-swatch" style="background:rgba(16,185,129,0.25)"></span>80&ndash;120 reference band</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(16,185,129,0.25)"></span>${bandLabel} your range</span>
     `;
     const disclaimerEl = document.getElementById('graphDisclaimer');
     disclaimerEl.hidden = false;
-    disclaimerEl.textContent = '80–120 mmHg is a general reference band shown for orientation, not a personalized target. Talk to your doctor about your own numbers.';
+    disclaimerEl.textContent = 'Shaded band is your range from Settings, not a diagnosis. Talk to your doctor about your own numbers.';
     chartRow.style.display = '';
     emptyMsg.hidden = true;
 
@@ -1388,10 +1607,10 @@
       points: points,
       yMin: yMin,
       yMax: yMax,
-      bands: [{ min:80, max:120, color:'rgba(16,185,129,0.06)' }],
+      bands: [{ min:rng.bpDiaMin, max:rng.bpSysMax, color:'rgba(16,185,129,0.06)' }],
       series: [
-        { key:'systolic', color:'#1d4ed8', normalMin:80, normalMax:120 },
-        { key:'diastolic', color:'#059669', normalMin:80, normalMax:120 }
+        { key:'systolic', color:'#1d4ed8', normalMin:rng.bpSysMin, normalMax:rng.bpSysMax },
+        { key:'diastolic', color:'#059669', normalMin:rng.bpDiaMin, normalMax:rng.bpDiaMax }
       ],
       avgLines: [
         { value:sysAvg, color:'#1d4ed8' },
@@ -1408,7 +1627,7 @@
 
     let summary = `Average: <strong>${sysAvg}/${diaAvg}</strong> mmHg <span class="readout-sub">across ${points.length} reading${points.length === 1 ? '' : 's'}</span>`;
     if(outOfBandCount > 0){
-      summary += `<br><span class="readout-sub">${outOfBandCount} reading${outOfBandCount === 1 ? '' : 's'} outside the 80&ndash;120 reference band</span>`;
+      summary += `<br><span class="readout-sub">${outOfBandCount} reading${outOfBandCount === 1 ? '' : 's'} outside your range</span>`;
     }
     if(trendMsg) summary += `<br><span class="readout-sub">${trendMsg}</span>`;
     readout.innerHTML = summary;
@@ -1453,20 +1672,21 @@
       return;
     }
 
+    const rng = loadSettings();
     const avg = Math.round(points.reduce((s,p) => s + p.pulse, 0) / points.length);
     const allVals = points.map(p => p.pulse);
-    const yMin = Math.max(0, Math.floor((Math.min(...allVals, 60) - 10) / 10) * 10);
-    const yMax = Math.ceil((Math.max(...allVals, 100) + 10) / 10) * 10;
-    const outOfBandCount = points.filter(p => p.pulse < 60 || p.pulse > 100).length;
+    const yMin = Math.max(0, Math.floor((Math.min(...allVals, rng.hrMin) - 10) / 10) * 10);
+    const yMax = Math.ceil((Math.max(...allVals, rng.hrMax) + 10) / 10) * 10;
+    const outOfBandCount = points.filter(p => p.pulse < rng.hrMin || p.pulse > rng.hrMax).length;
     const trend = computeTrendSplit(points, 'pulse');
     const trendMsg = trendPhrase(trend, 'heart rate readings');
 
     legend.innerHTML = `
       <span class="legend-item"><span class="legend-swatch" style="background:#0891b2"></span>Heart Rate avg ${avg} bpm</span>
-      <span class="legend-item"><span class="legend-swatch" style="background:rgba(8,145,178,0.25)"></span>60&ndash;100 reference band</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(8,145,178,0.25)"></span>${rng.hrMin}&ndash;${rng.hrMax} your range</span>
     `;
     disclaimerEl.hidden = false;
-    disclaimerEl.textContent = '60–100 bpm is a commonly cited resting heart rate reference band, not a personalized target. Talk to your doctor about your own numbers.';
+    disclaimerEl.textContent = 'Shaded band is your range from Settings, not a diagnosis. Talk to your doctor about your own numbers.';
     chartRow.style.display = '';
     emptyMsg.hidden = true;
 
@@ -1474,8 +1694,8 @@
       points: points,
       yMin: yMin,
       yMax: yMax,
-      bands: [{ min:60, max:100, color:'rgba(8,145,178,0.06)' }],
-      series: [{ key:'pulse', color:'#0891b2', normalMin:60, normalMax:100 }],
+      bands: [{ min:rng.hrMin, max:rng.hrMax, color:'rgba(8,145,178,0.06)' }],
+      series: [{ key:'pulse', color:'#0891b2', normalMin:rng.hrMin, normalMax:rng.hrMax }],
       avgLines: [{ value:avg, color:'#0891b2' }],
       onPointTap: (p) => {
         const dt = new Date(p.timestamp);
@@ -1487,7 +1707,7 @@
 
     let summary = `Average: <strong>${avg} bpm</strong> <span class="readout-sub">across ${points.length} reading${points.length === 1 ? '' : 's'}</span>`;
     if(outOfBandCount > 0){
-      summary += `<br><span class="readout-sub">${outOfBandCount} reading${outOfBandCount === 1 ? '' : 's'} outside the 60&ndash;100 reference band</span>`;
+      summary += `<br><span class="readout-sub">${outOfBandCount} reading${outOfBandCount === 1 ? '' : 's'} outside your range</span>`;
     }
     if(trendMsg) summary += `<br><span class="readout-sub">${trendMsg}</span>`;
     readout.innerHTML = summary;
@@ -1594,6 +1814,402 @@
 
   window.closeDisclosure = function(){
     document.getElementById('disclosureOverlay').hidden = true;
+  };
+
+  // ---- Settings screen ----
+
+  function showToast(msg){
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { if(t.parentNode) t.parentNode.removeChild(t); }, 4000);
+  }
+
+  window.openSettingsInfo = function(key){
+    const info = SETTINGS_INFO[key];
+    if(!info) return;
+    document.getElementById('settingsInfoTitle').textContent = info.title;
+    document.getElementById('settingsInfoBody').textContent = info.body;
+    document.getElementById('settingsInfoOverlay').hidden = false;
+  };
+  window.closeSettingsInfo = function(){
+    document.getElementById('settingsInfoOverlay').hidden = true;
+  };
+
+  function lastBackupText(){
+    const raw = localStorage.getItem('todaysStatus_lastBackup');
+    if(!raw) return 'Never backed up';
+    const then = new Date(raw);
+    const days = Math.floor((Date.now() - then.getTime()) / 86400000);
+    if(days <= 0) return 'Last backup: today';
+    if(days === 1) return 'Last backup: yesterday';
+    return 'Last backup: ' + days + ' days ago';
+  }
+
+  // When today has nothing logged yet, this finds the most recent earlier
+  // day that does — so the card can say "last entry was [date]" instead of
+  // a bare "nothing logged" that reads as if the data vanished.
+  function mostRecentPriorDay(prefix){
+    let best = null;
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!k || k.indexOf(prefix) !== 0) continue;
+      const dateStr = k.slice(prefix.length);
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || dateStr === todayKey()) continue;
+      try{
+        const parsed = JSON.parse(localStorage.getItem(k));
+        if(parsed && Array.isArray(parsed.entries) && parsed.entries.length){
+          if(!best || dateStr > best) best = dateStr;
+        }
+      }catch(e){}
+    }
+    return best;
+  }
+
+  function friendlyDate(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { month:'long', day:'numeric' });
+  }
+
+  function todaysStatusDataStats(){
+    let bpCount = 0, fluidCount = 0, bytes = 0;
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!k || k.indexOf('todaysStatus_') !== 0) continue;
+      const v = localStorage.getItem(k) || '';
+      bytes += k.length + v.length;
+      if(k.indexOf('todaysStatus_bp_') === 0){
+        try{ bpCount += (JSON.parse(v).entries || []).length; }catch(e){}
+      } else if(k.indexOf('todaysStatus_fluid_') === 0){
+        try{ fluidCount += (JSON.parse(v).entries || []).length; }catch(e){}
+      }
+    }
+    return { bpCount, fluidCount, kb: Math.max(1, Math.round(bytes / 1024)) };
+  }
+
+  function ghFile(repoPath, file){
+    const clean = repoPath.replace(/^https?:\/\/[^/]+\//, '').replace(/\/+$/, '');
+    return 'https://github.com/' + clean + '/edit/main/' + file;
+  }
+  function ghPagesUrl(repoPath){
+    if(repoPath.indexOf('http') === 0) return repoPath;
+    const parts = repoPath.replace(/\/+$/, '').split('/');
+    if(parts.length < 2) return '';
+    return 'https://' + parts[0] + '.github.io/' + parts[1] + '/';
+  }
+
+  function renderFAQList(){
+    const cats = [];
+    todaysStatusFAQ.forEach(item => { if(cats.indexOf(item.category) === -1) cats.push(item.category); });
+    return cats.map(cat => {
+      const items = todaysStatusFAQ.filter(f => f.category === cat);
+      return `<div class="faq-category">${cat}</div>` + items.map((f, idx) => {
+        const id = 'faq_' + cat.replace(/\s+/g,'') + '_' + idx;
+        return `
+          <div class="faq-item" id="${id}">
+            <div class="faq-question" onclick="window.toggleFAQ('${id}')">
+              <span>${f.question}</span>
+              <span class="faq-chevron">&rsaquo;</span>
+            </div>
+            <div class="faq-answer">${f.answer}</div>
+          </div>`;
+      }).join('');
+    }).join('');
+  }
+
+  window.toggleFAQ = function(id){
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle('open');
+  };
+
+  function renderSettingsScreen(){
+    const s = loadSettings();
+    const stats = todaysStatusDataStats();
+    const scroll = document.getElementById('settingsScroll');
+    scroll.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <span>Fluid Goal</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('fluidGoal')">i</button>
+        </div>
+        <div class="settings-field-label">Daily target (oz)</div>
+        <div class="settings-input-row">
+          <input type="number" id="setFluidGoal" inputmode="numeric" value="${s.fluidGoalOz}">
+        </div>
+        <div class="settings-hint">A common starting point is 64 oz — this is a reference, not medical advice. Use the number your doctor gave you if you have one.</div>
+        <button class="settings-save-btn" onclick="window.saveFluidGoal()">Save Fluid Goal</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <span>BP &amp; Heart Rate Ranges</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('bpRange')">i</button>
+        </div>
+        <div class="settings-hint" style="margin-top:2px;">Clinical default (AHA reference range) shown below. Adjust to match your doctor's numbers if given.</div>
+
+        <div class="settings-field-label" style="margin-top:14px;">Systolic (mmHg)</div>
+        <div class="range-pair-row">
+          <span class="range-pair-label">Min&ndash;Max</span>
+          <input type="number" id="setSysMin" value="${s.bpSysMin}" style="text-align:center;width:70px;border:1.5px solid var(--line);border-radius:8px;padding:8px;">
+          <input type="number" id="setSysMax" value="${s.bpSysMax}" style="text-align:center;width:70px;border:1.5px solid var(--line);border-radius:8px;padding:8px;">
+          <button class="settings-reset-btn" onclick="window.resetRange('sys')">Reset</button>
+        </div>
+
+        <div class="settings-field-label">Diastolic (mmHg)</div>
+        <div class="range-pair-row">
+          <span class="range-pair-label">Min&ndash;Max</span>
+          <input type="number" id="setDiaMin" value="${s.bpDiaMin}" style="text-align:center;width:70px;border:1.5px solid var(--line);border-radius:8px;padding:8px;">
+          <input type="number" id="setDiaMax" value="${s.bpDiaMax}" style="text-align:center;width:70px;border:1.5px solid var(--line);border-radius:8px;padding:8px;">
+          <button class="settings-reset-btn" onclick="window.resetRange('dia')">Reset</button>
+        </div>
+
+        <div class="settings-field-label">Heart Rate (bpm)</div>
+        <div class="range-pair-row">
+          <span class="range-pair-label">Min&ndash;Max</span>
+          <input type="number" id="setHrMin" value="${s.hrMin}" style="text-align:center;width:70px;border:1.5px solid var(--line);border-radius:8px;padding:8px;">
+          <input type="number" id="setHrMax" value="${s.hrMax}" style="text-align:center;width:70px;border:1.5px solid var(--line);border-radius:8px;padding:8px;">
+          <button class="settings-reset-btn" onclick="window.resetRange('hr')">Reset</button>
+        </div>
+        <div class="bp-error" id="rangeError" hidden></div>
+        <button class="settings-save-btn" onclick="window.saveRanges()">Save Ranges</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <span>Your Data</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('dataManagement')">i</button>
+        </div>
+        <div class="settings-hint">Everything below is stored only in this browser, on this device. Nothing is sent to a server — there's no account and no cloud backup. Protection comes from your device's own lock screen, not from this app. Clearing browser data, reinstalling, or switching devices without exporting first means this data is gone for good.</div>
+
+        <div class="data-stat-row">
+          <div class="data-stat"><div class="data-stat-num">${stats.bpCount}</div><div class="data-stat-label">BP readings</div></div>
+          <div class="data-stat"><div class="data-stat-num">${stats.fluidCount}</div><div class="data-stat-label">Fluid entries</div></div>
+          <div class="data-stat"><div class="data-stat-num">${stats.kb}</div><div class="data-stat-label">KB stored</div></div>
+        </div>
+        <div class="settings-hint" style="margin-top:-8px;margin-bottom:12px;font-weight:600;">${lastBackupText()}</div>
+
+        <div class="settings-field-label">Your email (for the backup draft)</div>
+        <div class="settings-input-row">
+          <input type="email" id="setBackupEmail" placeholder="you@example.com" value="${s.backupEmail}">
+        </div>
+
+        <div class="settings-btn-row">
+          <button class="settings-btn-primary" onclick="window.exportBackup()">Export Backup</button>
+          <button class="settings-btn-secondary" onclick="window.emailBackup()">Email Backup</button>
+        </div>
+        <div class="settings-btn-row">
+          <button class="settings-btn-secondary" style="width:100%" onclick="window.pickImportFile()">Import Backup</button>
+        </div>
+
+        <div class="settings-field-label" style="margin-top:16px;">If you get a new device or reinstall</div>
+        <ol class="recovery-list">
+          <li>Go back to your GitHub Pages link and tap "Add to Home Screen" again.</li>
+          <li>Open the backup email, save the attached file (or find it in Downloads).</li>
+          <li>Open the app, go to Settings &rarr; Your Data &rarr; Import Backup, and pick that file.</li>
+          <li>Review the preview screen, then confirm.</li>
+        </ol>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <span>GitHub Quick Links</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('githubLinks')">i</button>
+        </div>
+        <div class="settings-field-label">Your repo (e.g. yourname/pwa-tutorial-test)</div>
+        <div class="settings-input-row">
+          <input type="text" id="setGithubPath" placeholder="yourname/your-repo" value="${s.githubRepoPath}">
+        </div>
+        <button class="settings-save-btn" onclick="window.saveGithubPath()">Save Repo Path</button>
+        <div class="settings-hint">Before pasting in a new lesson's code, export a backup first (Your Data above) — it's not required, but it's a good habit and takes ten seconds.</div>
+        <div id="githubLinksBox" style="margin-top:12px;">${renderGithubLinks(s.githubRepoPath)}</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title"><span>Common Questions</span></div>
+        ${renderFAQList()}
+      </div>
+    `;
+  }
+
+  function renderGithubLinks(path){
+    if(!path) return '<div class="settings-hint">Add your repo path above to generate quick links.</div>';
+    const files = ['index.html','sw.js','manifest.json'];
+    let html = `<div class="gh-link-row"><span>Live app</span><a href="${ghPagesUrl(path)}" target="_blank" rel="noopener">Open &rsaquo;</a></div>`;
+    files.forEach(f => {
+      html += `<div class="gh-link-row"><span>Edit ${f}</span><a href="${ghFile(path, f)}" target="_blank" rel="noopener">Open &rsaquo;</a></div>`;
+    });
+    return html;
+  }
+
+  window.saveFluidGoal = function(){
+    const val = parseInt(document.getElementById('setFluidGoal').value, 10);
+    if(!val || val < 8 || val > 300){ showToast('Enter a goal between 8 and 300 oz.'); return; }
+    const s = loadSettings();
+    s.fluidGoalOz = val;
+    saveSettingsObj(s);
+    renderStatus();
+    showToast('Fluid goal saved.');
+  };
+
+  window.resetRange = function(which){
+    if(which === 'sys'){ document.getElementById('setSysMin').value = DEFAULT_SETTINGS.bpSysMin; document.getElementById('setSysMax').value = DEFAULT_SETTINGS.bpSysMax; }
+    if(which === 'dia'){ document.getElementById('setDiaMin').value = DEFAULT_SETTINGS.bpDiaMin; document.getElementById('setDiaMax').value = DEFAULT_SETTINGS.bpDiaMax; }
+    if(which === 'hr'){ document.getElementById('setHrMin').value = DEFAULT_SETTINGS.hrMin; document.getElementById('setHrMax').value = DEFAULT_SETTINGS.hrMax; }
+  };
+
+  window.saveRanges = function(){
+    const sysMin = parseInt(document.getElementById('setSysMin').value, 10);
+    const sysMax = parseInt(document.getElementById('setSysMax').value, 10);
+    const diaMin = parseInt(document.getElementById('setDiaMin').value, 10);
+    const diaMax = parseInt(document.getElementById('setDiaMax').value, 10);
+    const hrMin = parseInt(document.getElementById('setHrMin').value, 10);
+    const hrMax = parseInt(document.getElementById('setHrMax').value, 10);
+    const errEl = document.getElementById('rangeError');
+    const bad = (lo,hi,abLo,abHi) => isNaN(lo) || isNaN(hi) || lo >= hi || lo < abLo || hi > abHi;
+    if(bad(sysMin,sysMax,70,250)){ errEl.hidden=false; errEl.textContent='Systolic range must be between 70 and 250, with min below max.'; return; }
+    if(bad(diaMin,diaMax,40,150)){ errEl.hidden=false; errEl.textContent='Diastolic range must be between 40 and 150, with min below max.'; return; }
+    if(bad(hrMin,hrMax,30,220)){ errEl.hidden=false; errEl.textContent='Heart rate range must be between 30 and 220, with min below max.'; return; }
+    errEl.hidden = true;
+    const s = loadSettings();
+    Object.assign(s, { bpSysMin:sysMin, bpSysMax:sysMax, bpDiaMin:diaMin, bpDiaMax:diaMax, hrMin:hrMin, hrMax:hrMax });
+    saveSettingsObj(s);
+    renderBPStatus();
+    showToast('Ranges saved.');
+  };
+
+  window.saveGithubPath = function(){
+    const val = document.getElementById('setGithubPath').value.trim();
+    const s = loadSettings();
+    s.githubRepoPath = val;
+    saveSettingsObj(s);
+    document.getElementById('githubLinksBox').innerHTML = renderGithubLinks(val);
+    showToast('Repo path saved.');
+  };
+
+  window.exportBackup = function(){
+    try{
+      const s = loadSettings();
+      s.backupEmail = document.getElementById('setBackupEmail') ? document.getElementById('setBackupEmail').value.trim() : s.backupEmail;
+      saveSettingsObj(s);
+      const allData = {};
+      for(let i=0; i<localStorage.length; i++){
+        const k = localStorage.key(i);
+        if(k && k.indexOf('todaysStatus_') === 0) allData[k] = localStorage.getItem(k);
+      }
+      allData['_backupCreated'] = new Date().toISOString();
+      const json = JSON.stringify(allData, null, 2);
+      const blob = new Blob([json], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'TodaysStatus_Backup_' + todayKey() + '.json';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      // Delay cleanup — revoking the blob URL immediately can race the
+      // browser's download handoff and cause a silent, no-error failure,
+      // especially when testing a page opened directly via file://.
+      setTimeout(() => {
+        if(a.parentNode) a.parentNode.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 1500);
+      localStorage.setItem('todaysStatus_lastBackup', new Date().toISOString());
+      showToast('Backup file downloaded — check your Downloads folder.');
+      renderSettingsScreen();
+    }catch(err){
+      showToast('Export failed: ' + err.message);
+    }
+  };
+
+  window.emailBackup = function(){
+    const email = document.getElementById('setBackupEmail').value.trim();
+    const s = loadSettings();
+    s.backupEmail = email;
+    saveSettingsObj(s);
+    const subject = encodeURIComponent("Today's Status Backup");
+    const body = encodeURIComponent(
+      "Attach the file you just downloaded (or download it now from Settings > Your Data > Export Backup) to this email, then send it to yourself.\n\n" +
+      "It's your copy in case you lose this device or need to reinstall.\n\n" +
+      "File name looks like: TodaysStatus_Backup_" + todayKey() + ".json"
+    );
+    window.location.href = 'mailto:' + encodeURIComponent(email) + '?subject=' + subject + '&body=' + body;
+  };
+
+  let _pendingImportData = null;
+
+  window.pickImportFile = function(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(e){
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        try{
+          const data = JSON.parse(ev.target.result);
+          const looksValid = Object.keys(data).some(k => k.indexOf('todaysStatus_') === 0);
+          if(!looksValid){ showToast("That doesn't look like a Today's Status backup file."); return; }
+          _pendingImportData = data;
+          showImportPreview(data);
+        }catch(err){
+          showToast('Import failed: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  function showImportPreview(data){
+    let bpCount = 0, fluidCount = 0, dayCount = 0;
+    const dayKeys = {};
+    Object.keys(data).forEach(k => {
+      if(k.match(/^todaysStatus_bp_\d{4}-\d{2}-\d{2}$/)){
+        dayKeys[k.slice(-10)] = true;
+        try{ bpCount += (JSON.parse(data[k]).entries || []).length; }catch(e){}
+      }
+      if(k.match(/^todaysStatus_fluid_\d{4}-\d{2}-\d{2}$/)){
+        dayKeys[k.slice(-10)] = true;
+        try{ fluidCount += (JSON.parse(data[k]).entries || []).length; }catch(e){}
+      }
+    });
+    dayCount = Object.keys(dayKeys).length;
+    const created = data['_backupCreated'] ? new Date(data['_backupCreated']).toLocaleString() : 'Unknown';
+    const current = todaysStatusDataStats();
+    document.getElementById('importPreviewBox').innerHTML =
+      `<strong>Backup file contains:</strong> ${bpCount} BP readings, ${fluidCount} fluid entries, across ${dayCount} day${dayCount===1?'':'s'}.<br>` +
+      `<strong>Backup created:</strong> ${created}<br><br>` +
+      `<strong>This device currently has:</strong> ${current.bpCount} BP readings, ${current.fluidCount} fluid entries — this will be replaced.`;
+    document.getElementById('importPreviewOverlay').hidden = false;
+  }
+
+  window.cancelImport = function(){
+    _pendingImportData = null;
+    document.getElementById('importPreviewOverlay').hidden = true;
+  };
+
+  window.confirmImport = function(){
+    if(!_pendingImportData){ showToast('Import data lost — please try again.'); return; }
+    Object.keys(_pendingImportData).forEach(k => {
+      if(k === '_backupCreated') return;
+      localStorage.setItem(k, _pendingImportData[k]);
+    });
+    _pendingImportData = null;
+    document.getElementById('importPreviewOverlay').hidden = true;
+    renderStatus();
+    renderBPStatus();
+    renderSettingsScreen();
+    showToast('Data imported successfully.');
+  };
+
+  window.openSettings = function(){
+    renderSettingsScreen();
+    document.getElementById('settingsOverlay').hidden = false;
+  };
+  window.closeSettings = function(){
+    document.getElementById('settingsOverlay').hidden = true;
   };
 
   window.handleButtonTap = function(key){
