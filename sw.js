@@ -1,6 +1,6 @@
 // Today's Status — Lesson 3 service worker
 // Keeps the app installable and usable offline.
-const CACHE_NAME = 'todays-status-v13';
+const CACHE_NAME = 'todays-status-v14';
 const APP_SHELL = [
   './',
   './index.html',
@@ -25,10 +25,34 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const isHTML = req.mode === 'navigate' ||
+    req.destination === 'document' ||
+    req.url.endsWith('/') ||
+    req.url.endsWith('index.html');
+
+  if (isHTML) {
+    // Network-first for the HTML shell: always try to get the live,
+    // current version first. Only fall back to the cached copy if the
+    // network request fails (offline). This is what actually solves
+    // "stuck on an old version" — no update-detection dance required,
+    // no double-reload needed, no stale content when online.
+    event.respondWith(
+      fetch(req).then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        return response;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (icons, manifest) — these rarely
+  // change, so serving from cache is fast and still safe.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(req).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).catch(() => cached);
+      return fetch(req).catch(() => cached);
     })
   );
 });
