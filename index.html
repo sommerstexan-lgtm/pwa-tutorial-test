@@ -459,6 +459,19 @@
     font-weight:700; font-size:14px; padding:9px; border-radius:10px; cursor:pointer;
   }
   .med-toggle-btn.active{ background:#1e293b; color:#fff; border-color:#1e293b; }
+  .med-stepper-row{ display:flex; align-items:center; gap:10px; }
+  .med-stepper-btn{
+    width:44px; height:44px; border-radius:10px; border:1.5px solid var(--line);
+    background:#f9fafb; color:#1e293b; font-size:22px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .med-stepper-btn:active{ background:#e5e7eb; }
+  .med-stepper-btn:disabled{ opacity:0.4; cursor:default; }
+  .med-stepper-row input{
+    flex:1; text-align:center; font-weight:700; font-size:17px;
+    border:1.5px solid var(--line); border-radius:10px; padding:10px; background:#fff;
+  }
   .med-times-grid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
   .med-times-grid .med-time-field{ display:flex; flex-direction:column; gap:4px; }
   .med-times-grid label{ font-size:11px; color:var(--sub); font-weight:600; }
@@ -563,7 +576,7 @@
 <footer>
   Lesson 4 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v17</span>
+  <span style="opacity:0.6;font-size:11px;">Build v18</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -2529,7 +2542,11 @@
         <div class="settings-hint" style="margin-top:6px;">Start date can go as far back as you actually started taking it — no limit. Leave stop date blank if you're still taking it. Neither can be set in the future.</div>
 
         <div class="med-field-label">Doses per day</div>
-        <input type="number" id="medFormDosesPerDay" min="1" max="6" value="1" oninput="window.rebuildMedTimesGrid()">
+        <div class="med-stepper-row">
+          <button type="button" class="med-stepper-btn" onclick="window.adjustMedDosesPerDay(-1)" aria-label="Decrease doses per day">&minus;</button>
+          <input type="text" id="medFormDosesPerDay" value="1" readonly inputmode="none">
+          <button type="button" class="med-stepper-btn" onclick="window.adjustMedDosesPerDay(1)" aria-label="Increase doses per day">+</button>
+        </div>
 
         <div class="med-field-label">Expected time for each dose</div>
         <div class="med-times-grid" id="medTimesGrid"></div>
@@ -2551,6 +2568,13 @@
       </div>
     `;
   }
+
+  window.adjustMedDosesPerDay = function(delta){
+    const input = document.getElementById('medFormDosesPerDay');
+    const n = Math.min(6, Math.max(1, (parseInt(input.value, 10) || 1) + delta));
+    input.value = n;
+    window.rebuildMedTimesGrid();
+  };
 
   window.rebuildMedTimesGrid = function(prefillTimes){
     const input = document.getElementById('medFormDosesPerDay');
