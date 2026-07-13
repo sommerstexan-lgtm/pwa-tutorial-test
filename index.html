@@ -576,7 +576,7 @@
 <footer>
   Lesson 4 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v18</span>
+  <span style="opacity:0.6;font-size:11px;">Build v19</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -2564,7 +2564,7 @@
       <div class="bp-error" id="medFormError" hidden></div>
       <div class="settings-btn-row" style="margin-top:12px;">
         <button class="settings-btn-primary" style="flex:1" id="medFormSaveBtn" onclick="window.saveMedicationForm()">Add Medication</button>
-        <button class="settings-btn-secondary" style="flex:1" id="medFormCancelBtn" onclick="window.cancelMedForm()" hidden>Cancel</button>
+        <button class="settings-btn-secondary" style="flex:1" id="medFormCancelBtn" onclick="window.cancelMedForm()" hidden>+ Add New Medication</button>
       </div>
     `;
   }
@@ -2682,17 +2682,23 @@
     errorEl.hidden = true;
 
     const list = loadMedications();
+    let savedId;
     if(_medFormEditingId){
       const med = list.find(m => m.id === _medFormEditingId);
       if(med){
         Object.assign(med, { name, dosage, withFood:_medFormFoodValue, dosesPerDay, times, peakWindow, startDate, stopDate, notes });
       }
+      savedId = _medFormEditingId;
     } else {
-      list.push({ id: Date.now().toString(), name, dosage, withFood:_medFormFoodValue, dosesPerDay, times, peakWindow, startDate, stopDate, notes });
+      savedId = Date.now().toString();
+      list.push({ id: savedId, name, dosage, withFood:_medFormFoodValue, dosesPerDay, times, peakWindow, startDate, stopDate, notes });
     }
     saveMedications(list);
     document.getElementById('medListBox').innerHTML = renderMedicationsList();
-    window.cancelMedForm();
+    // Reload the form from what was just saved (rather than clearing it) so
+    // the reader can see the values actually persisted, instead of the form
+    // silently resetting to a blank "add new" state right after a save.
+    window.startEditMedication(savedId);
     showToast('Medication saved.');
   };
 
