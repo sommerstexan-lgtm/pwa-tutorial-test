@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 3 build-along app - single file PWA -->
+<!-- Today's Status — Lesson 4 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -431,6 +431,80 @@
      is already showing, so they need to sit above it, not at the default
      small-modal layer (z-index 50) shared with Log Fluid / Log BP / etc. */
   #settingsInfoOverlay, #importPreviewOverlay{ z-index:80; }
+
+  /* ---- Medications (Lesson 4) ---- */
+  .med-list-item{
+    background:#f9fafb; border:1px solid var(--line); border-radius:12px;
+    padding:12px; margin-bottom:8px;
+  }
+  .med-list-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .med-list-name{ font-weight:800; font-size:15px; }
+  .med-list-detail{ font-size:12.5px; color:var(--sub); margin-top:3px; line-height:1.5; }
+  .med-list-actions{ display:flex; gap:2px; flex-shrink:0; }
+  .med-field-label{ font-size:12.5px; color:var(--sub); font-weight:600; margin:10px 0 5px 0; }
+  .med-form input[type=text], .med-form input[type=number], .med-form input[type=date], .med-form select, .med-form textarea{
+    width:100%; border:1.5px solid var(--line); border-radius:10px;
+    padding:10px 10px; font-size:15px; background:#fff; font-family:inherit;
+  }
+  .med-form textarea{ resize:vertical; min-height:60px; line-height:1.4; }
+  .med-date-row{ display:flex; gap:8px; }
+  .med-date-row > div{ flex:1; }
+  .med-stopped-badge{
+    display:inline-block; font-size:11px; font-weight:700; color:#92400e;
+    background:#fef3c7; padding:2px 8px; border-radius:999px; margin-left:6px;
+  }
+  .med-toggle-row{ display:flex; gap:8px; margin-top:4px; }
+  .med-toggle-btn{
+    flex:1; border:1.5px solid var(--line); background:#fff; color:var(--sub);
+    font-weight:700; font-size:14px; padding:9px; border-radius:10px; cursor:pointer;
+  }
+  .med-toggle-btn.active{ background:#1e293b; color:#fff; border-color:#1e293b; }
+  .med-times-grid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+  .med-times-grid .med-time-field{ display:flex; flex-direction:column; gap:4px; }
+  .med-times-grid label{ font-size:11px; color:var(--sub); font-weight:600; }
+  .med-times-grid input[type=time]{
+    border:1.5px solid var(--line); border-radius:8px; padding:8px; font-size:14px;
+  }
+  .med-empty{ font-size:14px; color:var(--sub); padding:6px 0 10px 0; }
+
+  /* Log Medicine checklist (Taken / Coming up / Missed) */
+  .med-status-list{ display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+  .med-status-row{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:#f9fafb; border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  }
+  .med-status-name{ font-weight:700; font-size:14.5px; }
+  .med-status-sub{ font-size:12px; color:var(--sub); margin-top:1px; }
+  .med-status-pill{
+    font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; white-space:nowrap; flex-shrink:0;
+  }
+  .med-status-pill.taken{ background:#d1fae5; color:#047857; }
+  .med-status-pill.coming{ background:#e5e7eb; color:#6b7280; }
+  .med-status-pill.missed{ background:#fee2e2; color:#b91c1c; }
+  .med-log-select{
+    width:100%; border:1.5px solid var(--line); border-radius:10px;
+    padding:11px 10px; font-size:15px; margin-bottom:10px; background:#fff;
+  }
+  .med-log-time-row{ display:flex; gap:8px; margin-bottom:12px; align-items:center; }
+  .med-log-time-row input[type=time]{
+    flex:1; border:1.5px solid var(--line); border-radius:10px; padding:11px 10px; font-size:15px;
+  }
+  .med-entry-name{ font-weight:800; font-size:15px; }
+
+  /* Medication bracket list, shown under the BP/HR trend chart when the
+     reader opens Medication Timeline from Log Medicine. */
+  .med-bracket-list{ padding:0 16px 16px 16px; overflow-y:auto; }
+  .med-bracket-card{
+    background:#f9fafb; border:1px solid var(--line); border-radius:12px;
+    padding:12px; margin-bottom:10px;
+  }
+  .med-bracket-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .med-bracket-name{ font-weight:800; font-size:14.5px; }
+  .med-bracket-time{ font-size:12px; color:var(--sub); }
+  .med-bracket-row{ font-size:13px; color:#374151; margin-top:6px; line-height:1.5; }
+  .med-bracket-row strong{ color:var(--ink); }
+  .med-bracket-miss{ color:#b91c1c; font-weight:600; }
+  .med-bracket-hit{ color:#047857; font-weight:600; }
 </style>
 </head>
 <body>
@@ -487,9 +561,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 3 of the build-along series.<br>
+  Lesson 4 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v15</span>
+  <span style="opacity:0.6;font-size:11px;">Build v17</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -559,6 +633,36 @@
   </div>
 </div>
 
+<!-- Log Medicine modal — lands on today's Taken / Coming up / Missed checklist -->
+<div class="overlay" id="medOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#f59e0b"></span>
+      Log Medicine
+    </div>
+
+    <div class="bp-history-label">Today's Status</div>
+    <div class="med-status-list" id="medStatusList"></div>
+
+    <div class="med-field-label">Log a dose</div>
+    <select class="med-log-select" id="medLogSelect"></select>
+    <div class="med-log-time-row">
+      <label for="medLogTime" style="font-size:12px;color:var(--sub);font-weight:600;">Time taken</label>
+      <input type="time" id="medLogTime">
+    </div>
+    <div class="bp-error" id="medLogError" hidden></div>
+    <button class="modal-btn primary" style="width:100%; margin-bottom:18px;" id="medLogSubmitBtn" onclick="window.submitMedDose()">Save Dose</button>
+
+    <div class="bp-history-label">Today's Logged Doses</div>
+    <div class="bp-history-list" id="medHistoryList"></div>
+
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openMedGraph('bp')">View Medication Timeline (BP)</button>
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openMedGraph('hr')">View Medication Timeline (HR)</button>
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.closeMedicineModal();window.openSettings();window.jumpToMedSettings();">Manage Medications</button>
+    <button class="modal-btn secondary" style="width:100%" onclick="window.closeMedicineModal()">Close</button>
+  </div>
+</div>
+
 <!-- Trend graph — full-screen, shared by Fluid and BP so both cards behave identically -->
 <div class="graph-overlay" id="graphOverlay" hidden>
   <div class="graph-header">
@@ -591,6 +695,8 @@
     </div>
   </div>
   <div class="chart-empty" id="chartEmptyMsg" hidden></div>
+
+  <div class="med-bracket-list" id="medBracketList" hidden></div>
 
   <div class="graph-readout" id="graphReadout">Tap a point to see its value.</div>
 </div>
@@ -674,7 +780,7 @@
     { key:'bp',          label:'Log BP',          color:'#10b981', active:true  },
     { key:'meal',         label:'Log Meal',        color:'#9333ea', active:false },
     { key:'fluid',        label:'Log Fluid',       color:'#3b82f6', active:true  },
-    { key:'medicine',     label:'Log Medicine',    color:'#f59e0b', active:false },
+    { key:'medicine',     label:'Log Medicine',    color:'#f59e0b', active:true  },
     { key:'weight',       label:'Log Weight',      color:'#f97316', active:false },
     { key:'symptoms',     label:'Log Symptoms',    color:'#ec4899', active:false },
     { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:false },
@@ -687,10 +793,6 @@
     meal: {
       title:'Log Meal',
       body:"This button will log what and when you eat. By the time you finish this course, it'll cross-reference meals against your BP and symptom timing, catching food-triggered patterns most people never think to connect."
-    },
-    medicine: {
-      title:'Log Medicine',
-      body:"This button will log your medications and doses. By the time you finish this course, it'll track effectiveness over time and flag when a medication may be losing its impact — before your next appointment, not after."
     },
     weight: {
       title:'Log Weight',
@@ -740,6 +842,126 @@
     localStorage.setItem('todaysStatus_settings', JSON.stringify(s));
   }
 
+  // ---- Medications (Lesson 4) ----
+  // Stored as its own list (not date-scoped, unlike BP/Fluid) since a
+  // medication is a standing thing you take, not a daily reading.
+  // Each medication: { id, name, dosage, withFood, dosesPerDay, times:[...], peakWindow }
+  // peakWindow is one of '1-2' | '2-4' | '4-6' (hours after the dose), based
+  // on the trough/peak methodology clinical trials use to evaluate
+  // antihypertensive drugs — not a single fixed number for every medication.
+  const PEAK_WINDOWS = {
+    '1-2': { startHr:1, endHr:2, label:'1–2 hours after' },
+    '2-4': { startHr:2, endHr:4, label:'2–4 hours after' },
+    '4-6': { startHr:4, endHr:6, label:'4–6 hours after' }
+  };
+  const MED_MISSED_GRACE_MIN = 90; // minutes past an expected time before a dose counts as "Missed"
+
+  function loadMedications(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_medications');
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch(e){ return []; }
+  }
+
+  function saveMedications(list){
+    localStorage.setItem('todaysStatus_medications', JSON.stringify(list));
+  }
+
+  // A medication counts as active through its stop date, inclusive — so
+  // entering today as the stop date still lets you log today's dose. Only
+  // the day *after* stop date does it disappear from the dropdown/checklist.
+  // History (Medication Timeline) is never filtered by this — stopping a
+  // medication doesn't erase what it already did.
+  function isMedActiveToday(med){
+    if(!med.stopDate) return true;
+    return med.stopDate >= todayKey();
+  }
+
+  function loadMedLogData(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_medlog_' + todayKey());
+      if(!raw) return { entries:[] };
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed.entries)) parsed.entries = [];
+      return parsed;
+    }catch(e){ return { entries:[] }; }
+  }
+
+  function saveMedLogData(data){
+    localStorage.setItem('todaysStatus_medlog_' + todayKey(), JSON.stringify(data));
+  }
+
+  // Every logged dose across every day this device has data for, flattened
+  // and sorted chronologically — used by the bracket calculation, which
+  // needs to look at BP/HR readings from before and after a specific dose
+  // no matter which day it's viewed from.
+  function getAllMedLogEntries(){
+    const all = [];
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!k || k.indexOf('todaysStatus_medlog_') !== 0) continue;
+      try{
+        const parsed = JSON.parse(localStorage.getItem(k));
+        (parsed.entries || []).forEach(e => all.push(e));
+      }catch(e){}
+    }
+    all.sort((a,b) => a.timestamp - b.timestamp);
+    return all;
+  }
+
+  function getAllBPEntriesAllDays(){
+    const all = [];
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!k || k.indexOf('todaysStatus_bp_') !== 0) continue;
+      try{
+        const parsed = JSON.parse(localStorage.getItem(k));
+        (parsed.entries || []).forEach(e => all.push(e));
+      }catch(err){}
+    }
+    all.sort((a,b) => a.timestamp - b.timestamp);
+    return all;
+  }
+
+  // For one logged dose, finds the "before" (trough) reading — the closest
+  // BP/HR reading logged before the dose — and the "after" (peak) reading —
+  // the reading closest to the middle of that medication's own peak-effect
+  // window. If nothing falls inside the window, after comes back null on
+  // purpose: the graph must say "no reading in window," never guess by
+  // substituting the nearest reading from outside it.
+  function getDoseBracket(doseTimestamp, peakWindowKey, kind){
+    const win = PEAK_WINDOWS[peakWindowKey] || PEAK_WINDOWS['2-4'];
+    let pool = getAllBPEntriesAllDays();
+    if(kind === 'hr') pool = pool.filter(e => typeof e.pulse === 'number' && !isNaN(e.pulse));
+
+    let before = null;
+    pool.forEach(e => {
+      if(e.timestamp < doseTimestamp && (!before || e.timestamp > before.timestamp)) before = e;
+    });
+
+    const windowStart = doseTimestamp + win.startHr * 3600000;
+    const windowEnd = doseTimestamp + win.endHr * 3600000;
+    const windowMid = (windowStart + windowEnd) / 2;
+
+    let after = null, bestDist = Infinity;
+    pool.forEach(e => {
+      if(e.timestamp >= windowStart && e.timestamp <= windowEnd){
+        const dist = Math.abs(e.timestamp - windowMid);
+        if(dist < bestDist){ bestDist = dist; after = e; }
+      }
+    });
+
+    return { before:before, after:after, windowStart:windowStart, windowEnd:windowEnd, windowLabel:win.label };
+  }
+
+  function formatElapsed(fromTs, toTs){
+    const mins = Math.round(Math.abs(toTs - fromTs) / 60000);
+    if(mins < 60) return mins + ' min';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h + 'h' + (m ? ' ' + m + 'm' : '');
+  }
+
   const SETTINGS_INFO = {
     fluidGoal: {
       title:'Fluid Goal',
@@ -748,6 +970,10 @@
     bpRange: {
       title:'BP & Heart Rate Ranges',
       body:"How to use it: set the systolic, diastolic, and heart rate range that's right for you — the defaults come from current AHA guidance, but your doctor's numbers always take priority. What it unlocks: readings outside your range get flagged on the status card and in the trend graphs, so out-of-range days are easy to spot at a glance. If you skip it: the app keeps using the clinical default range shown here, which is a reasonable general reference but isn't personalized to you."
+    },
+    medications: {
+      title:'Medications',
+      body:"How to use it: add each medication you take regularly — name, dosage, whether it's taken with food, how many times a day, the expected time for each dose, and its peak-effect window. What it unlocks: Log Medicine shows a daily Taken / Coming up / Missed checklist, and the Medication Timeline graph brackets your BP and heart rate readings around each dose. If you're not sure of a medication's peak-effect window, leave it on the default (2–4 hours) — that matches the window most oral cardiac medications fall into, and it's better than guessing an exact number. If no reading falls in the window, the graph says so rather than substituting a reading that wouldn't actually reflect the medication's effect."
     },
     dataManagement: {
       title:'Your Data',
@@ -773,7 +999,11 @@
     { category:'Logging & Data', question:"Why didn't today's data show up?",
       answer:"Each day's readings are stored under that day's date. If you're checking after midnight, you're now on a new day — look at yesterday's trend graph and it'll be there." },
     { category:'Install & Updates', question:"How do I get a new lesson's update onto my installed app?",
-      answer:"Update the files in your GitHub repo (Settings → GitHub Quick Links makes this one tap), wait about 5 minutes for GitHub Pages to redeploy, then close and reopen the installed app." }
+      answer:"Update the files in your GitHub repo (Settings → GitHub Quick Links makes this one tap), wait about 5 minutes for GitHub Pages to redeploy, then close and reopen the installed app." },
+    { category:'Medications', question:"How does the before/after bracket on the Medication Timeline work?",
+      answer:"\"Before\" is the closest BP or heart rate reading you logged before the dose. \"After\" is the closest reading that falls inside that medication's peak-effect window — the time range, set in Settings, when the medication's effect is expected to be strongest. This mirrors how clinical trials evaluate blood pressure medications, rather than picking an arbitrary fixed number of hours for every drug." },
+    { category:'Medications', question:"Why does a dose sometimes show \"no reading in window\"?",
+      answer:"It means you didn't log a BP or heart rate reading during that medication's peak-effect window for that dose. The app won't substitute a reading from outside the window, because that reading wouldn't actually reflect the medication's effect — it would just look like it does. Log a reading during the window next time to fill it in." }
   ];
 
   function formatDateKey(d){
@@ -782,6 +1012,33 @@
 
   function todayKey(){
     return formatDateKey(new Date());
+  }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // 24-hour "HH:MM" -> a locale-formatted display string, e.g. "8:00 AM".
+  function formatTimeLabel(t){
+    if(!t) return '';
+    const parts = t.split(':').map(Number);
+    const d = new Date();
+    d.setHours(parts[0], parts[1], 0, 0);
+    return d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+  }
+
+  // A <input type=time> value is always today's clock time here — this app
+  // only supports same-day backfill, matching how BP and Fluid already work.
+  function timeStringToTimestamp(timeStr){
+    const parts = timeStr.split(':').map(Number);
+    const d = new Date();
+    d.setHours(parts[0], parts[1], 0, 0);
+    return d.getTime();
+  }
+
+  function nowTimeString(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   }
 
   function loadFluidData(){
@@ -1213,6 +1470,191 @@
   window.cancelEditBPEntry = function(){
     document.getElementById('bpError').hidden = true;
     renderBPHistory();
+  };
+
+  // ---- Log Medicine (Lesson 4) ----
+
+  function renderMedLogSelect(){
+    const meds = loadMedications().filter(isMedActiveToday);
+    const sel = document.getElementById('medLogSelect');
+    const btn = document.getElementById('medLogSubmitBtn');
+    if(!meds.length){
+      sel.innerHTML = '<option value="">No active medications</option>';
+      sel.disabled = true;
+      btn.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+    btn.disabled = false;
+    sel.innerHTML = meds.map(m => `<option value="${m.id}">${escapeHtml(m.name)}${m.dosage ? ' — ' + escapeHtml(m.dosage) : ''}</option>`).join('');
+  }
+
+  // Taken / Coming up / Missed checklist for every configured medication's
+  // expected dose slot(s) today. A logged dose satisfies slots in order
+  // (1st dose logged fills slot 1, 2nd fills slot 2, etc.) — simple and
+  // predictable, not trying to guess which slot a late dose was "for."
+  function renderMedChecklist(){
+    const allMeds = loadMedications();
+    const meds = allMeds.filter(isMedActiveToday);
+    const list = document.getElementById('medStatusList');
+    if(!allMeds.length){
+      list.innerHTML = '<div class="med-empty">No medications added yet. Tap "Manage Medications" below to add your first one.</div>';
+      return;
+    }
+    if(!meds.length){
+      list.innerHTML = '<div class="med-empty">All your medications are currently marked as stopped. Manage Medications below to add a new one or update dates.</div>';
+      return;
+    }
+    const todayEntries = loadMedLogData().entries;
+    const now = Date.now();
+    let html = '';
+    meds.forEach(med => {
+      const times = (med.times && med.times.length) ? med.times : ['08:00'];
+      const medEntries = todayEntries.filter(e => e.medId === med.id).sort((a,b) => a.timestamp - b.timestamp);
+      times.forEach((t, idx) => {
+        const slotTs = timeStringToTimestamp(t);
+        const matched = medEntries[idx];
+        let pillClass, pillText, subText;
+        if(matched){
+          pillClass = 'taken';
+          pillText = 'Taken';
+          subText = new Date(matched.timestamp).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+        } else if(now < slotTs + MED_MISSED_GRACE_MIN * 60000){
+          pillClass = 'coming';
+          pillText = 'Coming up';
+          subText = 'Expected ' + formatTimeLabel(t);
+        } else {
+          pillClass = 'missed';
+          pillText = 'Missed';
+          subText = 'Expected ' + formatTimeLabel(t);
+        }
+        html += `<div class="med-status-row">
+          <div>
+            <div class="med-status-name">${escapeHtml(med.name)}${times.length > 1 ? ' · Dose ' + (idx+1) : ''}</div>
+            <div class="med-status-sub">${subText}</div>
+          </div>
+          <span class="med-status-pill ${pillClass}">${pillText}</span>
+        </div>`;
+      });
+    });
+    list.innerHTML = html;
+  }
+
+  function renderMedHistory(){
+    const entries = loadMedLogData().entries.slice().sort((a,b) => b.timestamp - a.timestamp);
+    const list = document.getElementById('medHistoryList');
+    if(!entries.length){
+      list.innerHTML = '<div class="bp-history-empty">No doses logged yet today.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(e => {
+      const timeStr = new Date(e.timestamp).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      return `<div class="bp-entry" data-id="${e.id}">
+        <div>
+          <span class="med-entry-name">${escapeHtml(e.medName)}</span>
+          <span class="bp-entry-time">${timeStr}${e.dosage ? ' · ' + escapeHtml(e.dosage) : ''}</span>
+        </div>
+        <div class="entry-actions">
+          <button class="entry-edit-btn" onclick="window.startEditMedEntry(${e.id})" aria-label="Edit dose time">&#9998;</button>
+          <button class="bp-entry-del" onclick="window.deleteMedEntry(${e.id})" aria-label="Delete dose">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.openMedicineModal = function(){
+    renderMedLogSelect();
+    document.getElementById('medLogTime').value = nowTimeString();
+    document.getElementById('medLogError').hidden = true;
+    renderMedChecklist();
+    renderMedHistory();
+    document.getElementById('medOverlay').hidden = false;
+  };
+
+  window.closeMedicineModal = function(){
+    document.getElementById('medOverlay').hidden = true;
+  };
+
+  window.submitMedDose = function(){
+    const sel = document.getElementById('medLogSelect');
+    const timeInput = document.getElementById('medLogTime');
+    const errorEl = document.getElementById('medLogError');
+    const meds = loadMedications();
+    const med = meds.find(m => m.id === sel.value);
+    if(!med){
+      errorEl.textContent = 'Add a medication in Settings first.';
+      errorEl.hidden = false;
+      return;
+    }
+    if(!timeInput.value){
+      errorEl.textContent = 'Enter the time you took this dose.';
+      errorEl.hidden = false;
+      timeInput.focus();
+      return;
+    }
+    errorEl.hidden = true;
+    const data = loadMedLogData();
+    data.entries.push({
+      id: Date.now(),
+      medId: med.id,
+      medName: med.name,
+      dosage: med.dosage,
+      // Snapshot the peak window at the moment of logging, so editing a
+      // medication's window later doesn't retroactively rewrite the bracket
+      // shown for doses already logged.
+      peakWindow: med.peakWindow,
+      timestamp: timeStringToTimestamp(timeInput.value)
+    });
+    saveMedLogData(data);
+    timeInput.value = nowTimeString();
+    renderMedChecklist();
+    renderMedHistory();
+    showToast(med.name + ' logged.');
+  };
+
+  window.deleteMedEntry = function(id){
+    const data = loadMedLogData();
+    data.entries = data.entries.filter(e => e.id !== id);
+    saveMedLogData(data);
+    renderMedChecklist();
+    renderMedHistory();
+  };
+
+  window.startEditMedEntry = function(id){
+    const entries = loadMedLogData().entries;
+    const entry = entries.find(e => e.id === id);
+    if(!entry) return;
+    const row = document.querySelector('#medHistoryList .bp-entry[data-id="' + id + '"]');
+    if(!row) return;
+    const d = new Date(entry.timestamp);
+    const timeVal = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    row.innerHTML = `<div class="bp-edit-row">
+      <div class="bp-edit-fields">
+        <input type="time" id="medEditTime_${id}" value="${timeVal}" style="flex:1;">
+      </div>
+      <div class="bp-edit-actions">
+        <button class="entry-save-btn" onclick="window.saveEditMedEntry(${id})">Save</button>
+        <button class="entry-cancel-btn" onclick="window.cancelEditMedEntry()">Cancel</button>
+      </div>
+    </div>`;
+    document.getElementById('medEditTime_' + id).focus();
+  };
+
+  window.saveEditMedEntry = function(id){
+    const input = document.getElementById('medEditTime_' + id);
+    if(!input.value){ input.focus(); return; }
+    const data = loadMedLogData();
+    const entry = data.entries.find(e => e.id === id);
+    if(entry){
+      entry.timestamp = timeStringToTimestamp(input.value);
+      saveMedLogData(data);
+    }
+    renderMedChecklist();
+    renderMedHistory();
+  };
+
+  window.cancelEditMedEntry = function(){
+    renderMedHistory();
   };
 
   // ---- Trend graphs: shared by Fluid and BP so both cards behave identically ----
@@ -1732,19 +2174,92 @@
     readout.innerHTML = summary;
   }
 
+  // Renders one bracket card per dose logged within the selected date
+  // range: the medication name/time, the before (trough) reading, and the
+  // after (peak-window) reading — or an explicit "no reading in window"
+  // message rather than a substituted, misleading value.
+  function renderMedBracketList(dates, kind){
+    const box = document.getElementById('medBracketList');
+    box.hidden = false;
+    const dateSet = {};
+    dates.forEach(d => { dateSet[d] = true; });
+    const doses = getAllMedLogEntries().filter(e => dateSet[formatDateKey(new Date(e.timestamp))]);
+
+    if(!doses.length){
+      box.innerHTML = '<div class="chart-empty">No medications logged in this range yet.</div>';
+      return;
+    }
+
+    const sorted = doses.slice().sort((a,b) => b.timestamp - a.timestamp);
+    box.innerHTML = sorted.map(dose => {
+      const peakKey = dose.peakWindow || '2-4';
+      const win = PEAK_WINDOWS[peakKey] || PEAK_WINDOWS['2-4'];
+      const bracket = getDoseBracket(dose.timestamp, peakKey, kind);
+      const doseTimeStr = new Date(dose.timestamp).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+
+      let beforeHtml, afterHtml;
+      if(kind === 'hr'){
+        beforeHtml = bracket.before
+          ? `<strong>${bracket.before.pulse}</strong> bpm — ${formatElapsed(bracket.before.timestamp, dose.timestamp)} before`
+          : 'No heart rate logged before this dose';
+        afterHtml = bracket.after
+          ? `<span class="med-bracket-hit"><strong>${bracket.after.pulse}</strong> bpm</span> — ${formatElapsed(dose.timestamp, bracket.after.timestamp)} after`
+          : `<span class="med-bracket-miss">No reading in the ${win.label} window</span>`;
+      } else {
+        beforeHtml = bracket.before
+          ? `<strong>${bracket.before.systolic}/${bracket.before.diastolic}</strong> mmHg — ${formatElapsed(bracket.before.timestamp, dose.timestamp)} before`
+          : 'No reading logged before this dose';
+        afterHtml = bracket.after
+          ? `<span class="med-bracket-hit"><strong>${bracket.after.systolic}/${bracket.after.diastolic}</strong> mmHg</span> — ${formatElapsed(dose.timestamp, bracket.after.timestamp)} after`
+          : `<span class="med-bracket-miss">No reading in the ${win.label} window</span>`;
+      }
+
+      return `<div class="med-bracket-card">
+        <div class="med-bracket-head">
+          <span class="med-bracket-name">${escapeHtml(dose.medName)}${dose.dosage ? ' · ' + escapeHtml(dose.dosage) : ''}</span>
+          <span class="med-bracket-time">${doseTimeStr}</span>
+        </div>
+        <div class="med-bracket-row">Before: ${beforeHtml}</div>
+        <div class="med-bracket-row">After (peak ${win.label}): ${afterHtml}</div>
+      </div>`;
+    }).join('');
+  }
+
   function renderGraph(){
     const dates = getGraphDateList();
+    const chartRow = document.getElementById('chartRow');
     if(graphType === 'fluid'){
       document.getElementById('graphTitle').textContent = 'Fluid Trend';
+      document.getElementById('medBracketList').hidden = true;
+      chartRow.style.flex = '';
       renderFluidChart(dates);
     } else if(graphType === 'hr'){
       document.getElementById('graphTitle').textContent = 'Heart Rate Trend';
+      document.getElementById('medBracketList').hidden = true;
+      chartRow.style.flex = '';
       renderHRChart(dates);
+    } else if(graphType === 'medbp'){
+      document.getElementById('graphTitle').textContent = 'Medication Timeline (BP)';
+      chartRow.style.flex = '0 0 190px';
+      renderBPChart(dates);
+      renderMedBracketList(dates, 'bp');
+    } else if(graphType === 'medhr'){
+      document.getElementById('graphTitle').textContent = 'Medication Timeline (HR)';
+      chartRow.style.flex = '0 0 190px';
+      renderHRChart(dates);
+      renderMedBracketList(dates, 'hr');
     } else {
       document.getElementById('graphTitle').textContent = 'Blood Pressure Trend';
+      document.getElementById('medBracketList').hidden = true;
+      chartRow.style.flex = '';
       renderBPChart(dates);
     }
   }
+
+  window.openMedGraph = function(kind){
+    window.closeMedicineModal();
+    openGraph(kind === 'hr' ? 'medhr' : 'medbp');
+  };
 
   function openGraph(type){
     graphType = type;
@@ -1781,6 +2296,8 @@
     document.getElementById('graphOverlay').hidden = true;
     if(graphType === 'fluid'){
       window.openFluidModal();
+    } else if(graphType === 'medbp' || graphType === 'medhr'){
+      window.openMedicineModal();
     } else {
       window.openBPModal();
     }
@@ -1891,6 +2408,14 @@
     return d.toLocaleDateString(undefined, { month:'long', day:'numeric' });
   }
 
+  // Medication start/stop dates can legitimately be years in the past, so
+  // unlike friendlyDate() (used for "last logged 3 days ago" style text),
+  // this always includes the year to avoid ambiguity.
+  function medDateLabel(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+  }
+
   function todaysStatusDataStats(){
     let bpCount = 0, fluidCount = 0, bytes = 0;
     for(let i=0; i<localStorage.length; i++){
@@ -1940,6 +2465,226 @@
   window.toggleFAQ = function(id){
     const el = document.getElementById(id);
     if(el) el.classList.toggle('open');
+  };
+
+  // ---- Medications settings (Lesson 4) ----
+
+  let _medFormFoodValue = false;
+  let _medFormEditingId = null;
+
+  function renderMedicationsList(){
+    const meds = loadMedications();
+    if(!meds.length) return '<div class="med-empty">No medications added yet.</div>';
+    return meds.map(m => {
+      const win = PEAK_WINDOWS[m.peakWindow] || PEAK_WINDOWS['2-4'];
+      const timesStr = (m.times || []).map(formatTimeLabel).join(', ') || '—';
+      const active = isMedActiveToday(m);
+      const dateStr = 'Started ' + medDateLabel(m.startDate || todayKey()) + (m.stopDate ? ' · Stopped ' + medDateLabel(m.stopDate) : '');
+      return `<div class="med-list-item" data-id="${m.id}">
+        <div class="med-list-top">
+          <div>
+            <div class="med-list-name">${escapeHtml(m.name)}${!active ? '<span class="med-stopped-badge">Stopped</span>' : ''}</div>
+            <div class="med-list-detail">${escapeHtml(m.dosage || '')}${m.dosage ? ' · ' : ''}${m.withFood ? 'With food' : 'Without food'} · ${m.dosesPerDay}x/day</div>
+            <div class="med-list-detail">Times: ${timesStr}</div>
+            <div class="med-list-detail">Peak window: ${win.label}</div>
+            <div class="med-list-detail">${dateStr}</div>
+            ${m.notes ? `<div class="med-list-detail">Notes: ${escapeHtml(m.notes)}</div>` : ''}
+          </div>
+          <div class="med-list-actions">
+            <button class="entry-edit-btn" onclick="window.startEditMedication('${m.id}')" aria-label="Edit medication">&#9998;</button>
+            <button class="entry-del-btn" onclick="window.deleteMedication('${m.id}')" aria-label="Delete medication">&times;</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderMedicationForm(){
+    return `
+      <div class="med-field-label" style="margin-top:16px;">Add / Edit Medication</div>
+      <div class="med-form">
+        <div class="med-field-label" style="margin-top:0;">Name</div>
+        <input type="text" id="medFormName" placeholder="e.g. Losartan">
+
+        <div class="med-field-label">Dosage</div>
+        <input type="text" id="medFormDosage" placeholder="e.g. 50mg">
+
+        <div class="med-field-label">Take with food?</div>
+        <div class="med-toggle-row">
+          <button type="button" class="med-toggle-btn" id="medFoodYes" onclick="window.setMedFood(true)">Yes</button>
+          <button type="button" class="med-toggle-btn active" id="medFoodNo" onclick="window.setMedFood(false)">No</button>
+        </div>
+
+        <div class="med-field-label">Start / stop date</div>
+        <div class="med-date-row">
+          <div>
+            <label style="font-size:11px;color:var(--sub);font-weight:600;">Start date</label>
+            <input type="date" id="medFormStartDate" max="${todayKey()}">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--sub);font-weight:600;">Stop date (optional)</label>
+            <input type="date" id="medFormStopDate" max="${todayKey()}">
+          </div>
+        </div>
+        <div class="settings-hint" style="margin-top:6px;">Start date can go as far back as you actually started taking it — no limit. Leave stop date blank if you're still taking it. Neither can be set in the future.</div>
+
+        <div class="med-field-label">Doses per day</div>
+        <input type="number" id="medFormDosesPerDay" min="1" max="6" value="1" oninput="window.rebuildMedTimesGrid()">
+
+        <div class="med-field-label">Expected time for each dose</div>
+        <div class="med-times-grid" id="medTimesGrid"></div>
+
+        <div class="med-field-label">Peak-effect window</div>
+        <select id="medFormPeakWindow">
+          <option value="1-2">1–2 hours after (fast-acting, e.g. immediate-release beta-blockers)</option>
+          <option value="2-4" selected>2–4 hours after — default if not sure</option>
+          <option value="4-6">4–6 hours after (slower-acting / extended-release)</option>
+        </select>
+
+        <div class="med-field-label">Notes (optional)</div>
+        <textarea id="medFormNotes" placeholder="e.g. reduced to every-other-day per Dr. Aggarwala, systolic ~120"></textarea>
+      </div>
+      <div class="bp-error" id="medFormError" hidden></div>
+      <div class="settings-btn-row" style="margin-top:12px;">
+        <button class="settings-btn-primary" style="flex:1" id="medFormSaveBtn" onclick="window.saveMedicationForm()">Add Medication</button>
+        <button class="settings-btn-secondary" style="flex:1" id="medFormCancelBtn" onclick="window.cancelMedForm()" hidden>Cancel</button>
+      </div>
+    `;
+  }
+
+  window.rebuildMedTimesGrid = function(prefillTimes){
+    const input = document.getElementById('medFormDosesPerDay');
+    const nRaw = parseInt(input.value, 10);
+    const n = Math.min(6, Math.max(1, isNaN(nRaw) ? 1 : nRaw));
+    input.value = n;
+    const defaults = ['08:00','13:00','18:00','21:00','07:00','22:00'];
+    const grid = document.getElementById('medTimesGrid');
+    const existing = [];
+    grid.querySelectorAll('input[type=time]').forEach(inp => existing.push(inp.value));
+    let html = '';
+    for(let i=0; i<n; i++){
+      const val = (prefillTimes && prefillTimes[i]) || existing[i] || defaults[i] || '08:00';
+      html += `<div class="med-time-field"><label>Dose ${i+1}</label><input type="time" id="medTime_${i}" value="${val}"></div>`;
+    }
+    grid.innerHTML = html;
+  };
+
+  window.setMedFood = function(val){
+    _medFormFoodValue = val;
+    document.getElementById('medFoodYes').classList.toggle('active', val === true);
+    document.getElementById('medFoodNo').classList.toggle('active', val === false);
+  };
+
+  window.cancelMedForm = function(){
+    _medFormEditingId = null;
+    document.getElementById('medFormName').value = '';
+    document.getElementById('medFormDosage').value = '';
+    document.getElementById('medFormStartDate').value = todayKey();
+    document.getElementById('medFormStopDate').value = '';
+    document.getElementById('medFormNotes').value = '';
+    document.getElementById('medFormDosesPerDay').value = 1;
+    document.getElementById('medFormPeakWindow').value = '2-4';
+    document.getElementById('medFormError').hidden = true;
+    document.getElementById('medFormSaveBtn').textContent = 'Add Medication';
+    document.getElementById('medFormCancelBtn').hidden = true;
+    window.setMedFood(false);
+    window.rebuildMedTimesGrid(['08:00']);
+  };
+
+  window.startEditMedication = function(id){
+    const med = loadMedications().find(m => m.id === id);
+    if(!med) return;
+    _medFormEditingId = id;
+    document.getElementById('medFormName').value = med.name;
+    document.getElementById('medFormDosage').value = med.dosage || '';
+    document.getElementById('medFormStartDate').value = med.startDate || todayKey();
+    document.getElementById('medFormStopDate').value = med.stopDate || '';
+    document.getElementById('medFormNotes').value = med.notes || '';
+    document.getElementById('medFormDosesPerDay').value = med.dosesPerDay || 1;
+    document.getElementById('medFormPeakWindow').value = med.peakWindow || '2-4';
+    document.getElementById('medFormError').hidden = true;
+    document.getElementById('medFormSaveBtn').textContent = 'Update Medication';
+    document.getElementById('medFormCancelBtn').hidden = false;
+    window.setMedFood(!!med.withFood);
+    window.rebuildMedTimesGrid(med.times);
+    const section = document.getElementById('medSettingsSection');
+    if(section) section.scrollIntoView({ behavior:'smooth', block:'start' });
+  };
+
+  window.saveMedicationForm = function(){
+    const nameInput = document.getElementById('medFormName');
+    const errorEl = document.getElementById('medFormError');
+    const name = nameInput.value.trim();
+    if(!name){
+      errorEl.textContent = 'Enter a medication name.';
+      errorEl.hidden = false;
+      nameInput.focus();
+      return;
+    }
+    const dosage = document.getElementById('medFormDosage').value.trim();
+    const startDateInput = document.getElementById('medFormStartDate');
+    const stopDateInput = document.getElementById('medFormStopDate');
+    const today = todayKey();
+    let startDate = startDateInput.value || today;
+    let stopDate = stopDateInput.value || '';
+
+    if(startDate > today){
+      errorEl.textContent = 'Start date can\'t be in the future.';
+      errorEl.hidden = false;
+      startDateInput.focus();
+      return;
+    }
+    if(stopDate && stopDate > today){
+      errorEl.textContent = 'Stop date can\'t be in the future — only enter it once the medication has actually been stopped.';
+      errorEl.hidden = false;
+      stopDateInput.focus();
+      return;
+    }
+    if(stopDate && stopDate < startDate){
+      errorEl.textContent = 'Stop date can\'t be before the start date.';
+      errorEl.hidden = false;
+      stopDateInput.focus();
+      return;
+    }
+
+    const notes = document.getElementById('medFormNotes').value.trim();
+    const dosesPerDay = Math.min(6, Math.max(1, parseInt(document.getElementById('medFormDosesPerDay').value, 10) || 1));
+    const peakWindow = document.getElementById('medFormPeakWindow').value;
+    const times = [];
+    for(let i=0; i<dosesPerDay; i++){
+      const el = document.getElementById('medTime_' + i);
+      times.push(el && el.value ? el.value : '08:00');
+    }
+    errorEl.hidden = true;
+
+    const list = loadMedications();
+    if(_medFormEditingId){
+      const med = list.find(m => m.id === _medFormEditingId);
+      if(med){
+        Object.assign(med, { name, dosage, withFood:_medFormFoodValue, dosesPerDay, times, peakWindow, startDate, stopDate, notes });
+      }
+    } else {
+      list.push({ id: Date.now().toString(), name, dosage, withFood:_medFormFoodValue, dosesPerDay, times, peakWindow, startDate, stopDate, notes });
+    }
+    saveMedications(list);
+    document.getElementById('medListBox').innerHTML = renderMedicationsList();
+    window.cancelMedForm();
+    showToast('Medication saved.');
+  };
+
+  window.deleteMedication = function(id){
+    if(!confirm('Delete this medication? Already-logged doses keep its name in history, but it will disappear from Log Medicine and Settings.')) return;
+    const list = loadMedications().filter(m => m.id !== id);
+    saveMedications(list);
+    document.getElementById('medListBox').innerHTML = renderMedicationsList();
+    if(_medFormEditingId === id) window.cancelMedForm();
+  };
+
+  window.jumpToMedSettings = function(){
+    setTimeout(() => {
+      const el = document.getElementById('medSettingsSection');
+      if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 50);
   };
 
   function renderSettingsScreen(){
@@ -1992,6 +2737,16 @@
         </div>
         <div class="bp-error" id="rangeError" hidden></div>
         <button class="settings-save-btn" onclick="window.saveRanges()">Save Ranges</button>
+      </div>
+
+      <div class="settings-section" id="medSettingsSection">
+        <div class="settings-section-title">
+          <span>Medications</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('medications')">i</button>
+        </div>
+        <div class="settings-hint">Add each medication you take regularly. This powers Log Medicine's daily Taken / Coming up / Missed checklist and the Medication Timeline graph.</div>
+        <div id="medListBox">${renderMedicationsList()}</div>
+        ${renderMedicationForm()}
       </div>
 
       <div class="settings-section">
@@ -2065,6 +2820,10 @@
         ${renderFAQList()}
       </div>
     `;
+    _medFormEditingId = null;
+    window.setMedFood(false);
+    document.getElementById('medFormStartDate').value = todayKey();
+    window.rebuildMedTimesGrid(['08:00']);
   }
 
   function renderGithubLinks(path){
@@ -2252,6 +3011,8 @@
       window.openFluidModal();
     } else if(key === 'bp'){
       window.openBPModal();
+    } else if(key === 'medicine'){
+      window.openMedicineModal();
     } else {
       window.openDisclosure(key);
     }
