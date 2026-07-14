@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 4 build-along app - single file PWA -->
+<!-- Today's Status — Lesson 5 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -349,6 +349,61 @@
     padding-right:max(16px, env(safe-area-inset-right));
   }
   .settings-scroll{ flex:1; overflow-y:auto; padding:4px 16px 40px 16px; }
+
+  /* ---- Catch It (Lesson 5) ---- */
+  .catch-pill{
+    position:fixed; right:18px; bottom:calc(22px + env(safe-area-inset-bottom));
+    width:60px; height:60px; border-radius:50%; border:none;
+    background:#8b5cf6; color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 18px rgba(139,92,246,0.45);
+    z-index:40; cursor:pointer;
+  }
+  .catch-pill .icon{ width:26px; height:26px; color:#fff; }
+  .catch-pill .icon svg{ width:100%; height:100%; display:block; }
+
+  .catch-thumb-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+  .catch-thumb-wrap{ position:relative; width:74px; height:74px; }
+  .catch-thumb{ width:74px; height:74px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; }
+  .catch-thumb-remove{
+    position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%;
+    background:#dc2626; color:#fff; border:none; font-size:14px; line-height:1; cursor:pointer;
+  }
+  .catch-add-photo-btn{
+    width:100%; background:#374151; color:#fff; border:none; border-radius:10px;
+    padding:12px; font-size:15px; font-weight:700; margin-bottom:12px; cursor:pointer;
+  }
+  .catch-field-label{ display:block; font-size:13px; font-weight:700; color:#374151; margin:10px 0 4px; }
+  .catch-form-input, .catch-note-edit{
+    width:100%; border:1.5px solid var(--line); border-radius:10px; padding:11px 12px;
+    font-size:15px; box-sizing:border-box; font-family:inherit;
+  }
+  .catch-note-edit{ resize:vertical; }
+  .catch-form-error{ color:#b91c1c; font-size:13.5px; font-weight:600; margin-top:8px; min-height:1em; }
+
+  .catch-card{
+    display:flex; gap:10px; align-items:center; background:#f9fafb; border:1px solid var(--line);
+    border-radius:12px; padding:10px; margin-bottom:10px; cursor:pointer;
+  }
+  .catch-card-thumb-wrap{ width:56px; height:56px; border-radius:8px; overflow:hidden; background:#e5e7eb; flex-shrink:0; }
+  .catch-card-thumb{ width:100%; height:100%; object-fit:cover; display:block; }
+  .catch-card-body{ min-width:0; flex:1; }
+  .catch-card-date{ font-size:12.5px; color:var(--sub); font-weight:700; margin-bottom:2px; }
+  .catch-card-note{ font-size:14.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .catch-detail-images{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .catch-detail-images img{ width:100%; height:auto; border-radius:10px; border:1px solid var(--line); display:block; }
+  .catch-note-display{ font-size:15px; line-height:1.5; color:var(--ink); white-space:pre-wrap; background:#f9fafb; border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:8px; }
+  .catch-note-empty{ color:var(--sub); font-style:italic; }
+  .catch-link-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:11px 12px; margin-top:12px;
+  }
+  .catch-link-label{ font-size:14px; color:#1e3a8a; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .catch-link-open{
+    flex-shrink:0; background:#1d4ed8; color:#fff; border-radius:8px; padding:7px 14px;
+    font-size:13.5px; font-weight:700; text-decoration:none;
+  }
   .settings-section{
     background:var(--card); border:1px solid var(--line); border-radius:14px;
     padding:16px; margin-bottom:14px;
@@ -574,9 +629,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 4 of the build-along series.<br>
+  Lesson 5 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v20</span>
+  <span style="opacity:0.6;font-size:11px;">Build v21</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -754,6 +809,55 @@
   </div>
 </div>
 
+<!-- Catch It — new entry form (bottom sheet, like BP/Fluid/Medicine) -->
+<div class="overlay" id="catchFormOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#8b5cf6"></span>
+      New Catch
+    </div>
+    <div class="catch-thumb-row" id="catchFormImages"></div>
+    <button type="button" class="catch-add-photo-btn" onclick="window.addAnotherCatchPhoto()">+ Add Another Photo</button>
+    <label class="catch-field-label" for="catchFormNote">Note (optional)</label>
+    <textarea id="catchFormNote" class="catch-note-edit" rows="4" placeholder="What is this and why does it matter? Example: BP spike after the walk Tuesday — want to ask Dr. Aggarwala about it."></textarea>
+    <label class="catch-field-label" for="catchFormLinkUrl">Link (optional)</label>
+    <input type="url" id="catchFormLinkUrl" class="catch-form-input" placeholder="https://...">
+    <label class="catch-field-label" for="catchFormLinkLabel">Link label (optional)</label>
+    <input type="text" id="catchFormLinkLabel" class="catch-form-input" placeholder="Example: Mayo Clinic — AFib article">
+    <div class="catch-form-error" id="catchFormError"></div>
+    <div class="modal-actions" style="margin-top:6px">
+      <button class="modal-btn secondary" onclick="window.cancelCatchForm()">Cancel</button>
+      <button class="modal-btn primary" onclick="window.saveCatchEntry()">Save Catch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Catch It — My Catches library, full-screen shell like Settings/Trend -->
+<div class="graph-overlay" id="catchOverlay" hidden>
+  <div class="graph-header">
+    <button class="graph-back" onclick="window.closeCatchLibrary()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">My Catches</span>
+    <button class="graph-close" onclick="window.closeCatchLibrary()" aria-label="Close My Catches">&times;</button>
+  </div>
+  <div class="settings-scroll" id="catchScroll"></div>
+</div>
+
+<!-- Catch It — single entry detail view -->
+<div class="graph-overlay" id="catchDetailOverlay" hidden>
+  <div class="graph-header">
+    <button class="graph-back" onclick="window.closeCatchDetail()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">Catch Detail</span>
+    <button class="graph-close" onclick="window.closeCatchDetail()" aria-label="Close">&times;</button>
+  </div>
+  <div class="settings-scroll" id="catchDetailScroll"></div>
+</div>
+
+<!-- Catch It — floating pill, available everywhere, and its hidden file input -->
+<button type="button" class="catch-pill" id="catchPill" onclick="window.triggerCatchCapture()" aria-label="Catch It — snap a photo or screenshot">
+  <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h2l1.4-2h5.2L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/></svg></span>
+</button>
+<input type="file" id="catchFileInput" accept="image/*" multiple hidden onchange="window.handleCatchFiles(this.files)">
+
 <!-- Inert button disclosure modal -->
 <div class="overlay" id="disclosureOverlay" hidden>
   <div class="modal">
@@ -786,7 +890,8 @@
     activity: '<circle cx="15" cy="5" r="2"/><path d="M11.5 22l1.7-5.8 2.8-1.7-.8-4.5-3.7.9-1.7 3.6M8 14.5l-2.5 2.5M13 8.5l3.5 1.5"/>',
     appointment: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     planday: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M7.5 9l1.5 1.5L12 7M8 14h8M8 17.5h5"/>',
-    note: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'
+    note: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    catchit: '<path d="M4 8a2 2 0 0 1 2-2h2l1.4-2h5.2L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/>'
   };
 
   const BUTTONS = [
@@ -799,7 +904,7 @@
     { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:false },
     { key:'appointment',  label:'Log Appointment', color:'#6366f1', active:false },
     { key:'planday',      label:'Plan My Day',     color:'#06b6d4', active:false },
-    { key:'note',         label:'Add Note',        color:'#8b5cf6', active:false },
+    { key:'catchit',      label:'Catch It',        color:'#8b5cf6', active:true  },
   ];
 
   const DISCLOSURES = {
@@ -827,10 +932,6 @@
       title:'Plan My Day',
       body:"This button will set reminders and events for today. By the time you finish this course, it'll actively watch your day unfold and change color if something gets missed — so nothing important slips through."
     },
-    note: {
-      title:'Add Note',
-      body:"This button will log a free-text note, timestamped. By the time you finish this course, it'll be searchable and linked to everything else logged that same day, giving you real context when the app catches something later."
-    }
   };
 
   // ---- Settings: defaults, storage, and static info-popup content ----
@@ -3043,6 +3144,8 @@
       window.openBPModal();
     } else if(key === 'medicine'){
       window.openMedicineModal();
+    } else if(key === 'catchit'){
+      window.openCatchLibrary();
     } else {
       window.openDisclosure(key);
     }
@@ -3062,6 +3165,404 @@
     const d = new Date();
     document.getElementById('todayDate').textContent = d.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
   }
+
+  // ---- Catch It (Lesson 5) ----
+  // Photos are the one thing in this app too big for localStorage — browsers
+  // cap localStorage around 5–10MB total, and a handful of full-size photos
+  // blows past that fast (this is exactly the bug CardiacLens's own Evidence
+  // Library hit before its storage was moved to IndexedDB). So here, every
+  // photo lives in IndexedDB from the start; only the lightweight text
+  // (note, link, image IDs) lives in localStorage.
+  const CATCH_DB_NAME = 'todaysStatusCatchDB';
+  const CATCH_DB_VERSION = 1;
+  const CATCH_STORE = 'catchImages';
+  const CATCH_MAX_WIDTH = 1200; // compress before storing so a dozen catches don't strain IndexedDB
+
+  let catchDraftImages = []; // [{id, dataUrl, addedAt}] while composing a new catch
+  let catchSearchKeyword = '';
+  let catchSortOrder = 'newest';
+
+  function openCatchDB(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(CATCH_DB_NAME, CATCH_DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(CATCH_STORE)) db.createObjectStore(CATCH_STORE, { keyPath:'id' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function catchDbPutImage(img){
+    return openCatchDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(CATCH_STORE, 'readwrite');
+      tx.objectStore(CATCH_STORE).put(img);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    }));
+  }
+
+  function catchDbGetImage(id){
+    return openCatchDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(CATCH_STORE, 'readonly');
+      const req = tx.objectStore(CATCH_STORE).get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    }));
+  }
+
+  function catchDbDeleteImage(id){
+    return openCatchDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(CATCH_STORE, 'readwrite');
+      tx.objectStore(CATCH_STORE).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    }));
+  }
+
+  function loadCatchEntries(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_catches');
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch(e){ return []; }
+  }
+
+  function saveCatchEntries(list){
+    localStorage.setItem('todaysStatus_catches', JSON.stringify(list));
+  }
+
+  function catchUid(prefix){
+    return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  }
+
+  function resizeCatchImage(file){
+    return new Promise((resolve, reject) => {
+      if(!file || !file.type || !/^image\//.test(file.type)){ reject(new Error('Only image files can be added.')); return; }
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read this photo.'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Could not process this photo.'));
+        img.onload = () => {
+          try{
+            let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+            if(!w || !h){ reject(new Error('Could not process this photo.')); return; }
+            if(w > CATCH_MAX_WIDTH){ h = Math.round(h * (CATCH_MAX_WIDTH / w)); w = CATCH_MAX_WIDTH; }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve({ id: catchUid('img_'), dataUrl: canvas.toDataURL('image/jpeg', 0.75), addedAt: new Date().toISOString() });
+          }catch(e){ reject(new Error('Could not compress this photo.')); }
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function dataUrlToFile(dataUrl, filename){
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+    return new File([u8arr], filename, { type: mime });
+  }
+
+  // Tapping the pill (or the tile's own "+ New Catch" button) both funnel
+  // through here — the OS picker itself offers Camera or Photo Library, and
+  // supports selecting more than one photo at once from the library.
+  window.triggerCatchCapture = function(){
+    catchDraftImages = [];
+    document.getElementById('catchFileInput').click();
+  };
+
+  window.addAnotherCatchPhoto = function(){
+    document.getElementById('catchFileInput').click();
+  };
+
+  window.handleCatchFiles = function(files){
+    const list = Array.prototype.slice.call(files || []);
+    if(!list.length) return;
+    let chain = Promise.resolve();
+    list.forEach(file => {
+      chain = chain.then(() => resizeCatchImage(file).then(img => { catchDraftImages.push(img); }));
+    });
+    chain.then(() => {
+      document.getElementById('catchFileInput').value = ''; // allows re-picking the same file later
+      window.openCatchForm();
+    }).catch(err => {
+      showToast(err && err.message ? err.message : 'Could not add that photo.');
+      if(catchDraftImages.length) window.openCatchForm();
+    });
+  };
+
+  window.openCatchForm = function(){
+    const box = document.getElementById('catchFormImages');
+    box.innerHTML = catchDraftImages.map((img, idx) => `
+      <div class="catch-thumb-wrap">
+        <img src="${img.dataUrl}" class="catch-thumb" alt="Catch photo ${idx+1}">
+        <button type="button" class="catch-thumb-remove" onclick="window.removeCatchDraftImage(${idx})" aria-label="Remove photo">&times;</button>
+      </div>
+    `).join('');
+    document.getElementById('catchFormNote').value = '';
+    document.getElementById('catchFormLinkUrl').value = '';
+    document.getElementById('catchFormLinkLabel').value = '';
+    document.getElementById('catchFormError').textContent = '';
+    document.getElementById('catchFormOverlay').hidden = false;
+  };
+
+  window.removeCatchDraftImage = function(idx){
+    if(idx < 0 || idx >= catchDraftImages.length) return;
+    catchDraftImages.splice(idx, 1);
+    window.openCatchForm();
+  };
+
+  window.cancelCatchForm = function(){
+    catchDraftImages = [];
+    document.getElementById('catchFormOverlay').hidden = true;
+  };
+
+  window.saveCatchEntry = function(){
+    if(!catchDraftImages.length){
+      document.getElementById('catchFormError').textContent = 'Add at least one photo before saving.';
+      return;
+    }
+    const note = document.getElementById('catchFormNote').value.trim();
+    const linkUrl = document.getElementById('catchFormLinkUrl').value.trim();
+    const linkLabel = document.getElementById('catchFormLinkLabel').value.trim();
+    const now = new Date().toISOString();
+    const record = {
+      id: catchUid('catch_'),
+      note: note,
+      linkUrl: linkUrl,
+      linkLabel: linkLabel,
+      images: catchDraftImages.map(img => ({ id: img.id, addedAt: img.addedAt })),
+      createdAt: now,
+      updatedAt: now
+    };
+    const jobs = catchDraftImages.map(img => catchDbPutImage({ id: img.id, dataUrl: img.dataUrl, addedAt: img.addedAt }));
+    Promise.all(jobs).then(() => {
+      const list = loadCatchEntries();
+      list.push(record);
+      saveCatchEntries(list);
+      catchDraftImages = [];
+      document.getElementById('catchFormOverlay').hidden = true;
+      showToast('Saved to My Catches');
+      window.openCatchLibrary();
+    }).catch(() => {
+      document.getElementById('catchFormError').textContent =
+        'This photo could not be saved — storage may be full. Try removing one image and saving again.';
+    });
+  };
+
+  window.openCatchLibrary = function(){
+    document.getElementById('catchOverlay').hidden = false;
+    catchSearchKeyword = '';
+    catchSortOrder = 'newest';
+    renderCatchLibraryShell();
+  };
+
+  window.closeCatchLibrary = function(){
+    document.getElementById('catchOverlay').hidden = true;
+  };
+
+  // The search box and sort buttons render once; only the list underneath
+  // re-renders on every keystroke, so the search box never loses focus or
+  // cursor position while typing.
+  function renderCatchLibraryShell(){
+    let html = '<button class="modal-btn primary" style="width:100%;margin-bottom:14px" onclick="window.triggerCatchCapture()">+ New Catch</button>';
+    html += '<input type="text" id="catchSearchBox" class="catch-form-input" style="margin-bottom:10px" placeholder="🔍 Search notes..." oninput="window.filterCatchLibrary(this.value)">';
+    html += '<div class="sort-row">';
+    html += '<span class="sort-label">Sort:</span>';
+    html += '<button class="sort-btn active" id="catchSortNewestBtn" onclick="window.setCatchSort(\'newest\')">Newest</button>';
+    html += '<button class="sort-btn" id="catchSortOldestBtn" onclick="window.setCatchSort(\'oldest\')">Oldest</button>';
+    html += '</div>';
+    html += '<div id="catchListContainer"></div>';
+    document.getElementById('catchScroll').innerHTML = html;
+    renderCatchList();
+  }
+
+  function renderCatchList(){
+    const container = document.getElementById('catchListContainer');
+    if(!container) return;
+    const all = loadCatchEntries();
+    const kw = catchSearchKeyword.trim().toLowerCase();
+    let filtered = kw ? all.filter(e => (e.note || '').toLowerCase().indexOf(kw) !== -1) : all.slice();
+    filtered.sort((a, b) => {
+      const cmp = String(a.createdAt).localeCompare(String(b.createdAt));
+      return catchSortOrder === 'oldest' ? cmp : -cmp;
+    });
+
+    if(!filtered.length){
+      container.innerHTML = '<div class="history-empty">' +
+        (kw ? 'No catches match "' + escapeHtml(catchSearchKeyword) + '".'
+            : 'Nothing caught yet. Tap the purple pill anytime you want to save a photo, a note, or both — before it slips your mind.') +
+        '</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(entry => {
+      const count = (entry.images || []).length;
+      const preview = entry.note ? escapeHtml(entry.note.slice(0, 90)) : '(No note)';
+      const dateStr = friendlyDate((entry.createdAt || '').slice(0,10));
+      return `<div class="catch-card" onclick="window.viewCatchEntry('${entry.id}')">
+        <div class="catch-card-thumb-wrap" id="catchThumb_${entry.id}"></div>
+        <div class="catch-card-body">
+          <div class="catch-card-date">${dateStr} · ${count} photo${count===1?'':'s'}</div>
+          <div class="catch-card-note">${preview}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Thumbnails load from IndexedDB after the list itself is on screen,
+    // so opening the library never blocks on image reads.
+    filtered.forEach(entry => {
+      const firstImg = (entry.images || [])[0];
+      if(!firstImg) return;
+      catchDbGetImage(firstImg.id).then(img => {
+        const el = document.getElementById('catchThumb_' + entry.id);
+        if(el && img) el.innerHTML = `<img src="${img.dataUrl}" class="catch-card-thumb" alt="Catch photo">`;
+      });
+    });
+  }
+
+  window.filterCatchLibrary = function(val){
+    catchSearchKeyword = val;
+    renderCatchList();
+  };
+
+  window.setCatchSort = function(order){
+    catchSortOrder = order;
+    const nb = document.getElementById('catchSortNewestBtn');
+    const ob = document.getElementById('catchSortOldestBtn');
+    if(nb) nb.classList.toggle('active', order === 'newest');
+    if(ob) ob.classList.toggle('active', order === 'oldest');
+    renderCatchList();
+  };
+
+  window.viewCatchEntry = function(id){
+    const entry = loadCatchEntries().find(e => e.id === id);
+    if(!entry) return;
+    document.getElementById('catchDetailOverlay').hidden = false;
+    renderCatchDetail(entry);
+  };
+
+  window.closeCatchDetail = function(){
+    document.getElementById('catchDetailOverlay').hidden = true;
+    renderCatchList(); // reflect any edit or delete in the list behind it
+  };
+
+  function renderCatchDetail(entry){
+    const imgIds = (entry.images || []).map(i => i.id);
+    let html = `<div class="modal-title" style="margin-bottom:6px">${friendlyDate((entry.createdAt||'').slice(0,10))}</div>`;
+    html += '<div class="catch-detail-images" id="catchDetailImages"></div>';
+    html += '<div id="catchDetailNoteBlock"></div>';
+    if(entry.linkUrl){
+      html += `<div class="catch-link-row">
+        <span class="catch-link-label">${escapeHtml(entry.linkLabel || entry.linkUrl)}</span>
+        <a href="${escapeHtml(entry.linkUrl)}" target="_blank" rel="noopener" class="catch-link-open">Open</a>
+      </div>`;
+    }
+    html += `<div class="modal-actions" style="margin-top:16px">
+      <button class="modal-btn secondary" onclick="window.editCatchNote('${entry.id}')">Edit Note</button>
+      <button class="modal-btn primary" onclick="window.shareCatchEntry('${entry.id}')">Share</button>
+    </div>`;
+    html += `<button type="button" class="modal-btn secondary" style="width:100%;margin-top:10px;background:#fef2f2;color:#b91c1c" onclick="window.deleteCatchEntry('${entry.id}')">Delete Catch</button>`;
+
+    document.getElementById('catchDetailScroll').innerHTML = html;
+    renderCatchNoteBlock(entry, false);
+
+    Promise.all(imgIds.map(catchDbGetImage)).then(imgs => {
+      const box = document.getElementById('catchDetailImages');
+      if(!box) return;
+      box.innerHTML = imgs.filter(Boolean).map((img, idx) =>
+        `<img src="${img.dataUrl}" alt="Catch photo ${idx+1}">`
+      ).join('') || '<div class="history-empty">Photos could not be loaded.</div>';
+    });
+  }
+
+  function renderCatchNoteBlock(entry, editing){
+    const el = document.getElementById('catchDetailNoteBlock');
+    if(!el) return;
+    if(editing){
+      el.innerHTML = `<textarea id="catchNoteEditArea" class="catch-note-edit" rows="4">${escapeHtml(entry.note || '')}</textarea>
+        <div class="modal-actions" style="margin-top:8px">
+          <button class="modal-btn secondary" onclick="window.cancelEditCatchNote('${entry.id}')">Cancel</button>
+          <button class="modal-btn primary" onclick="window.saveCatchNote('${entry.id}')">Save Note</button>
+        </div>`;
+    } else {
+      el.innerHTML = entry.note
+        ? `<div class="catch-note-display">${escapeHtml(entry.note)}</div>`
+        : '<div class="catch-note-display catch-note-empty">No note added.</div>';
+    }
+  }
+
+  window.editCatchNote = function(id){
+    const entry = loadCatchEntries().find(e => e.id === id);
+    if(entry) renderCatchNoteBlock(entry, true);
+  };
+
+  window.cancelEditCatchNote = function(id){
+    const entry = loadCatchEntries().find(e => e.id === id);
+    if(entry) renderCatchNoteBlock(entry, false);
+  };
+
+  // Only note text is editable here — the link and photos are locked once
+  // saved, on purpose: this stays a record of what you caught in the
+  // moment, not something reshaped after the fact.
+  window.saveCatchNote = function(id){
+    const list = loadCatchEntries();
+    const entry = list.find(e => e.id === id);
+    if(!entry) return;
+    const area = document.getElementById('catchNoteEditArea');
+    entry.note = area ? area.value.trim() : entry.note;
+    entry.updatedAt = new Date().toISOString();
+    saveCatchEntries(list);
+    renderCatchNoteBlock(entry, false);
+    showToast('Note updated');
+  };
+
+  window.deleteCatchEntry = function(id){
+    if(!confirm('Delete this catch? This cannot be undone.')) return;
+    const list = loadCatchEntries();
+    const entry = list.find(e => e.id === id);
+    if(!entry){ window.closeCatchDetail(); return; }
+    const ids = (entry.images || []).map(i => i.id);
+    Promise.all(ids.map(catchDbDeleteImage)).then(() => {
+      saveCatchEntries(list.filter(e => e.id !== id));
+      document.getElementById('catchDetailOverlay').hidden = true;
+      renderCatchList();
+      showToast('Catch deleted');
+    });
+  };
+
+  // Native share sheet — the only reliable way from a web page to hand off
+  // an actual photo file alongside text, letting the reader pick Mail,
+  // Messages, or anything else already on their phone.
+  window.shareCatchEntry = function(id){
+    const entry = loadCatchEntries().find(e => e.id === id);
+    if(!entry) return;
+    const ids = (entry.images || []).map(i => i.id);
+    Promise.all(ids.map(catchDbGetImage)).then(imgs => {
+      const files = imgs.filter(Boolean).map((img, idx) => dataUrlToFile(img.dataUrl, 'catch-photo-' + (idx+1) + '.jpg'));
+      let text = entry.note || '';
+      if(entry.linkUrl) text += (text ? '\n\n' : '') + (entry.linkLabel ? entry.linkLabel + ': ' : '') + entry.linkUrl;
+      const shareData = { title: 'My Catch', text: text };
+      if(files.length && navigator.canShare && navigator.canShare({ files: files })){
+        shareData.files = files;
+      }
+      if(navigator.share){
+        navigator.share(shareData).catch(() => {});
+      } else {
+        showToast("Sharing isn't supported in this browser — open this on your phone to share.");
+      }
+    });
+  };
 
   // ---- Init ----
   renderDate();
