@@ -495,6 +495,17 @@
      small-modal layer (z-index 50) shared with Log Fluid / Log BP / etc. */
   #settingsInfoOverlay, #importPreviewOverlay{ z-index:80; }
 
+  /* Same class of bug: My Catches has its own "+ New Catch" button, so the
+     capture form (a z-50 .overlay) can be triggered while My Catches (a
+     z-70 graph-overlay) is already open behind it. catchDetailOverlay is
+     opened from within My Catches too, so it needs to clear that same
+     layer. Neither screen underneath is ever hidden while these are open —
+     only visually covered — so closing the form or detail view correctly
+     reveals whichever screen was already there (dashboard or My Catches)
+     with no extra state-tracking needed. */
+  #catchDetailOverlay{ z-index:75; }
+  #catchFormOverlay{ z-index:80; }
+
   /* ---- Medications (Lesson 4) ---- */
   .med-list-item{
     background:#f9fafb; border:1px solid var(--line); border-radius:12px;
@@ -639,7 +650,7 @@
 <footer>
   Lesson 5 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v26</span>
+  <span style="opacity:0.6;font-size:11px;">Build v27</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
