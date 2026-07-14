@@ -252,6 +252,14 @@
     background:#f9fafb; border:1px solid var(--line); border-radius:10px;
     padding:9px 10px;
   }
+
+  @keyframes justSavedFlash {
+    0% { background:#d1fae5; border-color:#10b981; }
+    100% { background:#f9fafb; border-color:var(--line); }
+  }
+  .entry-row.just-saved, .bp-entry.just-saved{
+    animation: justSavedFlash 1.8s ease-out forwards;
+  }
   .entry-reading{ font-weight:800; font-size:15px; }
   .entry-time{ color:var(--sub); font-size:12.5px; margin-left:6px; }
   .entry-actions{ display:flex; align-items:center; gap:0px; flex-shrink:0; }
@@ -631,7 +639,7 @@
 <footer>
   Lesson 5 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v24</span>
+  <span style="opacity:0.6;font-size:11px;">Build v26</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1218,7 +1226,7 @@
     document.getElementById('fluidSortAsc').classList.toggle('active', fluidSortOrder === 'asc');
   }
 
-  function renderFluidHistory(){
+  function renderFluidHistory(highlightId){
     const entries = loadFluidData().entries;
     const list = document.getElementById('fluidHistoryList');
 
@@ -1233,7 +1241,8 @@
     list.innerHTML = sorted.map(e => {
       const t = new Date(e.timestamp);
       const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
-      return `<div class="entry-row" data-id="${e.id}">
+      const highlightClass = (highlightId != null && e.id === highlightId) ? ' just-saved' : '';
+      return `<div class="entry-row${highlightClass}" data-id="${e.id}">
         <div>
           <span class="entry-reading">${e.amount} oz</span>
           <span class="entry-time">${timeStr}</span>
@@ -1346,7 +1355,7 @@
     document.getElementById('bpSortAsc').classList.toggle('active', bpSortOrder === 'asc');
   }
 
-  function renderBPHistory(){
+  function renderBPHistory(highlightId){
     const entries = loadBPData().entries;
     const list = document.getElementById('bpHistoryList');
 
@@ -1362,7 +1371,8 @@
       const t = new Date(e.timestamp);
       const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
       const pulseStr = e.pulse ? ' · ' + e.pulse + ' bpm' : '';
-      return `<div class="bp-entry" data-id="${e.id}">
+      const highlightClass = (highlightId != null && e.id === highlightId) ? ' just-saved' : '';
+      return `<div class="bp-entry${highlightClass}" data-id="${e.id}">
         <div>
           <span class="bp-entry-reading">${e.systolic}/${e.diastolic}</span>
           <span class="bp-entry-time">${timeStr}${pulseStr}</span>
@@ -1389,10 +1399,12 @@
 
   window.quickAddFluid = function(amount){
     const data = loadFluidData();
-    data.entries.push({ id: Date.now(), amount: amount, timestamp: Date.now() });
+    const newId = Date.now();
+    data.entries.push({ id: newId, amount: amount, timestamp: Date.now() });
     saveFluidData(data);
     renderStatus();
-    renderFluidHistory();
+    renderFluidHistory(newId);
+    showToast(amount + ' oz logged');
   };
 
   window.submitCustomFluid = function(){
@@ -1414,11 +1426,13 @@
   };
 
   window.deleteFluidEntry = function(id){
+    if(!confirm('Delete this fluid entry?')) return;
     const data = loadFluidData();
     data.entries = data.entries.filter(e => e.id !== id);
     saveFluidData(data);
     renderStatus();
     renderFluidHistory();
+    showToast('Fluid entry deleted');
   };
 
   window.startEditFluidEntry = function(id){
@@ -1452,6 +1466,7 @@
     }
     renderStatus();
     renderFluidHistory();
+    showToast('Fluid entry updated');
   };
 
   window.cancelEditFluidEntry = function(){
@@ -1501,8 +1516,23 @@
 
     errorEl.hidden = true;
     const data = loadBPData();
+
+    // The whole point of this check: a save happens in well under a second,
+    // and if you're not staring at the exact spot it lands, it's easy to
+    // assume nothing happened and tap Save again — creating an identical
+    // second reading. Only the single most recent entry is checked, and
+    // only within a short window, so a genuine repeat reading minutes later
+    // is never blocked.
+    const mostRecent = data.entries.reduce((a, e) => (!a || e.timestamp > a.timestamp) ? e : a, null);
+    if(mostRecent && mostRecent.systolic === systolic && mostRecent.diastolic === diastolic &&
+       (mostRecent.pulse || null) === (result.pulse || null) && (Date.now() - mostRecent.timestamp) < 10000){
+      const pulseNote = result.pulse ? ' · ' + result.pulse + ' bpm' : '';
+      if(!confirm('You just logged ' + systolic + '/' + diastolic + pulseNote + ' a few seconds ago. Log it again?')) return;
+    }
+
+    const newId = Date.now();
     data.entries.push({
-      id: Date.now(),
+      id: newId,
       systolic: systolic,
       diastolic: diastolic,
       pulse: result.pulse,
@@ -1514,16 +1544,19 @@
     diaInput.value = '';
     pulseInput.value = '';
     renderBPStatus();
-    renderBPHistory();
+    renderBPHistory(newId);
+    showToast('Reading saved');
     sysInput.focus();
   };
 
   window.deleteBPEntry = function(id){
+    if(!confirm('Delete this reading?')) return;
     const data = loadBPData();
     data.entries = data.entries.filter(e => e.id !== id);
     saveBPData(data);
     renderBPStatus();
     renderBPHistory();
+    showToast('Reading deleted');
   };
 
   window.startEditBPEntry = function(id){
@@ -1579,6 +1612,7 @@
     }
     renderBPStatus();
     renderBPHistory();
+    showToast('Reading updated');
   };
 
   window.cancelEditBPEntry = function(){
@@ -3288,20 +3322,28 @@
   window.handleCatchFiles = function(files){
     const list = Array.prototype.slice.call(files || []);
     if(!list.length) return;
+    const formAlreadyOpen = !document.getElementById('catchFormOverlay').hidden;
+    if(!formAlreadyOpen) showToast('Adding photo...');
     let chain = Promise.resolve();
     list.forEach(file => {
       chain = chain.then(() => resizeCatchImage(file).then(img => { catchDraftImages.push(img); }));
     });
     chain.then(() => {
       document.getElementById('catchFileInput').value = ''; // allows re-picking the same file later
-      window.openCatchForm();
+      if(formAlreadyOpen){
+        renderCatchFormThumbs(); // mid-draft add — never touch note/link the reader already typed
+      } else {
+        window.openCatchForm(); // fresh catch — safe to reset every field
+      }
     }).catch(err => {
       showToast(err && err.message ? err.message : 'Could not add that photo.');
-      if(catchDraftImages.length) window.openCatchForm();
+      if(catchDraftImages.length){
+        if(formAlreadyOpen) renderCatchFormThumbs(); else window.openCatchForm();
+      }
     });
   };
 
-  window.openCatchForm = function(){
+  function renderCatchFormThumbs(){
     const box = document.getElementById('catchFormImages');
     box.innerHTML = catchDraftImages.map((img, idx) => `
       <div class="catch-thumb-wrap">
@@ -3309,6 +3351,10 @@
         <button type="button" class="catch-thumb-remove" onclick="window.removeCatchDraftImage(${idx})" aria-label="Remove photo">&times;</button>
       </div>
     `).join('');
+  }
+
+  window.openCatchForm = function(){
+    renderCatchFormThumbs();
     document.getElementById('catchFormNote').value = '';
     document.getElementById('catchFormLinkUrl').value = '';
     document.getElementById('catchFormLinkLabel').value = '';
@@ -3319,7 +3365,7 @@
   window.removeCatchDraftImage = function(idx){
     if(idx < 0 || idx >= catchDraftImages.length) return;
     catchDraftImages.splice(idx, 1);
-    window.openCatchForm();
+    renderCatchFormThumbs(); // keep note/link intact when removing a photo too
   };
 
   window.cancelCatchForm = function(){
