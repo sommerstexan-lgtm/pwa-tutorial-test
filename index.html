@@ -631,7 +631,7 @@
 <footer>
   Lesson 5 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v22</span>
+  <span style="opacity:0.6;font-size:11px;">Build v23</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -3544,6 +3544,12 @@
   // Native share sheet — the only reliable way from a web page to hand off
   // an actual photo file alongside text, letting the reader pick Mail,
   // Messages, or anything else already on their phone.
+  //
+  // TEST VARIANT (v23): the link is included in the shared text even when
+  // photos are present, to determine whether Messages/Gmail handle a
+  // files+text+link share reliably. Apple's native Mail has shown
+  // inconsistent multi-photo attachment behavior independent of the link,
+  // so it's being tested here but not being relied on for readers.
   window.shareCatchEntry = function(id){
     const entry = loadCatchEntries().find(e => e.id === id);
     if(!entry) return;
@@ -3552,14 +3558,8 @@
       const files = imgs.filter(Boolean).map((img, idx) => dataUrlToFile(img.dataUrl, 'catch-photo-' + (idx+1) + '.jpg'));
       const hasFiles = files.length > 0 && navigator.canShare && navigator.canShare({ files: files });
 
-      // A link inside the shared text gets auto-expanded into a rich
-      // preview card by Messages/Mail — and on iOS that preview appears to
-      // bump the photo attachments out of the share entirely. So the link
-      // is only added to the shared text when there are no photos riding
-      // along; when photos are present, the link is left out on purpose —
-      // it's still one tap away via Open on the Catch Detail screen.
       let text = entry.note || '';
-      if(entry.linkUrl && !hasFiles){
+      if(entry.linkUrl){
         text += (text ? '\n\n' : '') + (entry.linkLabel ? entry.linkLabel + ': ' : '') + entry.linkUrl;
       }
 
