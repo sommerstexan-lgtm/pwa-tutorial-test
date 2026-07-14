@@ -631,7 +631,7 @@
 <footer>
   Lesson 5 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v21</span>
+  <span style="opacity:0.6;font-size:11px;">Build v22</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -3550,12 +3550,22 @@
     const ids = (entry.images || []).map(i => i.id);
     Promise.all(ids.map(catchDbGetImage)).then(imgs => {
       const files = imgs.filter(Boolean).map((img, idx) => dataUrlToFile(img.dataUrl, 'catch-photo-' + (idx+1) + '.jpg'));
+      const hasFiles = files.length > 0 && navigator.canShare && navigator.canShare({ files: files });
+
+      // A link inside the shared text gets auto-expanded into a rich
+      // preview card by Messages/Mail — and on iOS that preview appears to
+      // bump the photo attachments out of the share entirely. So the link
+      // is only added to the shared text when there are no photos riding
+      // along; when photos are present, the link is left out on purpose —
+      // it's still one tap away via Open on the Catch Detail screen.
       let text = entry.note || '';
-      if(entry.linkUrl) text += (text ? '\n\n' : '') + (entry.linkLabel ? entry.linkLabel + ': ' : '') + entry.linkUrl;
-      const shareData = { title: 'My Catch', text: text };
-      if(files.length && navigator.canShare && navigator.canShare({ files: files })){
-        shareData.files = files;
+      if(entry.linkUrl && !hasFiles){
+        text += (text ? '\n\n' : '') + (entry.linkLabel ? entry.linkLabel + ': ' : '') + entry.linkUrl;
       }
+
+      const shareData = { title: 'My Catch', text: text };
+      if(hasFiles) shareData.files = files;
+
       if(navigator.share){
         navigator.share(shareData).catch(() => {});
       } else {
