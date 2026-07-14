@@ -359,16 +359,6 @@
   .settings-scroll{ flex:1; overflow-y:auto; padding:4px 16px 40px 16px; }
 
   /* ---- Gotcha (Lesson 5) ---- */
-  .gotcha-pill{
-    position:fixed; right:18px; bottom:calc(22px + env(safe-area-inset-bottom));
-    width:60px; height:60px; border-radius:50%; border:none;
-    background:#dc2626; color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 6px 18px rgba(220,38,38,0.45);
-    z-index:40; cursor:pointer;
-  }
-  .gotcha-pill .icon{ width:26px; height:26px; color:#fff; }
-  .gotcha-pill .icon svg{ width:100%; height:100%; display:block; }
 
   .gotcha-thumb-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
   .gotcha-thumb-wrap{ position:relative; width:74px; height:74px; }
@@ -650,7 +640,7 @@
 <footer>
   Lesson 5 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v28</span>
+  <span style="opacity:0.6;font-size:11px;">Build v29</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -871,10 +861,7 @@
   <div class="settings-scroll" id="gotchaDetailScroll"></div>
 </div>
 
-<!-- Gotcha — floating pill, available everywhere, and its hidden file input -->
-<button type="button" class="gotcha-pill" id="gotchaPill" onclick="window.triggerGotchaCapture()" aria-label="Gotcha — snap a photo or screenshot">
-  <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h2l1.4-2h5.2L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/></svg></span>
-</button>
+<!-- Gotcha — hidden file input, triggered from the dashboard tile or My Gotchas' own "+ New Gotcha" button -->
 <input type="file" id="gotchaFileInput" accept="image/*" multiple hidden onchange="window.handleGotchaFiles(this.files)">
 
 <!-- Inert button disclosure modal -->
@@ -923,7 +910,7 @@
     { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:false },
     { key:'appointment',  label:'Log Appointment', color:'#6366f1', active:false },
     { key:'planday',      label:'Plan My Day',     color:'#06b6d4', active:false },
-    { key:'gotcha',      label:'Gotcha',        color:'#8b5cf6', active:true  },
+    { key:'gotcha',      label:'Gotcha',        color:'#dc2626', active:true  },
   ];
 
   const DISCLOSURES = {
@@ -3318,9 +3305,10 @@
     return new File([u8arr], filename, { type: mime });
   }
 
-  // Tapping the pill (or the tile's own "+ New Gotcha" button) both funnel
-  // through here — the OS picker itself offers Camera or Photo Library, and
-  // supports selecting more than one photo at once from the library.
+  // Tapping the dashboard tile (or the "+ New Gotcha" button inside My
+  // Gotchas) both funnel through here — the OS picker itself offers Camera
+  // or Photo Library, and supports selecting more than one photo at once
+  // from the library.
   window.triggerGotchaCapture = function(){
     gotchaDraftImages = [];
     document.getElementById('gotchaFileInput').click();
@@ -3458,7 +3446,7 @@
     if(!filtered.length){
       container.innerHTML = '<div class="history-empty">' +
         (kw ? 'No gotchas match "' + escapeHtml(gotchaSearchKeyword) + '".'
-            : 'No gotchas yet. Tap the red pill anytime you want to save a photo, a note, or both — before it slips your mind.') +
+            : 'No gotchas yet. Tap the red Gotcha button anytime you want to save a photo, a note, or both — before it slips your mind.') +
         '</div>';
       return;
     }
