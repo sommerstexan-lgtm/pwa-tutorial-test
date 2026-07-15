@@ -680,7 +680,7 @@
 <footer>
   Lesson 6 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v31</span>
+  <span style="opacity:0.6;font-size:11px;">Build v32</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -2211,7 +2211,11 @@
 
     // Reset the form but leave the modal open, same feedback pattern as
     // Fluid/BP: toast + a brief highlight on the just-saved row.
-    sel.value = getSymptomList()[0] || '';
+    // Order matters here: rebuild the <option> list FIRST (it may now
+    // include a symptom just added), THEN set the value, THEN explicitly
+    // refresh the "known symptom" banner — setting .value in JS never
+    // fires onchange, so handleSymptomSelectChange() never runs on its
+    // own after a programmatic reset like this one.
     document.getElementById('newSymptomInput').style.display = 'none';
     document.getElementById('symptomNotes').value = '';
     document.getElementById('symptomTime').value = nowTimeString();
@@ -2220,6 +2224,8 @@
     selectedSymptomSeverity = 0;
     document.getElementById('severityDescriptor').textContent = '';
     renderSymptomSelectOptions();
+    sel.value = getSymptomList()[0] || '';
+    updateSymptomExpectedBanner(sel.value);
     renderSymptomHistoryTodayList(entry.id);
     const wasBackdated = entry._date !== todayKey();
     showToast(symptomName + ' logged' + (wasBackdated ? ' for ' + friendlyDate(entry._date) + '.' : '.'));
