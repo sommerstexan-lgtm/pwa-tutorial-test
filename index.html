@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 5 build-along app - single file PWA -->
+<!-- Today's Status — Lesson 6 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -152,6 +152,9 @@
     background:#fff;
     width:100%;
     max-width:440px;
+    max-height:90vh;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
     border-radius:20px 20px 0 0;
     padding:22px 20px 26px 20px;
     box-shadow:0 -4px 24px rgba(0,0,0,0.2);
@@ -417,6 +420,16 @@
   }
   .settings-field-label{ font-size:12.5px; color:var(--sub); font-weight:600; margin:10px 0 5px 0; }
   .settings-input-row{ display:flex; gap:8px; align-items:center; }
+  .condition-check-row{
+    display:flex; align-items:center; gap:10px; padding:8px 2px;
+    border-bottom:1px solid #f3f4f6; font-size:14px; color:#374151; cursor:pointer;
+  }
+  .condition-check-row input{ width:18px; height:18px; flex-shrink:0; }
+  .condition-custom-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#f9fafb; border:1px solid var(--line); border-radius:8px;
+    padding:8px 10px; margin-top:6px; font-size:14px;
+  }
   .settings-input-row input{
     flex:1; min-width:0; border:1.5px solid var(--line); border-radius:10px;
     padding:10px 10px; font-size:15px; text-align:center;
@@ -511,6 +524,11 @@
     padding:10px 10px; font-size:15px; background:#fff; font-family:inherit;
   }
   .med-form textarea{ resize:vertical; min-height:60px; line-height:1.4; }
+  .modal-input{
+    width:100%; border:1.5px solid var(--line); border-radius:10px;
+    padding:10px 10px; font-size:15px; background:#fff; font-family:inherit;
+    box-sizing:border-box; margin-top:2px;
+  }
   .med-date-row{ display:flex; gap:8px; }
   .med-date-row > div{ flex:1; }
   .med-stopped-badge{
@@ -523,6 +541,28 @@
     font-weight:700; font-size:14px; padding:9px; border-radius:10px; cursor:pointer;
   }
   .med-toggle-btn.active{ background:#1e293b; color:#fff; border-color:#1e293b; }
+
+  .severity-selector{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:6px; }
+  .severity-btn{
+    border:1.5px solid var(--line); background:#fff; color:var(--sub);
+    font-weight:700; font-size:15px; padding:10px 0; border-radius:8px; cursor:pointer;
+  }
+  .severity-btn.selected.sev-low{ background:#10b981; color:#fff; border-color:#10b981; }
+  .severity-btn.selected.sev-mid{ background:#f59e0b; color:#fff; border-color:#f59e0b; }
+  .severity-btn.selected.sev-high{ background:#dc2626; color:#fff; border-color:#dc2626; }
+  .severity-descriptor{
+    min-height:22px; margin-top:8px; font-size:14px; font-weight:700;
+    color:var(--sub); text-align:center;
+  }
+
+  .sc-tab-row{ display:flex; gap:8px; padding:12px 16px 0; }
+  .sc-tab-row .sort-btn{ flex:1; }
+
+  .freq-bar-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .freq-bar-label{ width:38%; font-size:12.5px; color:#374151; flex-shrink:0; }
+  .freq-bar-track{ flex:1; height:14px; background:#f3f4f6; border-radius:7px; overflow:hidden; }
+  .freq-bar-fill{ height:100%; background:#ec4899; border-radius:7px; }
+  .freq-bar-count{ width:22px; text-align:right; font-size:12.5px; font-weight:700; color:#374151; flex-shrink:0; }
   .med-stepper-row{ display:flex; align-items:center; gap:10px; }
   .med-stepper-btn{
     width:44px; height:44px; border-radius:10px; border:1.5px solid var(--line);
@@ -638,9 +678,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 5 of the build-along series.<br>
+  Lesson 6 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v29</span>
+  <span style="opacity:0.6;font-size:11px;">Build v31</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -738,6 +778,86 @@
     <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.closeMedicineModal();window.openSettings();window.jumpToMedSettings();">Manage Medications</button>
     <button class="modal-btn secondary" style="width:100%" onclick="window.closeMedicineModal()">Close</button>
   </div>
+</div>
+
+<div class="overlay" id="symptomOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#ec4899"></span>
+      Log Symptom
+    </div>
+
+    <div class="med-field-label" style="margin-top:0;">Symptom</div>
+    <select class="med-log-select" id="symptomSelect" onchange="window.handleSymptomSelectChange()"></select>
+    <div id="newSymptomInput" style="display:none;margin-top:8px;">
+      <input type="text" id="newSymptomName" placeholder="Type the symptom" class="modal-input">
+    </div>
+
+    <div id="symptomExpectedBanner" style="display:none;margin-top:12px;padding:10px 12px;background:#f0f9ff;border:2px solid #3b82f6;border-radius:8px;">
+      <label style="display:flex;align-items:center;cursor:pointer;">
+        <input type="checkbox" id="symptomExpected" style="width:20px;height:20px;margin-right:10px;">
+        <div style="flex:1;">
+          <span id="symptomExpectedLabel" style="font-size:14px;font-weight:600;color:#1e3a8a;">Known symptom of my condition</span>
+          <div id="symptomExpectedSub" style="font-size:12px;color:#6b7280;margin-top:2px;"></div>
+        </div>
+      </label>
+    </div>
+
+    <div class="med-field-label">How severe? <span style="font-size:12px;font-weight:400;color:var(--sub);">(tap a number)</span></div>
+    <div class="severity-selector" id="severitySelector"></div>
+    <div id="severityDescriptor" class="severity-descriptor"></div>
+
+    <div class="med-field-label">Notes (optional)</div>
+    <input type="text" id="symptomNotes" class="modal-input" placeholder="Anything worth remembering">
+
+    <div id="symptomConditionRow" style="display:none;margin-top:10px;">
+      <div class="med-field-label" style="margin-top:0;">Related condition <span style="font-size:12px;font-weight:400;color:var(--sub);">(optional)</span></div>
+      <select class="med-log-select" id="symptomConditionSelect"></select>
+    </div>
+
+    <div class="med-log-time-row" style="margin-top:10px;">
+      <label for="symptomDate" style="font-size:12px;color:var(--sub);font-weight:600;">Date</label>
+      <input type="date" id="symptomDate">
+      <label for="symptomTime" style="font-size:12px;color:var(--sub);font-weight:600;">Time</label>
+      <input type="time" id="symptomTime">
+    </div>
+
+    <div class="bp-error" id="symptomError" hidden></div>
+    <button class="modal-btn primary" style="width:100%;margin-top:12px;margin-bottom:18px;" onclick="window.submitSymptom()">Save Symptom</button>
+
+    <div class="bp-history-label">Today's Logged Symptoms</div>
+    <div class="bp-history-list" id="symptomHistoryTodayList"></div>
+
+    <button class="modal-btn secondary" style="width:100%;margin-bottom:10px;" onclick="window.openSymptomHistory()">View Symptom History</button>
+    <button class="modal-btn secondary" style="width:100%" onclick="window.closeSymptomModal()">Close</button>
+  </div>
+</div>
+
+<div class="graph-overlay" id="symptomHistoryOverlay" hidden>
+  <div class="graph-header">
+    <button class="graph-back" onclick="window.closeSymptomHistory()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">Symptom History</span>
+    <button class="graph-close" onclick="window.closeSymptomHistory()" aria-label="Close">&times;</button>
+  </div>
+  <div class="sc-tab-row">
+    <button class="sort-btn active" id="symHistTabList" onclick="window.setSymptomHistoryView('list')">List</button>
+    <button class="sort-btn" id="symHistTabFreq" onclick="window.setSymptomHistoryView('freq')">Frequency</button>
+  </div>
+  <div style="padding:10px 16px 0;">
+    <input type="text" id="symptomHistorySearchBox" class="modal-input" placeholder="🔍 Search symptoms or notes..." oninput="window.filterSymptomHistory(this.value)">
+  </div>
+  <div class="sort-row" style="padding:10px 16px 0;">
+    <span class="sort-label">Sort:</span>
+    <button class="sort-btn active" id="symHistSortNewest" onclick="window.setSymptomHistorySort('newest')">Newest</button>
+    <button class="sort-btn" id="symHistSortOldest" onclick="window.setSymptomHistorySort('oldest')">Oldest</button>
+  </div>
+  <div style="padding:10px 16px 10px;">
+    <select class="med-log-select" id="symptomHistoryFilter" onchange="window.renderSymptomHistory()">
+      <option value="">All symptoms</option>
+    </select>
+  </div>
+  <div id="symHistListSection" style="padding:0 16px 20px;"></div>
+  <div id="symHistFreqSection" style="padding:0 16px 20px;display:none;"></div>
 </div>
 
 <!-- Trend graph — full-screen, shared by Fluid and BP so both cards behave identically -->
@@ -906,7 +1026,7 @@
     { key:'fluid',        label:'Log Fluid',       color:'#3b82f6', active:true  },
     { key:'medicine',     label:'Log Medicine',    color:'#f59e0b', active:true  },
     { key:'weight',       label:'Log Weight',      color:'#f97316', active:false },
-    { key:'symptoms',     label:'Log Symptoms',    color:'#ec4899', active:false },
+    { key:'symptoms',     label:'Log Symptoms',    color:'#ec4899', active:true  },
     { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:false },
     { key:'appointment',  label:'Log Appointment', color:'#6366f1', active:false },
     { key:'planday',      label:'Plan My Day',     color:'#06b6d4', active:false },
@@ -922,10 +1042,6 @@
       title:'Log Weight',
       body:"This button will log your weight. By the time you finish this course, it'll watch for sudden shifts that can signal fluid retention, days before it's visible or uncomfortable."
     },
-    symptoms: {
-      title:'Log Symptoms',
-      body:"This button will log how you're feeling, in your own words. By the time you finish this course, it'll surface which symptoms cluster together and when — patterns a single office visit is too short to ever catch."
-    },
     activity: {
       title:'Log Activity',
       body:"This button will log your movement and exertion. By the time you finish this course, it'll connect activity to how your body actually responds afterward, not just how many steps you took."
@@ -940,6 +1056,71 @@
     },
   };
 
+  // ---- Symptoms (Lesson 6) ----
+  // Generic symptoms available no matter which conditions are configured.
+  const PREDEFINED_SYMPTOMS = [
+    'Chest Pain/Discomfort','Dizziness/Lightheadedness','Fatigue/Weakness',
+    'Nausea','Palpitations','Shortness of Breath','Swelling (Legs/Feet/Ankles)'
+  ];
+
+  // Condition -> commonly-logged symptoms. This is a convenience list for
+  // faster logging, not a diagnostic claim — the same symptom can appear
+  // under several conditions, and nothing here suggests what a symptom
+  // means. What happened and when is for your doctor to interpret.
+  const CONDITION_SYMPTOMS = {
+    'Atrial Fibrillation': ['Heart Fluttering','Irregular Pulse Awareness','Palpitations','Sudden Fatigue Episodes'],
+    'Arrhythmia': ['Chest Flutter/Flip Sensation','Heart Fluttering','Palpitations','Skipped Beats'],
+    'CHF': ['Congestive Cough','Decreased Urine Output','Orthopnea (Breathless When Lying Flat)','Sudden Weight Gain (Fluid)'],
+    'Heart Failure': ['Congestive Cough','Decreased Urine Output','Orthopnea (Breathless When Lying Flat)','Sudden Weight Gain (Fluid)'],
+    'Cardiomyopathy': ['Chest Tightness','Exercise Intolerance','Fatigue After Minimal Exertion','Shortness of Breath on Exertion'],
+    'Heart Valve Disease': ['Chest Tightness on Exertion','Exercise Intolerance','Heart Murmur Awareness','Shortness of Breath on Exertion'],
+    'Coronary Artery Disease': ['Chest Tightness/Pressure','Exertional Chest Pain','Jaw or Arm Discomfort','Shortness of Breath on Exertion'],
+    'Bradycardia': ['Cold Extremities','Fatigue on Exertion','Presyncope (Near-Fainting)','Slow Pulse Awareness'],
+    'Tachycardia': ['Chest Discomfort During Episode','Palpitations','Racing Heart Episodes','Sudden Anxiety/Jitteriness'],
+    'Hypertension': ['Blurred Vision','Morning Headache','Neck/Shoulder Tension','Nosebleed'],
+    'Orthostatic Hypotension': ['Blacking Out on Standing','Leg Weakness on Standing','Standing Lightheadedness','Vision Graying on Standing'],
+    'Pacemaker/ICD': ['Device Site Discomfort','Palpitations','Presyncope (Near-Fainting)','Skipped Beats']
+  };
+  const MASTER_CONDITIONS = Object.keys(CONDITION_SYMPTOMS);
+
+  // Reliable match between a stored (possibly free-typed) condition string
+  // and a CONDITION_SYMPTOMS key — exact, substring either direction, or
+  // word-overlap — so a custom entry like "Congestive Heart Failure (CHF)"
+  // still inherits the CHF symptom list.
+  function conditionKeyMatch(cond, key){
+    const cn = cond.toLowerCase().replace(/[()/]/g,' ').replace(/\s+/g,' ').trim();
+    const kn = key.toLowerCase().replace(/[()/]/g,' ').replace(/\s+/g,' ').trim();
+    if(cn === kn) return true;
+    if(cn.indexOf(kn) !== -1 || kn.indexOf(cn) !== -1) return true;
+    const kWords = kn.split(' ').filter(w => w.length > 2);
+    const cWords = cn.split(' ').filter(w => w.length > 2);
+    return kWords.length > 0 && kWords.every(w => cWords.indexOf(w) !== -1);
+  }
+
+  // Full picker for the Log Symptom screen: predefined + everything mapped
+  // to the reader's conditions (checked + custom, fuzzy-matched) + anything
+  // they've personally typed before.
+  function getSymptomList(){
+    const s = loadSettings();
+    const allConditions = (s.conditions || []).concat(s.customConditions || []);
+    const condSymptoms = [];
+    allConditions.forEach(cond => {
+      Object.keys(CONDITION_SYMPTOMS).forEach(key => {
+        if(conditionKeyMatch(cond, key)) condSymptoms.push(...CONDITION_SYMPTOMS[key]);
+      });
+    });
+    const merged = [...new Set([...PREDEFINED_SYMPTOMS, ...condSymptoms, ...(s.customSymptoms || [])])];
+    return merged.sort((a,b) => a.localeCompare(b));
+  }
+
+  function isSymptomConditionMatch(symptomName){
+    const s = loadSettings();
+    const allConditions = (s.conditions || []).concat(s.customConditions || []);
+    return allConditions.some(cond =>
+      Object.keys(CONDITION_SYMPTOMS).some(key =>
+        conditionKeyMatch(cond, key) && CONDITION_SYMPTOMS[key].indexOf(symptomName) !== -1));
+  }
+
   // ---- Settings: defaults, storage, and static info-popup content ----
   const DEFAULT_SETTINGS = {
     fluidGoalOz: 64,
@@ -947,7 +1128,10 @@
     bpDiaMin: 60, bpDiaMax: 80,
     hrMin: 60, hrMax: 100,
     githubRepoPath: '',
-    backupEmail: ''
+    backupEmail: '',
+    conditions: [],
+    customConditions: [],
+    customSymptoms: []
   };
 
   function loadSettings(){
@@ -975,6 +1159,21 @@
     '4-6': { startHr:4, endHr:6, label:'4–6 hours after' }
   };
   const MED_MISSED_GRACE_MIN = 90; // minutes past an expected time before a dose counts as "Missed"
+
+  // Symptoms are a standing history list, like Medications — not day-scoped
+  // like BP/Fluid — because Symptom History needs to trend across weeks,
+  // not just show today.
+  function loadSymptoms(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_symptoms');
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch(e){ return []; }
+  }
+
+  function saveSymptomsList(list){
+    localStorage.setItem('todaysStatus_symptoms', JSON.stringify(list));
+  }
 
   function loadMedications(){
     try{
@@ -1103,6 +1302,10 @@
       title:'GitHub Quick Links',
       body:"How to use it: paste in your GitHub repo path once. What it unlocks: one-tap links to your live app and to GitHub's own web editor for each file, so pasting in a new lesson's code takes one tap to get to the right place instead of hunting for it. If you skip it: everything still works, you'll just navigate to GitHub manually each time."
     },
+    conditions: {
+      title:'Cardiac Conditions',
+      body:"How to use it: check off any diagnosed conditions from the list, or add your own if you don't see it — up to 5 custom entries. What it unlocks: Log Symptoms builds your symptom picker from your conditions automatically, and pre-checks a symptom as \"known\" when it's typical for what you've selected. This app never diagnoses or suggests what a symptom means — it just organizes what you log so it's easier to bring to your doctor. If you skip it: Log Symptoms still works with a general symptom list, it just won't be tailored to your specific conditions."
+    },
     appUpdates: {
       title:'App Updates',
       body:"How to use it: there's nothing to set here — this app checks for a new version automatically every time you open it while online. What it unlocks: you always see the current version without an app store or a manual update step. If you skip reading this: the only thing you might miss is knowing what to do on the rare occasion a new version doesn't show up on the very first reopen — close the app fully and try again, and if it still hasn't shown up after a couple of tries, remove and re-add the Home Screen icon."
@@ -1123,7 +1326,11 @@
     { category:'Medications', question:"How does the before/after bracket on the Medication Timeline work?",
       answer:"\"Before\" is the closest BP or heart rate reading you logged before the dose. \"After\" is the closest reading that falls inside that medication's peak-effect window — the time range, set in Settings, when the medication's effect is expected to be strongest. This mirrors how clinical trials evaluate blood pressure medications, rather than picking an arbitrary fixed number of hours for every drug." },
     { category:'Medications', question:"Why does a dose sometimes show \"no reading in window\"?",
-      answer:"It means you didn't log a BP or heart rate reading during that medication's peak-effect window for that dose. The app won't substitute a reading from outside the window, because that reading wouldn't actually reflect the medication's effect — it would just look like it does. Log a reading during the window next time to fill it in." }
+      answer:"It means you didn't log a BP or heart rate reading during that medication's peak-effect window for that dose. The app won't substitute a reading from outside the window, because that reading wouldn't actually reflect the medication's effect — it would just look like it does. Log a reading during the window next time to fill it in." },
+    { category:'Symptoms', question:"What does the \"Known symptom of my condition\" checkbox mean?",
+      answer:"It's pre-checked automatically when the symptom you picked is one commonly associated with a condition you've added in Settings. It's just a convenience flag for organizing your history and your Doctor's Report — it isn't the app telling you what's wrong, and you can always change it." },
+    { category:'Symptoms', question:"I don't see my condition in the list — what do I do?",
+      answer:"Go to Settings → Cardiac Conditions and type it into the custom field (up to 5). If your wording is close to a condition the app already recognizes — like \"Congestive Heart Failure\" for CHF — it'll still pull in that condition's usual symptom list automatically." }
   ];
 
   function formatDateKey(d){
@@ -1152,6 +1359,17 @@
   function timeStringToTimestamp(timeStr){
     const parts = timeStr.split(':').map(Number);
     const d = new Date();
+    d.setHours(parts[0], parts[1], 0, 0);
+    return d.getTime();
+  }
+
+  // Date-aware version — used by Log Symptoms so readers can backdate an
+  // entry to when it actually happened, not just "now." dateStr is
+  // 'YYYY-MM-DD'; falls back to today if omitted (keeps BP/Fluid/Medicine,
+  // which don't pass a date, working exactly as before).
+  function dateTimeStringToTimestamp(dateStr, timeStr){
+    const parts = timeStr.split(':').map(Number);
+    const d = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
     d.setHours(parts[0], parts[1], 0, 0);
     return d.getTime();
   }
@@ -1802,6 +2020,395 @@
   window.cancelEditMedEntry = function(){
     renderMedHistory();
   };
+
+  // ---- Symptoms (Lesson 6) ----
+
+  let selectedSymptomSeverity = 0;
+  const SEVERITY_DESCRIPTORS = {
+    1:'Barely noticeable', 2:'Mild', 3:'Mild', 4:'Noticeable', 5:'Moderate',
+    6:'Moderate', 7:'Uncomfortable', 8:'Significant', 9:'Severe', 10:'Worst — seek care if unsure'
+  };
+
+  function renderSeveritySelector(){
+    const box = document.getElementById('severitySelector');
+    let html = '';
+    for(let i=1;i<=10;i++) html += `<button type="button" class="severity-btn" id="severityBtn${i}" onclick="window.selectSeverity(${i})">${i}</button>`;
+    box.innerHTML = html;
+  }
+
+  window.selectSeverity = function(level){
+    selectedSymptomSeverity = level;
+    for(let i=1;i<=10;i++){
+      const btn = document.getElementById('severityBtn' + i);
+      btn.classList.remove('selected','sev-low','sev-mid','sev-high');
+      if(i === level){
+        btn.classList.add('selected');
+        btn.classList.add(level <= 3 ? 'sev-low' : level <= 6 ? 'sev-mid' : 'sev-high');
+      }
+    }
+    document.getElementById('severityDescriptor').textContent = level + ' — ' + SEVERITY_DESCRIPTORS[level];
+  };
+
+  function renderSymptomSelectOptions(){
+    const sel = document.getElementById('symptomSelect');
+    const list = getSymptomList();
+    sel.innerHTML = list.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')
+      + '<option value="__NEW__">+ Add a new symptom</option>';
+  }
+
+  window.handleSymptomSelectChange = function(){
+    const sel = document.getElementById('symptomSelect');
+    const newInput = document.getElementById('newSymptomInput');
+    if(sel.value === '__NEW__'){
+      newInput.style.display = 'block';
+      setTimeout(() => document.getElementById('newSymptomName').focus(), 50);
+      document.getElementById('symptomExpectedBanner').style.display = 'none';
+      return;
+    }
+    newInput.style.display = 'none';
+    updateSymptomExpectedBanner(sel.value);
+  };
+
+  function updateSymptomExpectedBanner(symptomName){
+    const banner = document.getElementById('symptomExpectedBanner');
+    const chk = document.getElementById('symptomExpected');
+    const lbl = document.getElementById('symptomExpectedLabel');
+    const sub = document.getElementById('symptomExpectedSub');
+    const s = loadSettings();
+    const hasConditions = (s.conditions.length + s.customConditions.length) > 0;
+    if(!hasConditions || !symptomName){ banner.style.display = 'none'; return; }
+    banner.style.display = 'block';
+    if(isSymptomConditionMatch(symptomName)){
+      chk.checked = true;
+      lbl.textContent = 'Known symptom of my condition';
+      sub.textContent = symptomName + ' is in your condition list — pre-checked as expected.';
+    } else {
+      chk.checked = false;
+      lbl.textContent = 'Known symptom of my condition?';
+      sub.textContent = 'Check this if this symptom is typical for your diagnosis.';
+    }
+  }
+
+  function renderSymptomConditionSelect(){
+    const s = loadSettings();
+    const allConditions = [...new Set([...(s.conditions||[]), ...(s.customConditions||[])])];
+    const row = document.getElementById('symptomConditionRow');
+    if(allConditions.length === 0){ row.style.display = 'none'; return; }
+    row.style.display = 'block';
+    const sel = document.getElementById('symptomConditionSelect');
+    sel.innerHTML = '<option value="">-- Optional --</option>' +
+      allConditions.sort((a,b)=>a.localeCompare(b)).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  }
+
+  function renderSymptomHistoryTodayList(highlightId){
+    const all = loadSymptoms();
+    const today = todayKey();
+    const entries = all.filter(e => e._date === today).sort((a,b) => b.timestamp - a.timestamp);
+    const list = document.getElementById('symptomHistoryTodayList');
+    if(!entries.length){
+      list.innerHTML = '<div class="bp-history-empty">No symptoms logged yet today.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(e => {
+      const highlightClass = (highlightId != null && e.id === highlightId) ? ' just-saved' : '';
+      const timeStr = new Date(e.timestamp).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      return `<div class="entry-row${highlightClass}" data-id="${e.id}">
+        <div>
+          <span class="entry-reading">${escapeHtml(e.symptom)} · Sev ${e.severity}/10</span>
+          <span class="entry-time">${timeStr}${e.condition ? ' · ' + escapeHtml(e.condition) : ''}</span>
+        </div>
+        <div class="entry-actions">
+          <button class="entry-edit-btn" onclick="window.startEditSymptomEntry(${e.id},'today')" aria-label="Edit symptom">&#9998;</button>
+          <button class="entry-del-btn" onclick="window.deleteSymptomEntry(${e.id})" aria-label="Delete symptom">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.openSymptomModal = function(){
+    renderSymptomSelectOptions();
+    document.getElementById('newSymptomInput').style.display = 'none';
+    document.getElementById('newSymptomName').value = '';
+    document.getElementById('symptomNotes').value = '';
+    document.getElementById('symptomTime').value = nowTimeString();
+    const symptomDateInput = document.getElementById('symptomDate');
+    symptomDateInput.value = todayKey();
+    symptomDateInput.max = todayKey();
+    document.getElementById('symptomError').hidden = true;
+    renderSeveritySelector();
+    selectedSymptomSeverity = 0;
+    document.getElementById('severityDescriptor').textContent = '';
+    renderSymptomConditionSelect();
+    updateSymptomExpectedBanner(document.getElementById('symptomSelect').value);
+    renderSymptomHistoryTodayList();
+    document.getElementById('symptomOverlay').hidden = false;
+  };
+
+  window.closeSymptomModal = function(){
+    document.getElementById('symptomOverlay').hidden = true;
+  };
+
+  window.submitSymptom = function(){
+    const sel = document.getElementById('symptomSelect');
+    const errorEl = document.getElementById('symptomError');
+    let symptomName = sel.value;
+    if(symptomName === '__NEW__'){
+      symptomName = document.getElementById('newSymptomName').value.trim();
+      if(!symptomName){
+        errorEl.textContent = 'Type the symptom name.';
+        errorEl.hidden = false;
+        return;
+      }
+    }
+    if(!selectedSymptomSeverity){
+      errorEl.textContent = 'Tap a severity number, 1–10.';
+      errorEl.hidden = false;
+      return;
+    }
+    const timeInput = document.getElementById('symptomTime');
+    const dateInput = document.getElementById('symptomDate');
+    if(!dateInput.value){
+      errorEl.textContent = 'Enter the date.';
+      errorEl.hidden = false;
+      dateInput.focus();
+      return;
+    }
+    if(dateInput.value > todayKey()){
+      errorEl.textContent = "Date can't be in the future.";
+      errorEl.hidden = false;
+      dateInput.focus();
+      return;
+    }
+    if(!timeInput.value){
+      errorEl.textContent = 'Enter the time.';
+      errorEl.hidden = false;
+      timeInput.focus();
+      return;
+    }
+    errorEl.hidden = true;
+
+    // Remember a genuinely new symptom for future quick-select.
+    const s = loadSettings();
+    if(getSymptomList().indexOf(symptomName) === -1){
+      s.customSymptoms = [...(s.customSymptoms || []), symptomName];
+      saveSettingsObj(s);
+    }
+
+    const conditionSel = document.getElementById('symptomConditionSelect');
+    const entry = {
+      id: Date.now(),
+      symptom: symptomName,
+      severity: selectedSymptomSeverity,
+      notes: document.getElementById('symptomNotes').value.trim(),
+      condition: (conditionSel && conditionSel.value) || '',
+      expected: document.getElementById('symptomExpected').checked,
+      timestamp: dateTimeStringToTimestamp(dateInput.value, timeInput.value),
+      _date: dateInput.value
+    };
+    const list = loadSymptoms();
+    list.push(entry);
+    saveSymptomsList(list);
+
+    // Reset the form but leave the modal open, same feedback pattern as
+    // Fluid/BP: toast + a brief highlight on the just-saved row.
+    sel.value = getSymptomList()[0] || '';
+    document.getElementById('newSymptomInput').style.display = 'none';
+    document.getElementById('symptomNotes').value = '';
+    document.getElementById('symptomTime').value = nowTimeString();
+    document.getElementById('symptomDate').value = todayKey();
+    window.selectSeverity(0);
+    selectedSymptomSeverity = 0;
+    document.getElementById('severityDescriptor').textContent = '';
+    renderSymptomSelectOptions();
+    renderSymptomHistoryTodayList(entry.id);
+    const wasBackdated = entry._date !== todayKey();
+    showToast(symptomName + ' logged' + (wasBackdated ? ' for ' + friendlyDate(entry._date) + '.' : '.'));
+  };
+
+  window.deleteSymptomEntry = function(id){
+    const list = loadSymptoms().filter(e => e.id !== id);
+    saveSymptomsList(list);
+    renderSymptomHistoryTodayList();
+    if(!document.getElementById('symptomHistoryOverlay').hidden) window.renderSymptomHistory();
+    showToast('Symptom entry deleted.');
+  };
+
+  // Inline edit — same row-swap pattern used by BP/Fluid/Medicine. `context`
+  // is 'today' or 'history' so Save/Cancel know which list to re-render.
+  window.startEditSymptomEntry = function(id, context){
+    const entry = loadSymptoms().find(e => e.id === id);
+    if(!entry) return;
+    const selector = context === 'today'
+      ? '#symptomHistoryTodayList .entry-row[data-id="' + id + '"]'
+      : '#symHistListSection .entry-row[data-id="' + id + '"]';
+    const row = document.querySelector(selector);
+    if(!row) return;
+    const symptomOptions = getSymptomList().map(s =>
+      `<option value="${escapeHtml(s)}"${s === entry.symptom ? ' selected' : ''}>${escapeHtml(s)}</option>`
+    ).join('');
+    const severityOptions = Array.from({length:10}, (_,i) => i+1).map(n =>
+      `<option value="${n}"${n === entry.severity ? ' selected' : ''}>${n} — ${SEVERITY_DESCRIPTORS[n]}</option>`
+    ).join('');
+    const d = new Date(entry.timestamp);
+    const dateVal = entry._date || todayKey();
+    const timeVal = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    row.innerHTML = `<div class="bp-edit-row">
+      <div class="bp-edit-fields" style="flex-direction:column;gap:6px;">
+        <select id="symEditSymptom_${id}" class="med-log-select">${symptomOptions}</select>
+        <select id="symEditSeverity_${id}" class="med-log-select">${severityOptions}</select>
+        <div style="display:flex;gap:6px;">
+          <input type="date" id="symEditDate_${id}" value="${dateVal}" max="${todayKey()}" style="flex:1;">
+          <input type="time" id="symEditTime_${id}" value="${timeVal}" style="flex:1;">
+        </div>
+        <input type="text" id="symEditNotes_${id}" class="modal-input" placeholder="Notes (optional)" value="${escapeHtml(entry.notes || '')}">
+      </div>
+      <div class="bp-edit-actions">
+        <button class="entry-save-btn" onclick="window.saveEditSymptomEntry(${id},'${context}')">Save</button>
+        <button class="entry-cancel-btn" onclick="window.cancelEditSymptomEntry('${context}')">Cancel</button>
+      </div>
+    </div>`;
+  };
+
+  window.saveEditSymptomEntry = function(id, context){
+    const symptomSel = document.getElementById('symEditSymptom_' + id);
+    const severitySel = document.getElementById('symEditSeverity_' + id);
+    const dateInput = document.getElementById('symEditDate_' + id);
+    const timeInput = document.getElementById('symEditTime_' + id);
+    const notesInput = document.getElementById('symEditNotes_' + id);
+    if(!dateInput.value || !timeInput.value){ return; }
+    const list = loadSymptoms();
+    const entry = list.find(e => e.id === id);
+    if(entry){
+      entry.symptom = symptomSel.value;
+      entry.severity = parseInt(severitySel.value, 10);
+      entry.notes = notesInput.value.trim();
+      entry.timestamp = dateTimeStringToTimestamp(dateInput.value, timeInput.value);
+      entry._date = dateInput.value;
+      saveSymptomsList(list);
+    }
+    window.cancelEditSymptomEntry(context);
+    showToast('Symptom entry updated.');
+  };
+
+  window.cancelEditSymptomEntry = function(context){
+    if(context === 'today') renderSymptomHistoryTodayList();
+    else window.renderSymptomHistory();
+  };
+
+  // ---- Symptom History screen ----
+
+  let symptomHistoryView = 'list';
+  let symptomHistorySearch = '';
+  let symptomHistorySort = 'newest';
+
+  window.openSymptomHistory = function(){
+    const filter = document.getElementById('symptomHistoryFilter');
+    const names = [...new Set(loadSymptoms().map(e => e.symptom))].sort((a,b)=>a.localeCompare(b));
+    filter.innerHTML = '<option value="">All symptoms</option>' + names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    symptomHistoryView = 'list';
+    symptomHistorySearch = '';
+    symptomHistorySort = 'newest';
+    document.getElementById('symptomHistorySearchBox').value = '';
+    document.getElementById('symHistSortNewest').classList.add('active');
+    document.getElementById('symHistSortOldest').classList.remove('active');
+    window.setSymptomHistoryView('list');
+    document.getElementById('symptomHistoryOverlay').hidden = false;
+  };
+
+  window.filterSymptomHistory = function(val){
+    symptomHistorySearch = (val || '').toLowerCase();
+    window.renderSymptomHistory();
+  };
+
+  window.setSymptomHistorySort = function(order){
+    symptomHistorySort = order;
+    document.getElementById('symHistSortNewest').classList.toggle('active', order === 'newest');
+    document.getElementById('symHistSortOldest').classList.toggle('active', order === 'oldest');
+    window.renderSymptomHistory();
+  };
+
+  window.closeSymptomHistory = function(){
+    document.getElementById('symptomHistoryOverlay').hidden = true;
+  };
+
+  window.setSymptomHistoryView = function(view){
+    symptomHistoryView = view;
+    document.getElementById('symHistTabList').classList.toggle('active', view === 'list');
+    document.getElementById('symHistTabFreq').classList.toggle('active', view === 'freq');
+    document.getElementById('symHistListSection').style.display = view === 'list' ? 'block' : 'none';
+    document.getElementById('symHistFreqSection').style.display = view === 'freq' ? 'block' : 'none';
+    window.renderSymptomHistory();
+  };
+
+  window.renderSymptomHistory = function(){
+    const filterVal = document.getElementById('symptomHistoryFilter').value;
+    let entries = loadSymptoms().slice().sort((a,b) => symptomHistorySort === 'newest' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
+    if(filterVal) entries = entries.filter(e => e.symptom === filterVal);
+    if(symptomHistorySearch){
+      entries = entries.filter(e =>
+        e.symptom.toLowerCase().indexOf(symptomHistorySearch) !== -1 ||
+        (e.notes || '').toLowerCase().indexOf(symptomHistorySearch) !== -1);
+    }
+
+    if(symptomHistoryView === 'list'){
+      const box = document.getElementById('symHistListSection');
+      if(!entries.length){
+        box.innerHTML = `<div class="bp-history-empty">${(symptomHistorySearch || filterVal) ? 'No symptoms match this search/filter.' : 'No symptoms logged yet.'}</div>`;
+        return;
+      }
+      box.innerHTML = entries.map(e => {
+        const d = new Date(e.timestamp);
+        const dateStr = d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+        const timeStr = d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+        return `<div class="entry-row" data-id="${e.id}" style="margin-bottom:8px;">
+          <div>
+            <span class="entry-reading">${escapeHtml(e.symptom)} · Sev ${e.severity}/10</span>
+            <span class="entry-time">${dateStr}, ${timeStr}${e.condition ? ' · ' + escapeHtml(e.condition) : ''}</span>
+            ${e.notes ? `<div style="font-size:12.5px;color:var(--sub);margin-top:2px;">${escapeHtml(e.notes)}</div>` : ''}
+          </div>
+          <div class="entry-actions">
+            <button class="entry-edit-btn" onclick="window.startEditSymptomEntry(${e.id},'history')" aria-label="Edit symptom">&#9998;</button>
+            <button class="entry-del-btn" onclick="window.deleteSymptomEntry(${e.id})" aria-label="Delete symptom">&times;</button>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      renderSymptomFrequencyBars(entries);
+    }
+  };
+
+  function renderSymptomFrequencyBars(entries){
+    const box = document.getElementById('symHistFreqSection');
+    if(!entries.length){
+      box.innerHTML = '<div class="bp-history-empty">No symptoms logged yet.</div>';
+      return;
+    }
+    const msDay = 24*60*60*1000;
+    const now = Date.now();
+    const windows = [ {label:'Last 7 Days', ms:7*msDay}, {label:'Last 30 Days', ms:30*msDay} ];
+    let html = '';
+    windows.forEach(w => {
+      const inWindow = entries.filter(e => (now - e.timestamp) <= w.ms);
+      const counts = {};
+      inWindow.forEach(e => { counts[e.symptom] = (counts[e.symptom] || 0) + 1; });
+      const rows = Object.keys(counts).sort((a,b) => counts[b]-counts[a]);
+      const maxCount = rows.length ? counts[rows[0]] : 1;
+      html += `<div class="settings-field-label" style="margin-top:${w.label==='Last 7 Days'?'0':'18px'};">${w.label}</div>`;
+      if(!rows.length){
+        html += '<div class="bp-history-empty">No symptoms in this window.</div>';
+        return;
+      }
+      rows.forEach(name => {
+        const pct = Math.max(8, Math.round((counts[name]/maxCount)*100));
+        html += `<div class="freq-bar-row">
+          <div class="freq-bar-label">${escapeHtml(name)}</div>
+          <div class="freq-bar-track"><div class="freq-bar-fill" style="width:${pct}%"></div></div>
+          <div class="freq-bar-count">${counts[name]}</div>
+        </div>`;
+      });
+    });
+    box.innerHTML = html;
+  }
 
   // ---- Trend graphs: shared by Fluid and BP so both cards behave identically ----
 
@@ -2618,6 +3225,62 @@
   let _medFormFoodValue = false;
   let _medFormEditingId = null;
 
+  function renderConditionsCheckboxes(s){
+    return MASTER_CONDITIONS.map(c => {
+      const checked = (s.conditions || []).indexOf(c) !== -1;
+      return `<label class="condition-check-row">
+        <input type="checkbox" ${checked ? 'checked' : ''} onchange="window.toggleCondition('${c.replace(/'/g,"\\'")}')">
+        <span>${escapeHtml(c)}</span>
+      </label>`;
+    }).join('');
+  }
+
+  function renderCustomConditionsList(s){
+    const customs = s.customConditions || [];
+    let html = customs.map(c => `<div class="condition-custom-row">
+        <span>${escapeHtml(c)}</span>
+        <button class="entry-del-btn" onclick="window.removeCustomCondition('${c.replace(/'/g,"\\'")}')" aria-label="Remove condition">&times;</button>
+      </div>`).join('');
+    if(customs.length < 5){
+      html += `<div style="margin-top:10px;">
+        <input type="text" id="newCustomCondition" placeholder="Don't see yours? Type it here" style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:9px;box-sizing:border-box;">
+        <button class="settings-save-btn" onclick="window.addCustomCondition()">Add Condition</button>
+      </div>`;
+    } else {
+      html += '<div class="settings-hint">Custom condition limit reached (5).</div>';
+    }
+    return html;
+  }
+
+  window.toggleCondition = function(name){
+    const s = loadSettings();
+    const idx = (s.conditions || []).indexOf(name);
+    if(idx === -1) s.conditions = [...(s.conditions||[]), name];
+    else s.conditions = s.conditions.filter(c => c !== name);
+    saveSettingsObj(s);
+  };
+
+  window.addCustomCondition = function(){
+    const input = document.getElementById('newCustomCondition');
+    const val = input.value.trim();
+    if(!val) return;
+    const s = loadSettings();
+    if(!s.customConditions) s.customConditions = [];
+    if(s.customConditions.length >= 5){ showToast('Custom condition limit reached (5).'); return; }
+    if(s.customConditions.indexOf(val) !== -1){ showToast('Already added.'); return; }
+    s.customConditions.push(val);
+    saveSettingsObj(s);
+    document.getElementById('customConditionsBox').innerHTML = renderCustomConditionsList(s);
+    showToast(val + ' added.');
+  };
+
+  window.removeCustomCondition = function(name){
+    const s = loadSettings();
+    s.customConditions = (s.customConditions || []).filter(c => c !== name);
+    saveSettingsObj(s);
+    document.getElementById('customConditionsBox').innerHTML = renderCustomConditionsList(s);
+  };
+
   function renderMedicationsList(){
     const meds = loadMedications();
     if(!meds.length) return '<div class="med-empty">No medications added yet.</div>';
@@ -2902,6 +3565,16 @@
         <button class="settings-save-btn" onclick="window.saveRanges()">Save Ranges</button>
       </div>
 
+      <div class="settings-section" id="conditionsSettingsSection">
+        <div class="settings-section-title">
+          <span>Cardiac Conditions</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('conditions')">i</button>
+        </div>
+        <div class="settings-hint">Check any that apply. This tailors your Log Symptoms picker — it doesn't diagnose or interpret anything.</div>
+        <div id="conditionsCheckboxBox">${renderConditionsCheckboxes(s)}</div>
+        <div id="customConditionsBox">${renderCustomConditionsList(s)}</div>
+      </div>
+
       <div class="settings-section" id="medSettingsSection">
         <div class="settings-section-title">
           <span>Medications</span>
@@ -3178,6 +3851,8 @@
       window.openMedicineModal();
     } else if(key === 'gotcha'){
       window.openGotchaLibrary();
+    } else if(key === 'symptoms'){
+      window.openSymptomModal();
     } else {
       window.openDisclosure(key);
     }
