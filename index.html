@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 6 build-along app - single file PWA -->
+<!-- Today's Status — Lesson 7 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -497,6 +497,7 @@
      is already showing, so they need to sit above it, not at the default
      small-modal layer (z-index 50) shared with Log Fluid / Log BP / etc. */
   #settingsInfoOverlay, #importPreviewOverlay{ z-index:80; }
+  #activityDetailOverlay{ z-index:75; }
 
   /* Same class of bug: My Gotchas has its own "+ New Gotcha" button, so the
      capture form (a z-50 .overlay) can be triggered while My Gotchas (a
@@ -557,6 +558,30 @@
 
   .sc-tab-row{ display:flex; gap:8px; padding:12px 16px 0; }
   .sc-tab-row .sort-btn{ flex:1; }
+
+  /* ---- Activity (Lesson 7) ---- */
+  .activity-boundary-banner{
+    background:#fffbeb; border:2px solid #f59e0b; border-radius:10px;
+    padding:12px; margin-bottom:14px; font-size:13.5px; color:#78350f; line-height:1.5;
+  }
+  .activity-boundary-banner strong{ display:block; margin-bottom:4px; color:#92400e; }
+  .activity-timer{
+    text-align:center; font-size:42px; font-weight:800; color:#0f766e;
+    font-variant-numeric:tabular-nums; margin:6px 0 4px;
+  }
+  .activity-timer-label{ text-align:center; font-size:13px; color:var(--sub); margin-bottom:14px; }
+  .activity-running-name{ text-align:center; font-size:17px; font-weight:800; color:var(--ink); margin-bottom:2px; }
+  .activity-quick-grid{ display:flex; flex-direction:column; gap:8px; margin:14px 0; }
+  .activity-quick-btn{
+    width:100%; border:1.5px solid var(--line); background:#f9fafb; color:#1e293b;
+    font-weight:700; font-size:14.5px; padding:12px; border-radius:10px; cursor:pointer;
+    text-align:left;
+  }
+  .activity-quick-btn .aq-sub{ display:block; font-weight:500; font-size:12px; color:var(--sub); margin-top:2px; }
+  .activity-link-banner{
+    background:#f0fdfa; border:1.5px solid #14b8a6; border-radius:8px;
+    padding:8px 10px; margin-bottom:10px; font-size:13px; font-weight:600; color:#0f766e;
+  }
 
   .freq-bar-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
   .freq-bar-label{ width:38%; font-size:12.5px; color:#374151; flex-shrink:0; }
@@ -678,9 +703,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 6 of the build-along series.<br>
+  Lesson 7 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v32</span>
+  <span style="opacity:0.6;font-size:11px;">Build v37</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -690,6 +715,7 @@
       <span class="modal-dot" style="background:#3b82f6"></span>
       Log Fluid
     </div>
+    <div class="activity-link-banner" id="fluidActivityLinkBanner" style="display:none;"></div>
     <div class="quick-row">
       <button onclick="window.quickAddFluid(8)">+8 oz</button>
       <button onclick="window.quickAddFluid(16)">+16 oz</button>
@@ -719,6 +745,7 @@
       <span class="modal-dot" style="background:#10b981"></span>
       Log BP
     </div>
+    <div class="activity-link-banner" id="bpActivityLinkBanner" style="display:none;"></div>
     <div class="bp-input-row">
       <div class="bp-field">
         <label for="bpSystolic">Systolic</label>
@@ -786,6 +813,7 @@
       <span class="modal-dot" style="background:#ec4899"></span>
       Log Symptom
     </div>
+    <div class="activity-link-banner" id="symptomActivityLinkBanner" style="display:none;"></div>
 
     <div class="med-field-label" style="margin-top:0;">Symptom</div>
     <select class="med-log-select" id="symptomSelect" onchange="window.handleSymptomSelectChange()"></select>
@@ -858,6 +886,149 @@
   </div>
   <div id="symHistListSection" style="padding:0 16px 20px;"></div>
   <div id="symHistFreqSection" style="padding:0 16px 20px;display:none;"></div>
+</div>
+
+<!-- Log Activity modal (Lesson 7) -->
+<div class="overlay" id="activityOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#14b8a6"></span>
+      Log Activity
+    </div>
+
+    <!-- Setup view: nothing started yet -->
+    <div id="activitySetupView">
+      <div class="activity-boundary-banner" id="activityBoundaryBanner" style="display:none;">
+        <strong>Before you start:</strong>
+        This app logs your activity and how your body responded to it. It does not tell you what activity is safe for you — that call belongs to your doctor.
+        <button class="modal-btn secondary" style="width:100%;margin-top:10px;" onclick="window.dismissActivityBoundary()">Got it</button>
+      </div>
+
+      <div class="med-field-label" style="margin-top:0;">Activity</div>
+      <select class="med-log-select" id="activitySelect" onchange="window.handleActivitySelectChange()"></select>
+      <div id="newActivityInput" style="display:none;margin-top:8px;">
+        <input type="text" id="newActivityName" placeholder="Type the activity" class="modal-input">
+      </div>
+
+      <div class="med-field-label">Intensity</div>
+      <div class="med-toggle-row" id="activityIntensityRow">
+        <button type="button" class="med-toggle-btn" id="intensityLight" onclick="window.setActivityIntensity('light')">Light</button>
+        <button type="button" class="med-toggle-btn" id="intensityModerate" onclick="window.setActivityIntensity('moderate')">Moderate</button>
+        <button type="button" class="med-toggle-btn" id="intensityVigorous" onclick="window.setActivityIntensity('vigorous')">Vigorous</button>
+      </div>
+
+      <div class="bp-error" id="activitySetupError" hidden></div>
+      <button class="modal-btn primary" style="width:100%;margin-top:14px;margin-bottom:18px;" onclick="window.startActivity()">Continue</button>
+
+      <div class="bp-history-label">Today's Activities</div>
+      <div class="bp-history-list" id="activityHistoryTodayList"></div>
+
+      <button class="modal-btn secondary" style="width:100%;margin-top:10px;margin-bottom:10px;" onclick="window.openActivityHistory()">View Activity History</button>
+      <button class="modal-btn secondary" style="width:100%" onclick="window.closeActivityModal()">Close</button>
+    </div>
+
+    <!-- Ready view: activity chosen, timer NOT running yet. The reader can
+         optionally record a Before BP/HR, Before fluid, and/or a symptom —
+         none of it required, all of it repeatable — before they choose to
+         actually start the clock. -->
+    <div id="activityReadyView" style="display:none;">
+      <div class="activity-running-name" id="activityReadyName"></div>
+      <div class="activity-timer-label" id="activityReadyIntensityLabel"></div>
+      <div class="activity-timer-label" style="margin-top:-6px;margin-bottom:2px;font-weight:700;color:var(--ink);">Before You Begin</div>
+      <div class="activity-timer-label" style="margin-bottom:12px;">
+        Record BP/HR, log your fluids, or note how you're feeling — as many
+        or as few as you want. Nothing here is required. Start the timer
+        whenever you're ready.
+      </div>
+
+      <div class="activity-quick-grid" id="activityReadyQuickButtons"></div>
+
+      <button class="modal-btn primary" style="width:100%;margin-bottom:10px;" onclick="window.startActivityTimerNow()">Start Activity Timer</button>
+      <button class="modal-btn secondary" style="width:100%" onclick="window.cancelActivity()">Cancel</button>
+    </div>
+
+    <!-- Running view: activity in progress -->
+    <div id="activityRunningView" style="display:none;">
+      <div class="activity-running-name" id="activityRunningName"></div>
+      <div class="activity-timer" id="activityTimerDisplay">00:00</div>
+      <div class="activity-timer-label" id="activityIntensityLabel"></div>
+
+      <div class="activity-quick-grid" id="activityQuickButtons"></div>
+
+      <button class="modal-btn primary" style="width:100%;margin-bottom:10px;" onclick="window.openActivityFinish()">Finish Activity</button>
+      <button class="modal-btn secondary" style="width:100%;margin-bottom:10px;" onclick="window.closeActivityModal()">Close (keeps it running)</button>
+      <button class="modal-btn secondary" style="width:100%" onclick="window.cancelActivity()">Cancel Activity</button>
+    </div>
+
+    <!-- Finish view: confirm end, optional after-checkpoints + notes -->
+    <div id="activityFinishView" style="display:none;">
+      <div class="activity-running-name" id="activityFinishName"></div>
+      <div class="activity-timer" id="activityFinishDuration">0 min</div>
+      <div class="activity-timer-label">Total time</div>
+
+      <div class="activity-quick-grid" id="activityFinishQuickButtons"></div>
+
+      <div class="med-field-label">Notes (optional)</div>
+      <input type="text" id="activityFinishNotes" class="modal-input" placeholder="How did it go?">
+
+      <button class="modal-btn primary" style="width:100%;margin-top:10px;margin-bottom:10px;" onclick="window.saveFinishedActivity()">Save Activity</button>
+      <button class="modal-btn secondary" style="width:100%" onclick="window.backToRunningFromFinish()">Back, Keep Going</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activity History overlay — every completed activity, all days -->
+<div class="graph-overlay" id="activityHistoryOverlay" hidden>
+  <div class="graph-header">
+    <button class="graph-back" onclick="window.closeActivityHistory()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">Activity History</span>
+    <button class="graph-close" onclick="window.closeActivityHistory()" aria-label="Close">&times;</button>
+  </div>
+  <div style="padding:10px 16px 0;">
+    <input type="text" id="activityHistorySearchBox" class="modal-input" placeholder="🔍 Search activities or notes..." oninput="window.filterActivityHistory(this.value)">
+  </div>
+  <div class="sort-row" style="padding:10px 16px 0;flex-wrap:wrap;">
+    <span class="sort-label">Sort:</span>
+    <button class="sort-btn active" id="actHistSortNewest" onclick="window.setActivityHistorySort('newest')">Newest</button>
+    <button class="sort-btn" id="actHistSortOldest" onclick="window.setActivityHistorySort('oldest')">Oldest</button>
+    <button class="sort-btn" id="actHistSortLongest" onclick="window.setActivityHistorySort('longest')">Longest</button>
+    <button class="sort-btn" id="actHistSortShortest" onclick="window.setActivityHistorySort('shortest')">Shortest</button>
+  </div>
+  <div id="activityHistoryFullList" style="padding:10px 16px 20px;"></div>
+</div>
+
+<!-- Activity Detail — tap any row in History (or Today's Activities) to
+     open this. Read mode shows the full record, including the actual
+     linked BP/Fluid/Symptom readings (not just counts), since that's
+     exactly the kind of before/after picture worth handing a doctor.
+     Edit mode lets the reader correct the activity, intensity, or notes
+     after the fact -- start/end time and duration stay read-only, since
+     changing those would put them out of sync with whatever was logged
+     against them. -->
+<div class="graph-overlay" id="activityDetailOverlay" hidden>
+  <div class="graph-header">
+    <button class="graph-back" onclick="window.closeActivityDetail()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">Activity Detail</span>
+    <button class="graph-close" onclick="window.closeActivityDetail()" aria-label="Close">&times;</button>
+  </div>
+  <div id="activityDetailReadView" style="padding:16px;"></div>
+  <div id="activityDetailEditView" style="padding:16px;display:none;">
+    <div class="med-field-label" style="margin-top:0;">Activity</div>
+    <select class="med-log-select" id="activityEditSelect" onchange="window.handleActivityEditSelectChange()"></select>
+    <div id="editNewActivityInput" style="display:none;margin-top:8px;">
+      <input type="text" id="editNewActivityName" placeholder="Type the activity" class="modal-input">
+    </div>
+    <div class="med-field-label">Intensity</div>
+    <div class="med-toggle-row" id="activityEditIntensityRow">
+      <button type="button" class="med-toggle-btn" id="editIntensityLight" onclick="window.setEditActivityIntensity('light')">Light</button>
+      <button type="button" class="med-toggle-btn" id="editIntensityModerate" onclick="window.setEditActivityIntensity('moderate')">Moderate</button>
+      <button type="button" class="med-toggle-btn" id="editIntensityVigorous" onclick="window.setEditActivityIntensity('vigorous')">Vigorous</button>
+    </div>
+    <div class="med-field-label">Notes</div>
+    <input type="text" id="activityEditNotes" class="modal-input" placeholder="How did it go?">
+    <button class="modal-btn primary" style="width:100%;margin-top:14px;margin-bottom:10px;" onclick="window.saveActivityEdit()">Save Changes</button>
+    <button class="modal-btn secondary" style="width:100%" onclick="window.cancelActivityEdit()">Cancel</button>
+  </div>
 </div>
 
 <!-- Trend graph — full-screen, shared by Fluid and BP so both cards behave identically -->
@@ -1027,7 +1198,7 @@
     { key:'medicine',     label:'Log Medicine',    color:'#f59e0b', active:true  },
     { key:'weight',       label:'Log Weight',      color:'#f97316', active:false },
     { key:'symptoms',     label:'Log Symptoms',    color:'#ec4899', active:true  },
-    { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:false },
+    { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:true  },
     { key:'appointment',  label:'Log Appointment', color:'#6366f1', active:false },
     { key:'planday',      label:'Plan My Day',     color:'#06b6d4', active:false },
     { key:'gotcha',      label:'Gotcha',        color:'#dc2626', active:true  },
@@ -1041,10 +1212,6 @@
     weight: {
       title:'Log Weight',
       body:"This button will log your weight. By the time you finish this course, it'll watch for sudden shifts that can signal fluid retention, days before it's visible or uncomfortable."
-    },
-    activity: {
-      title:'Log Activity',
-      body:"This button will log your movement and exertion. By the time you finish this course, it'll connect activity to how your body actually responds afterward, not just how many steps you took."
     },
     appointment: {
       title:'Log Appointment',
@@ -1131,7 +1298,8 @@
     backupEmail: '',
     conditions: [],
     customConditions: [],
-    customSymptoms: []
+    customSymptoms: [],
+    customActivities: []
   };
 
   function loadSettings(){
@@ -1173,6 +1341,744 @@
 
   function saveSymptomsList(list){
     localStorage.setItem('todaysStatus_symptoms', JSON.stringify(list));
+  }
+
+  // ---- Activity (Lesson 7) ----
+  // Completed activities are day-scoped (todaysStatus_activity_<date>),
+  // the same convention BP and Fluid already use — so a future analytics
+  // pass can walk all three the same way. The *in-progress* activity is
+  // kept separately (todaysStatus_activeActivity, no date suffix) so a
+  // reload mid-walk doesn't lose it, and its elapsed time is always
+  // recomputed from startTimestamp rather than trusted from memory.
+  const PREDEFINED_ACTIVITIES = [
+    'Walk','Bike Ride','Yard Work','Stairs','Housework','Physical Therapy / Rehab Exercises','Swimming'
+  ];
+
+  function getActivityList(){
+    const s = loadSettings();
+    const merged = [...new Set([...PREDEFINED_ACTIVITIES, ...(s.customActivities || [])])];
+    return merged.sort((a,b) => a.localeCompare(b));
+  }
+
+  function loadActivityData(dateKey){
+    try{
+      const raw = localStorage.getItem('todaysStatus_activity_' + dateKey);
+      if(!raw) return { entries:[] };
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed.entries)) parsed.entries = [];
+      return parsed;
+    }catch(e){ return { entries:[] }; }
+  }
+
+  function saveActivityData(dateKey, data){
+    localStorage.setItem('todaysStatus_activity_' + dateKey, JSON.stringify(data));
+  }
+
+  function loadActiveActivity(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_activeActivity');
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+
+  function saveActiveActivity(activity){
+    localStorage.setItem('todaysStatus_activeActivity', JSON.stringify(activity));
+  }
+
+  function clearActiveActivity(){
+    localStorage.removeItem('todaysStatus_activeActivity');
+  }
+
+  let activityTimerInterval = null;
+  let selectedActivityIntensity = '';
+
+  // Set only while a BP/Fluid/Symptom modal was opened from inside the
+  // running-activity screen's quick-log buttons; cleared the moment that
+  // modal is closed. This is what tags the saved entry with the right
+  // activityId + phase, and what routes the reader back to the activity
+  // screen instead of the dashboard when they're done.
+  let _activityLinkContext = null;
+
+  function renderActivityIntensityButtons(){
+    ['Light','Moderate','Vigorous'].forEach(label => {
+      const btn = document.getElementById('intensity' + label);
+      if(btn) btn.classList.toggle('active', selectedActivityIntensity === label.toLowerCase());
+    });
+  }
+
+  window.setActivityIntensity = function(level){
+    selectedActivityIntensity = level;
+    renderActivityIntensityButtons();
+  };
+
+  function renderActivitySelectOptions(){
+    const sel = document.getElementById('activitySelect');
+    const list = getActivityList();
+    sel.innerHTML = list.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('')
+      + '<option value="__NEW__">+ Add a new activity</option>';
+  }
+
+  window.handleActivitySelectChange = function(){
+    const sel = document.getElementById('activitySelect');
+    document.getElementById('newActivityInput').style.display = sel.value === '__NEW__' ? 'block' : 'none';
+  };
+
+  window.dismissActivityBoundary = function(){
+    localStorage.setItem('todaysStatus_activityBoundarySeen', '1');
+    document.getElementById('activityBoundaryBanner').style.display = 'none';
+  };
+
+  function activityElapsedLabel(startTimestamp){
+    const totalSec = Math.max(0, Math.floor((Date.now() - startTimestamp) / 1000));
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const mm = String(m).padStart(2,'0');
+    const ss = String(s).padStart(2,'0');
+    return h > 0 ? (h + ':' + mm + ':' + ss) : (mm + ':' + ss);
+  }
+
+  function tickActivityTimer(){
+    const active = loadActiveActivity();
+    if(!active){ stopActivityTimer(); return; }
+    const el = document.getElementById('activityTimerDisplay');
+    if(el) el.textContent = activityElapsedLabel(active.startTimestamp);
+  }
+
+  function startActivityTimer(){
+    stopActivityTimer();
+    tickActivityTimer();
+    activityTimerInterval = setInterval(tickActivityTimer, 1000);
+  }
+
+  function stopActivityTimer(){
+    if(activityTimerInterval){ clearInterval(activityTimerInterval); activityTimerInterval = null; }
+  }
+
+  // Every quick-log button on the ready/running/finish screens is
+  // generated here rather than hardcoded, since which phase each button
+  // represents (Before/During/After) depends on what's already been
+  // logged for this activity, not on a fixed step order.
+  //   mode 'ready'   — timer hasn't started yet. Everything is Before,
+  //                    everything is optional, everything is repeatable.
+  //                    A checkmark shows once something's been logged,
+  //                    but the label never advances to "During" here —
+  //                    there's no "during" without a running timer.
+  //   mode 'running' — Before advances to During after the first Before
+  //                    is logged, exactly as before.
+  //   mode 'finish'  — both remaining checkpoints are explicitly After;
+  //                    no Symptom button (Finish only handles BP/Fluid).
+  function renderActivityQuickButtons(containerId, mode){
+    const active = loadActiveActivity();
+    const container = document.getElementById(containerId);
+    if(!active || !container) return;
+
+    const hasBeforeBP = active.linkedBP.some(l => l.phase === 'before');
+    const hasBeforeFluid = active.linkedFluid.some(l => l.phase === 'before');
+
+    const bpPhase = mode === 'finish' ? 'after' : (mode === 'ready' ? 'before' : (hasBeforeBP ? 'during' : 'before'));
+    const fluidPhase = mode === 'finish' ? 'after' : (mode === 'ready' ? 'before' : (hasBeforeFluid ? 'during' : 'before'));
+    const bpLabel = bpPhase.charAt(0).toUpperCase() + bpPhase.slice(1);
+    const fluidLabel = fluidPhase.charAt(0).toUpperCase() + fluidPhase.slice(1);
+    const bpDone = mode !== 'finish' && hasBeforeBP;
+    const fluidDone = mode !== 'finish' && hasBeforeFluid;
+    const checkMark = ' <span style="color:#059669;">&#10003;</span>';
+
+    let bpSub, fluidSub;
+    if(mode === 'finish'){
+      bpSub = 'Repeatable — log as many as you want';
+      fluidSub = 'Repeatable — log as many as you want';
+    } else if(mode === 'ready'){
+      bpSub = bpDone ? 'Repeatable — log as many as you want' : 'Optional — record it if it\'s useful to you';
+      fluidSub = fluidDone ? 'Repeatable — log as many as you want' : 'Optional — how hydrated are you going in?';
+    } else {
+      bpSub = bpDone ? 'Repeatable — log as many as you want' : 'Do this before you start moving';
+      fluidSub = fluidDone ? 'Repeatable — log as many as you want' : 'How hydrated are you going in?';
+    }
+
+    let html = `
+      <button type="button" class="activity-quick-btn" onclick="window.logActivityBP('${bpPhase}')">
+        📊 Log BP/HR — ${bpLabel}${bpDone ? checkMark : ''}
+        <span class="aq-sub">${bpSub}</span>
+      </button>
+      <button type="button" class="activity-quick-btn" onclick="window.logActivityFluid('${fluidPhase}')">
+        💧 Log Fluid — ${fluidLabel}${fluidDone ? checkMark : ''}
+        <span class="aq-sub">${fluidSub}</span>
+      </button>`;
+    if(mode !== 'finish'){
+      const symptomSub = mode === 'ready'
+        ? 'Optional — note anything you\'re feeling beforehand'
+        : 'If anything feels off during this activity';
+      html += `
+      <button type="button" class="activity-quick-btn" onclick="window.logActivitySymptom()">
+        🩹 Log Symptom
+        <span class="aq-sub">${symptomSub}</span>
+      </button>`;
+    }
+    container.innerHTML = html;
+  }
+
+  function showActivityView(view){
+    document.getElementById('activitySetupView').style.display = view === 'setup' ? 'block' : 'none';
+    document.getElementById('activityReadyView').style.display = view === 'ready' ? 'block' : 'none';
+    document.getElementById('activityRunningView').style.display = view === 'running' ? 'block' : 'none';
+    document.getElementById('activityFinishView').style.display = view === 'finish' ? 'block' : 'none';
+    if(view === 'ready'){
+      const active = loadActiveActivity();
+      if(active){
+        document.getElementById('activityReadyName').textContent = active.activity;
+        document.getElementById('activityReadyIntensityLabel').textContent =
+          active.intensity ? active.intensity.charAt(0).toUpperCase() + active.intensity.slice(1) + ' intensity' : '';
+        renderActivityQuickButtons('activityReadyQuickButtons', 'ready');
+      }
+      stopActivityTimer();
+    } else if(view === 'running'){
+      const active = loadActiveActivity();
+      if(active){
+        document.getElementById('activityRunningName').textContent = active.activity;
+        document.getElementById('activityIntensityLabel').textContent =
+          active.intensity ? active.intensity.charAt(0).toUpperCase() + active.intensity.slice(1) + ' intensity' : '';
+        renderActivityQuickButtons('activityQuickButtons', 'running');
+        startActivityTimer();
+      }
+    } else {
+      stopActivityTimer();
+    }
+  }
+
+  window.openActivityModal = function(){
+    const active = loadActiveActivity();
+    if(active){
+      showActivityView(active.startTimestamp ? 'running' : 'ready');
+    } else {
+      showActivityView('setup');
+      renderActivitySelectOptions();
+      document.getElementById('newActivityInput').style.display = 'none';
+      document.getElementById('newActivityName').value = '';
+      selectedActivityIntensity = '';
+      renderActivityIntensityButtons();
+      document.getElementById('activitySetupError').hidden = true;
+      document.getElementById('activityBoundaryBanner').style.display =
+        localStorage.getItem('todaysStatus_activityBoundarySeen') ? 'none' : 'block';
+      renderActivityHistoryTodayList();
+    }
+    document.getElementById('activityOverlay').hidden = false;
+  };
+
+  window.closeActivityModal = function(){
+    document.getElementById('activityOverlay').hidden = true;
+    stopActivityTimer();
+  };
+
+  window.startActivity = function(){
+    const sel = document.getElementById('activitySelect');
+    let activityName = sel.value;
+    const errorEl = document.getElementById('activitySetupError');
+    if(activityName === '__NEW__'){
+      activityName = document.getElementById('newActivityName').value.trim();
+      if(!activityName){
+        errorEl.textContent = 'Type the activity name.';
+        errorEl.hidden = false;
+        return;
+      }
+    }
+    if(!selectedActivityIntensity){
+      errorEl.textContent = 'Tap an intensity level.';
+      errorEl.hidden = false;
+      return;
+    }
+    errorEl.hidden = true;
+
+    // Remember a genuinely new activity for future quick-select, same
+    // pattern as Log Symptom's custom entries.
+    const s = loadSettings();
+    if(getActivityList().indexOf(activityName) === -1){
+      s.customActivities = [...(s.customActivities || []), activityName];
+      saveSettingsObj(s);
+    }
+
+    const activity = {
+      id: Date.now(),
+      activity: activityName,
+      intensity: selectedActivityIntensity,
+      startTimestamp: null,   // set only when Start Activity Timer is tapped from the Ready view
+      endTimestamp: null,
+      durationMin: null,
+      notes: '',
+      linkedBP: [],
+      linkedFluid: [],
+      linkedSymptoms: []
+    };
+    saveActiveActivity(activity);
+    showActivityView('ready');
+  };
+
+  // Actually starts the clock. Called only from the Ready view's
+  // "Start Activity Timer" button — everything before this point (Before
+  // BP/HR, Before fluid, a symptom note) is optional and doesn't require
+  // the timer to be running.
+  window.startActivityTimerNow = function(){
+    const active = loadActiveActivity();
+    if(!active) return;
+    active.startTimestamp = Date.now();
+    saveActiveActivity(active);
+    showActivityView('running');
+    showToast(active.activity + ' started');
+  };
+
+  window.cancelActivity = function(){
+    if(!confirm('Discard this activity? Nothing about it will be saved.')) return;
+    clearActiveActivity();
+    stopActivityTimer();
+    showActivityView('setup');
+    renderActivitySelectOptions();
+    document.getElementById('newActivityInput').style.display = 'none';
+    selectedActivityIntensity = '';
+    renderActivityIntensityButtons();
+    renderActivityHistoryTodayList();
+    showToast('Activity discarded');
+  };
+
+  window.openActivityFinish = function(){
+    const active = loadActiveActivity();
+    if(!active) return;
+    document.getElementById('activityFinishName').textContent = active.activity;
+    document.getElementById('activityFinishDuration').textContent = activityElapsedLabel(active.startTimestamp);
+    document.getElementById('activityFinishNotes').value = active.notes || '';
+    renderActivityQuickButtons('activityFinishQuickButtons', 'finish');
+    showActivityView('finish');
+  };
+
+  window.backToRunningFromFinish = function(){
+    showActivityView('running');
+  };
+
+  window.saveFinishedActivity = function(){
+    const active = loadActiveActivity();
+    if(!active) return;
+    const endTimestamp = Date.now();
+    active.endTimestamp = endTimestamp;
+    active.durationMin = Math.max(1, Math.round((endTimestamp - active.startTimestamp) / 60000));
+    active.notes = document.getElementById('activityFinishNotes').value.trim();
+
+    const dateKey = formatDateKey(new Date(active.startTimestamp));
+    const data = loadActivityData(dateKey);
+    data.entries.push(active);
+    saveActivityData(dateKey, data);
+
+    clearActiveActivity();
+    stopActivityTimer();
+    showActivityView('setup');
+    renderActivitySelectOptions();
+    document.getElementById('newActivityInput').style.display = 'none';
+    selectedActivityIntensity = '';
+    renderActivityIntensityButtons();
+    renderActivityHistoryTodayList();
+    showToast('Activity saved — ' + active.durationMin + ' min');
+  };
+
+  function renderActivityHistoryTodayList(highlightId){
+    const data = loadActivityData(todayKey());
+    const list = document.getElementById('activityHistoryTodayList');
+    if(!list) return;
+    const entries = data.entries.slice().sort((a,b) => b.startTimestamp - a.startTimestamp);
+    if(!entries.length){
+      list.innerHTML = '<div class="bp-history-empty">No activities logged yet today.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(e => {
+      const t = new Date(e.startTimestamp);
+      const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      const highlightClass = (highlightId != null && e.id === highlightId) ? ' just-saved' : '';
+      const intensityStr = e.intensity ? ' · ' + e.intensity : '';
+      return `<div class="entry-row${highlightClass}" data-id="${e.id}" style="cursor:pointer;" onclick="window.openActivityDetail(${e.id}, '${todayKey()}')">
+        <div>
+          <span class="entry-reading">${escapeHtml(e.activity)}${intensityStr}</span>
+          <span class="entry-time">${timeStr} · ${e.durationMin} min</span>
+        </div>
+        <div class="entry-actions">
+          <button class="entry-del-btn" onclick="event.stopPropagation(); window.deleteActivityEntry(${e.id}, '${todayKey()}')" aria-label="Delete activity">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.deleteActivityEntry = function(id, dateKey){
+    if(!confirm('Delete this activity? Any BP, Fluid, or Symptom entries it linked to stay in their own histories — they just lose the link.')) return;
+    const data = loadActivityData(dateKey);
+    data.entries = data.entries.filter(e => e.id !== id);
+    saveActivityData(dateKey, data);
+
+    // A saved activity should never also be the live one — but if it
+    // somehow is, deleting the saved copy must stop the running timer
+    // too, not leave it ticking with nothing backing it.
+    const active = loadActiveActivity();
+    if(active && active.id === id){
+      clearActiveActivity();
+      stopActivityTimer();
+      if(document.getElementById('activityOverlay').hidden === false){
+        showActivityView('setup');
+        renderActivitySelectOptions();
+        selectedActivityIntensity = '';
+        renderActivityIntensityButtons();
+      }
+    }
+
+    renderActivityHistoryTodayList();
+    renderActivityFullHistory();
+    showToast('Activity deleted');
+  };
+
+  // ---- Activity History (every day, not just today) ----
+  function getAllActivityEntries(){
+    const all = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf('todaysStatus_activity_') === 0){
+        const dateKey = k.substring('todaysStatus_activity_'.length);
+        const data = loadActivityData(dateKey);
+        data.entries.forEach(e => all.push(Object.assign({}, e, { _dateKey: dateKey })));
+      }
+    }
+    return all;
+  }
+
+  // Shared by the Activity Detail view to pull the actual linked BP/Fluid
+  // readings (not just their counts) — these live in day-scoped storage
+  // just like activities do, so the lookup walks every day's key the same
+  // way getAllActivityEntries does.
+  function findEntryAcrossDays(prefix, id){
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf(prefix) === 0){
+        try{
+          const data = JSON.parse(localStorage.getItem(k)) || {};
+          const found = (data.entries || []).find(e => e.id === id);
+          if(found) return found;
+        }catch(e){}
+      }
+    }
+    return null;
+  }
+
+  let activityHistorySearch = '';
+  let activityHistorySort = 'newest';
+
+  window.filterActivityHistory = function(val){
+    activityHistorySearch = (val || '').toLowerCase();
+    renderActivityFullHistory();
+  };
+
+  window.setActivityHistorySort = function(order){
+    activityHistorySort = order;
+    ['Newest','Oldest','Longest','Shortest'].forEach(label => {
+      document.getElementById('actHistSort' + label).classList.toggle('active', label.toLowerCase() === order);
+    });
+    renderActivityFullHistory();
+  };
+
+  window.openActivityHistory = function(){
+    activityHistorySearch = '';
+    activityHistorySort = 'newest';
+    document.getElementById('activityHistorySearchBox').value = '';
+    ['Newest','Oldest','Longest','Shortest'].forEach(label => {
+      document.getElementById('actHistSort' + label).classList.toggle('active', label === 'Newest');
+    });
+    renderActivityFullHistory();
+    document.getElementById('activityHistoryOverlay').hidden = false;
+  };
+
+  window.closeActivityHistory = function(){
+    document.getElementById('activityHistoryOverlay').hidden = true;
+  };
+
+  function renderActivityFullHistory(){
+    const list = document.getElementById('activityHistoryFullList');
+    if(!list) return;
+    let entries = getAllActivityEntries();
+
+    if(activityHistorySearch){
+      entries = entries.filter(e =>
+        e.activity.toLowerCase().indexOf(activityHistorySearch) !== -1 ||
+        (e.notes || '').toLowerCase().indexOf(activityHistorySearch) !== -1);
+    }
+
+    entries.sort((a, b) => {
+      if(activityHistorySort === 'oldest') return a.startTimestamp - b.startTimestamp;
+      if(activityHistorySort === 'longest') return (b.durationMin || 0) - (a.durationMin || 0);
+      if(activityHistorySort === 'shortest') return (a.durationMin || 0) - (b.durationMin || 0);
+      return b.startTimestamp - a.startTimestamp; // newest
+    });
+
+    if(!entries.length){
+      list.innerHTML = `<div class="bp-history-empty">${activityHistorySearch ? 'No activities match this search.' : 'No activities logged yet.'}</div>`;
+      return;
+    }
+    list.innerHTML = entries.map(e => {
+      const t = new Date(e.startTimestamp);
+      const dateStr = t.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+      const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      const intensityStr = e.intensity ? ' · ' + e.intensity : '';
+      const notesStr = e.notes ? `<div class="entry-time">${escapeHtml(e.notes)}</div>` : '';
+      const bpCount = e.linkedBP.length, fluidCount = e.linkedFluid.length, symCount = e.linkedSymptoms.length;
+      const linkParts = [];
+      if(bpCount) linkParts.push(bpCount + ' BP');
+      if(fluidCount) linkParts.push(fluidCount + ' fluid');
+      if(symCount) linkParts.push(symCount + ' symptom' + (symCount > 1 ? 's' : ''));
+      const linkStr = linkParts.length ? `<div class="entry-time">Linked: ${linkParts.join(', ')}</div>` : '';
+      return `<div class="entry-row" data-id="${e.id}" style="cursor:pointer;" onclick="window.openActivityDetail(${e.id}, '${e._dateKey}')">
+        <div>
+          <span class="entry-reading">${escapeHtml(e.activity)}${intensityStr}</span>
+          <span class="entry-time">${dateStr}, ${timeStr} · ${e.durationMin} min</span>
+          ${notesStr}
+          ${linkStr}
+        </div>
+        <div class="entry-actions">
+          <button class="entry-del-btn" onclick="event.stopPropagation(); window.deleteActivityEntry(${e.id}, '${e._dateKey}')" aria-label="Delete activity">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ---- Activity Detail (read + edit) ----
+  let activityDetailId = null;
+  let activityDetailDateKey = null;
+  let selectedEditIntensity = '';
+
+  window.openActivityDetail = function(id, dateKey){
+    const data = loadActivityData(dateKey);
+    const entry = data.entries.find(e => e.id === id);
+    if(!entry) return;
+    activityDetailId = id;
+    activityDetailDateKey = dateKey;
+    renderActivityDetailRead(entry);
+    document.getElementById('activityDetailReadView').style.display = 'block';
+    document.getElementById('activityDetailEditView').style.display = 'none';
+    document.getElementById('activityDetailOverlay').hidden = false;
+  };
+
+  window.closeActivityDetail = function(){
+    document.getElementById('activityDetailOverlay').hidden = true;
+    activityDetailId = null;
+    activityDetailDateKey = null;
+  };
+
+  function renderActivityDetailRead(entry){
+    const startT = new Date(entry.startTimestamp);
+    const endT = entry.endTimestamp ? new Date(entry.endTimestamp) : null;
+    const dateStr = startT.toLocaleDateString(undefined, { month:'long', day:'numeric', year:'numeric' });
+    const startStr = startT.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+    const endStr = endT ? endT.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }) : '—';
+    const intensityStr = entry.intensity ? entry.intensity.charAt(0).toUpperCase() + entry.intensity.slice(1) : '—';
+
+    const bpRows = entry.linkedBP.map(link => {
+      const bp = findEntryAcrossDays('todaysStatus_bp_', link.entryId);
+      if(!bp) return '';
+      const phaseLabel = link.phase.charAt(0).toUpperCase() + link.phase.slice(1);
+      const pulseStr = bp.pulse ? ' · ' + bp.pulse + ' bpm' : '';
+      const bt = new Date(bp.timestamp).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      return `<div class="entry-row"><div><span class="entry-reading">${bp.systolic}/${bp.diastolic}${pulseStr}</span><span class="entry-time">${phaseLabel} · ${bt}</span></div></div>`;
+    }).join('');
+
+    const fluidRows = entry.linkedFluid.map(link => {
+      const f = findEntryAcrossDays('todaysStatus_fluid_', link.entryId);
+      if(!f) return '';
+      const phaseLabel = link.phase.charAt(0).toUpperCase() + link.phase.slice(1);
+      const ft = new Date(f.timestamp).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      return `<div class="entry-row"><div><span class="entry-reading">${f.amount} oz</span><span class="entry-time">${phaseLabel} · ${ft}</span></div></div>`;
+    }).join('');
+
+    const symptoms = loadSymptoms();
+    const symRows = entry.linkedSymptoms.map(sid => {
+      const s = symptoms.find(sy => sy.id === sid);
+      if(!s) return '';
+      const st = new Date(s.timestamp).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      return `<div class="entry-row"><div><span class="entry-reading">${escapeHtml(s.symptom)} · ${s.severity}/10</span><span class="entry-time">${st}${s.notes ? ' · ' + escapeHtml(s.notes) : ''}</span></div></div>`;
+    }).join('');
+
+    document.getElementById('activityDetailReadView').innerHTML = `
+      <div class="activity-running-name" style="text-align:left;">${escapeHtml(entry.activity)}</div>
+      <div class="activity-timer-label" style="text-align:left;margin-bottom:8px;">${intensityStr} intensity</div>
+      <div class="entry-time" style="display:block;margin-bottom:14px;">${dateStr} · ${startStr} – ${endStr} · ${entry.durationMin} min</div>
+      ${entry.notes ? `<div class="med-field-label" style="margin-top:0;">Notes</div><div class="entry-time" style="display:block;margin-bottom:14px;">${escapeHtml(entry.notes)}</div>` : ''}
+      <div class="bp-history-label">Blood Pressure / Heart Rate</div>
+      <div class="bp-history-list">${bpRows || '<div class="bp-history-empty">None logged.</div>'}</div>
+      <div class="bp-history-label">Fluid</div>
+      <div class="bp-history-list">${fluidRows || '<div class="bp-history-empty">None logged.</div>'}</div>
+      <div class="bp-history-label">Symptoms</div>
+      <div class="bp-history-list">${symRows || '<div class="bp-history-empty">None logged.</div>'}</div>
+      <button class="modal-btn primary" style="width:100%;margin-top:16px;margin-bottom:10px;" onclick="window.startEditActivityEntry()">Edit</button>
+      <button class="modal-btn secondary" style="width:100%" onclick="window.deleteActivityEntryFromDetail()">Delete Activity</button>
+    `;
+  }
+
+  window.startEditActivityEntry = function(){
+    const data = loadActivityData(activityDetailDateKey);
+    const entry = data.entries.find(e => e.id === activityDetailId);
+    if(!entry) return;
+
+    const sel = document.getElementById('activityEditSelect');
+    const list = getActivityList();
+    sel.innerHTML = list.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('')
+      + '<option value="__NEW__">+ Add a new activity</option>';
+    sel.value = list.indexOf(entry.activity) !== -1 ? entry.activity : '__NEW__';
+    document.getElementById('editNewActivityInput').style.display = sel.value === '__NEW__' ? 'block' : 'none';
+    document.getElementById('editNewActivityName').value = sel.value === '__NEW__' ? entry.activity : '';
+
+    selectedEditIntensity = entry.intensity || '';
+    ['Light','Moderate','Vigorous'].forEach(label => {
+      document.getElementById('editIntensity' + label).classList.toggle('active', selectedEditIntensity === label.toLowerCase());
+    });
+
+    document.getElementById('activityEditNotes').value = entry.notes || '';
+
+    document.getElementById('activityDetailReadView').style.display = 'none';
+    document.getElementById('activityDetailEditView').style.display = 'block';
+  };
+
+  window.handleActivityEditSelectChange = function(){
+    const sel = document.getElementById('activityEditSelect');
+    document.getElementById('editNewActivityInput').style.display = sel.value === '__NEW__' ? 'block' : 'none';
+  };
+
+  window.setEditActivityIntensity = function(level){
+    selectedEditIntensity = level;
+    ['Light','Moderate','Vigorous'].forEach(label => {
+      document.getElementById('editIntensity' + label).classList.toggle('active', selectedEditIntensity === label.toLowerCase());
+    });
+  };
+
+  window.cancelActivityEdit = function(){
+    document.getElementById('activityDetailEditView').style.display = 'none';
+    document.getElementById('activityDetailReadView').style.display = 'block';
+  };
+
+  window.saveActivityEdit = function(){
+    const data = loadActivityData(activityDetailDateKey);
+    const entry = data.entries.find(e => e.id === activityDetailId);
+    if(!entry) return;
+
+    const sel = document.getElementById('activityEditSelect');
+    let activityName = sel.value;
+    if(activityName === '__NEW__'){
+      activityName = document.getElementById('editNewActivityName').value.trim();
+      if(!activityName) return;
+      const s = loadSettings();
+      if(getActivityList().indexOf(activityName) === -1){
+        s.customActivities = [...(s.customActivities || []), activityName];
+        saveSettingsObj(s);
+      }
+    }
+
+    entry.activity = activityName;
+    entry.intensity = selectedEditIntensity;
+    entry.notes = document.getElementById('activityEditNotes').value.trim();
+    saveActivityData(activityDetailDateKey, data);
+
+    renderActivityDetailRead(entry);
+    document.getElementById('activityDetailEditView').style.display = 'none';
+    document.getElementById('activityDetailReadView').style.display = 'block';
+    renderActivityHistoryTodayList();
+    renderActivityFullHistory();
+    showToast('Activity updated');
+  };
+
+  window.deleteActivityEntryFromDetail = function(){
+    if(activityDetailId == null) return;
+    const id = activityDetailId, dateKey = activityDetailDateKey;
+    window.deleteActivityEntry(id, dateKey);
+    // deleteActivityEntry asks for confirmation; if the entry is gone, close the detail view too.
+    const data = loadActivityData(dateKey);
+    if(!data.entries.find(e => e.id === id)){
+      window.closeActivityDetail();
+    }
+  };
+
+  // ---- Cross-screen linking: BP / Fluid / Symptom quick-log from an active activity ----
+  // A quick-log button can be tapped from the Ready screen (all optional,
+  // all phase "before"), the Running screen, or the Finish screen (the
+  // "After" checkpoints live there). Whichever screen was showing gets
+  // remembered on the context so the reader lands back where they left
+  // off — and if they were on Finish, their in-progress notes are saved
+  // to the activity first so a detour to log a reading can't silently
+  // erase what they'd typed.
+  function currentActivityView(){
+    const finishVisible = document.getElementById('activityFinishView').style.display !== 'none';
+    if(finishVisible) return 'finish';
+    const readyVisible = document.getElementById('activityReadyView').style.display !== 'none';
+    if(readyVisible) return 'ready';
+    return 'running';
+  }
+
+  function persistFinishDraftNotes(){
+    if(currentActivityView() !== 'finish') return;
+    const active = loadActiveActivity();
+    if(!active) return;
+    active.notes = document.getElementById('activityFinishNotes').value.trim();
+    saveActiveActivity(active);
+  }
+
+  window.logActivityBP = function(phase){
+    const returnView = currentActivityView();
+    persistFinishDraftNotes();
+    _activityLinkContext = { type:'bp', phase: phase, returnView: returnView };
+    document.getElementById('activityOverlay').hidden = true;
+    window.openBPModal();
+  };
+
+  window.logActivityFluid = function(phase){
+    const returnView = currentActivityView();
+    persistFinishDraftNotes();
+    _activityLinkContext = { type:'fluid', phase: phase, returnView: returnView };
+    document.getElementById('activityOverlay').hidden = true;
+    window.openFluidModal();
+  };
+
+  window.logActivitySymptom = function(){
+    // Available from both Ready and Running (never from Finish), so the
+    // return view is whatever screen the reader was actually on.
+    const returnView = currentActivityView();
+    _activityLinkContext = { type:'symptom', returnView: returnView };
+    document.getElementById('activityOverlay').hidden = true;
+    window.openSymptomModal();
+  };
+
+  // Called at the top of each target modal's open function to show which
+  // activity (and phase, where relevant) this entry will be tagged with.
+  function updateActivityLinkBanner(bannerId, ctxType){
+    const banner = document.getElementById(bannerId);
+    if(!banner) return;
+    const active = loadActiveActivity();
+    if(_activityLinkContext && _activityLinkContext.type === ctxType && active){
+      const phaseStr = _activityLinkContext.phase
+        ? ' — ' + _activityLinkContext.phase.charAt(0).toUpperCase() + _activityLinkContext.phase.slice(1)
+        : '';
+      banner.textContent = '🏃 Linking this to: ' + active.activity + phaseStr;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  // If a BP/Fluid/Symptom modal was opened from the activity screen, closing
+  // it — with or without saving — returns the reader to whichever activity
+  // screen they came from (Ready, Running, or Finish) instead of dropping
+  // them at the dashboard or losing their place.
+  function returnToActivityIfLinked(){
+    if(_activityLinkContext){
+      const ctx = _activityLinkContext;
+      _activityLinkContext = null;
+      if(loadActiveActivity()){
+        document.getElementById('activityOverlay').hidden = false;
+        if(ctx.returnView === 'finish'){
+          window.openActivityFinish();
+        } else if(ctx.returnView === 'ready'){
+          showActivityView('ready');
+        } else {
+          showActivityView('running');
+        }
+      }
+    }
   }
 
   function loadMedications(){
@@ -1458,10 +2364,14 @@
       const t = new Date(e.timestamp);
       const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
       const highlightClass = (highlightId != null && e.id === highlightId) ? ' just-saved' : '';
+      const activityBadge = e.activityId
+        ? `<span class="entry-time" style="display:block;margin-left:0;margin-top:2px;color:#0f766e;font-weight:600;">🏃 ${e.activityTiming.charAt(0).toUpperCase() + e.activityTiming.slice(1)}: ${escapeHtml(e.activityName)}</span>`
+        : '';
       return `<div class="entry-row${highlightClass}" data-id="${e.id}">
         <div>
           <span class="entry-reading">${e.amount} oz</span>
           <span class="entry-time">${timeStr}</span>
+          ${activityBadge}
         </div>
         <div class="entry-actions">
           <button class="entry-edit-btn" onclick="window.startEditFluidEntry(${e.id})" aria-label="Edit entry">&#9998;</button>
@@ -1588,10 +2498,14 @@
       const timeStr = t.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
       const pulseStr = e.pulse ? ' · ' + e.pulse + ' bpm' : '';
       const highlightClass = (highlightId != null && e.id === highlightId) ? ' just-saved' : '';
+      const activityBadge = e.activityId
+        ? `<span class="bp-entry-time" style="display:block;margin-left:0;margin-top:2px;color:#0f766e;font-weight:600;">🏃 ${e.activityTiming.charAt(0).toUpperCase() + e.activityTiming.slice(1)}: ${escapeHtml(e.activityName)}</span>`
+        : '';
       return `<div class="bp-entry${highlightClass}" data-id="${e.id}">
         <div>
           <span class="bp-entry-reading">${e.systolic}/${e.diastolic}</span>
           <span class="bp-entry-time">${timeStr}${pulseStr}</span>
+          ${activityBadge}
         </div>
         <div class="entry-actions">
           <button class="entry-edit-btn" onclick="window.startEditBPEntry(${e.id})" aria-label="Edit reading">&#9998;</button>
@@ -1606,21 +2520,45 @@
     updateFluidSortButtons();
     renderStatus();
     renderFluidHistory();
+    updateActivityLinkBanner('fluidActivityLinkBanner', 'fluid');
     document.getElementById('fluidOverlay').hidden = false;
   };
 
   window.closeFluidModal = function(){
     document.getElementById('fluidOverlay').hidden = true;
+    returnToActivityIfLinked();
   };
 
   window.quickAddFluid = function(amount){
     const data = loadFluidData();
     const newId = Date.now();
-    data.entries.push({ id: newId, amount: amount, timestamp: Date.now() });
+    const entry = { id: newId, amount: amount, timestamp: Date.now() };
+
+    // Tag this entry, and the activity it belongs to, when it was logged
+    // via the running-activity screen's "Log Fluid" quick button.
+    if(_activityLinkContext && _activityLinkContext.type === 'fluid'){
+      const active = loadActiveActivity();
+      if(active){
+        entry.activityId = active.id;
+        entry.activityName = active.activity;
+        entry.activityTiming = _activityLinkContext.phase;
+        active.linkedFluid.push({ entryId: newId, phase: _activityLinkContext.phase });
+        saveActiveActivity(active);
+      }
+    }
+
+    data.entries.push(entry);
     saveFluidData(data);
     renderStatus();
     renderFluidHistory(newId);
     showToast(amount + ' oz logged');
+
+    if(_activityLinkContext && _activityLinkContext.type === 'fluid'){
+      const ctxAtSave = _activityLinkContext;
+      setTimeout(() => {
+        if(_activityLinkContext === ctxAtSave){ window.closeFluidModal(); }
+      }, 700);
+    }
   };
 
   window.submitCustomFluid = function(){
@@ -1697,11 +2635,13 @@
     updateBPSortButtons();
     renderBPStatus();
     renderBPHistory();
+    updateActivityLinkBanner('bpActivityLinkBanner', 'bp');
     document.getElementById('bpOverlay').hidden = false;
   };
 
   window.closeBPModal = function(){
     document.getElementById('bpOverlay').hidden = true;
+    returnToActivityIfLinked();
   };
 
   window.setBPSortOrder = function(order){
@@ -1747,13 +2687,28 @@
     }
 
     const newId = Date.now();
-    data.entries.push({
+    const entry = {
       id: newId,
       systolic: systolic,
       diastolic: diastolic,
       pulse: result.pulse,
       timestamp: Date.now()
-    });
+    };
+
+    // Tag this reading, and the activity it belongs to, when it was logged
+    // via the running-activity screen's "Log BP/HR" quick button.
+    if(_activityLinkContext && _activityLinkContext.type === 'bp'){
+      const active = loadActiveActivity();
+      if(active){
+        entry.activityId = active.id;
+        entry.activityName = active.activity;
+        entry.activityTiming = _activityLinkContext.phase;
+        active.linkedBP.push({ entryId: newId, phase: _activityLinkContext.phase });
+        saveActiveActivity(active);
+      }
+    }
+
+    data.entries.push(entry);
     saveBPData(data);
 
     sysInput.value = '';
@@ -1763,6 +2718,19 @@
     renderBPHistory(newId);
     showToast('Reading saved');
     sysInput.focus();
+
+    // When this reading was logged from the activity screen's quick-log
+    // button, don't make the reader hunt for a Close button to get back —
+    // let them see the saved reading for a beat, then return automatically.
+    if(_activityLinkContext && _activityLinkContext.type === 'bp'){
+      const ctxAtSave = _activityLinkContext;
+      setTimeout(() => {
+        // Only follow through if this is still the same quick-log trip —
+        // if the reader already left manually, or already started a
+        // second quick-log action, this stale timer must do nothing.
+        if(_activityLinkContext === ctxAtSave){ window.closeBPModal(); }
+      }, 700);
+    }
   };
 
   window.deleteBPEntry = function(id){
@@ -2141,11 +3109,13 @@
     renderSymptomConditionSelect();
     updateSymptomExpectedBanner(document.getElementById('symptomSelect').value);
     renderSymptomHistoryTodayList();
+    updateActivityLinkBanner('symptomActivityLinkBanner', 'symptom');
     document.getElementById('symptomOverlay').hidden = false;
   };
 
   window.closeSymptomModal = function(){
     document.getElementById('symptomOverlay').hidden = true;
+    returnToActivityIfLinked();
   };
 
   window.submitSymptom = function(){
@@ -2205,6 +3175,21 @@
       timestamp: dateTimeStringToTimestamp(dateInput.value, timeInput.value),
       _date: dateInput.value
     };
+
+    // Tag this symptom, and the activity it belongs to, when it was logged
+    // via the running-activity screen's "Log Symptom" quick button. Unlike
+    // BP/Fluid, a symptom doesn't get a Before/During/After phase — it's a
+    // point-in-time note, not a checkpoint.
+    if(_activityLinkContext && _activityLinkContext.type === 'symptom'){
+      const active = loadActiveActivity();
+      if(active){
+        entry.activityId = active.id;
+        entry.activityName = active.activity;
+        active.linkedSymptoms.push(entry.id);
+        saveActiveActivity(active);
+      }
+    }
+
     const list = loadSymptoms();
     list.push(entry);
     saveSymptomsList(list);
@@ -2229,6 +3214,13 @@
     renderSymptomHistoryTodayList(entry.id);
     const wasBackdated = entry._date !== todayKey();
     showToast(symptomName + ' logged' + (wasBackdated ? ' for ' + friendlyDate(entry._date) + '.' : '.'));
+
+    if(_activityLinkContext && _activityLinkContext.type === 'symptom'){
+      const ctxAtSave = _activityLinkContext;
+      setTimeout(() => {
+        if(_activityLinkContext === ctxAtSave){ window.closeSymptomModal(); }
+      }, 700);
+    }
   };
 
   window.deleteSymptomEntry = function(id){
@@ -3859,6 +4851,8 @@
       window.openGotchaLibrary();
     } else if(key === 'symptoms'){
       window.openSymptomModal();
+    } else if(key === 'activity'){
+      window.openActivityModal();
     } else {
       window.openDisclosure(key);
     }
