@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 7 build-along app - single file PWA -->
+<!-- Today's Status — Lesson 8 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -445,7 +445,7 @@
   }
   .range-pair-row{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }
   .range-pair-label{ width:64px; flex-shrink:0; font-size:13px; font-weight:700; color:var(--ink); }
-  .data-stat-row{ display:flex; gap:10px; margin:10px 0 14px 0; }
+  .data-stat-row{ display:flex; gap:10px; margin:10px 0 14px 0; flex-wrap:wrap; }
   .data-stat{
     flex:1; background:#f9fafb; border:1px solid var(--line); border-radius:10px;
     padding:10px; text-align:center;
@@ -703,9 +703,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 7 of the build-along series.<br>
+  Lesson 8 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v37</span>
+  <span style="opacity:0.6;font-size:11px;">Build v40</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -886,6 +886,110 @@
   </div>
   <div id="symHistListSection" style="padding:0 16px 20px;"></div>
   <div id="symHistFreqSection" style="padding:0 16px 20px;display:none;"></div>
+</div>
+
+<!-- Log Meal modal (Lesson 8) -->
+<div class="overlay" id="mealOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#9333ea"></span>
+      Log Meal
+    </div>
+
+    <div id="savedMealPickerBox" style="display:none;margin-bottom:14px;">
+      <div class="med-field-label" style="margin-top:0;">&#x1F4DA; Pick from Saved Meals</div>
+      <select class="med-log-select" id="savedMealPicker" onchange="window.applySavedMeal(this.value)">
+        <option value="">— Select a saved meal —</option>
+      </select>
+    </div>
+
+    <div class="med-field-label" style="margin-top:0;">What did you eat?</div>
+    <textarea id="mealDesc" class="modal-input" placeholder="e.g. Grilled chicken, rice, green beans" style="min-height:110px;"></textarea>
+
+    <label style="display:flex;align-items:center;margin-top:10px;cursor:pointer;">
+      <input type="checkbox" id="mealSaveAsQuick" style="width:18px;height:18px;margin-right:8px;" onchange="window.toggleMealSaveAsQuick(this.checked)">
+      <span style="font-size:13.5px;color:var(--sub);font-weight:600;">Save this as a quick meal</span>
+    </label>
+    <div id="mealSaveAsQuickFields" style="display:none;margin-top:8px;">
+      <input type="text" id="mealSaveName" class="modal-input" placeholder="Name this meal (e.g. My usual breakfast)" style="margin-bottom:8px;">
+      <select class="med-log-select" id="mealSaveType">
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner">Dinner</option>
+        <option value="snack">Snack</option>
+        <option value="meal" selected>Meal</option>
+      </select>
+    </div>
+
+    <div class="med-field-label">Fluid with this meal (oz) <span style="font-size:12px;font-weight:400;color:var(--sub);">(optional)</span></div>
+    <input type="number" id="mealFluid" class="modal-input" inputmode="numeric" placeholder="0">
+
+    <div class="med-field-label">Notes <span style="font-size:12px;font-weight:400;color:var(--sub);">(optional)</span></div>
+    <input type="text" id="mealNotes" class="modal-input" placeholder="e.g. high sodium, ate late">
+
+    <div id="mealTrackedFieldRow" style="display:none;margin-top:10px;">
+      <div class="med-field-label" style="margin-top:0;display:flex;align-items:center;gap:6px;">
+        <span id="mealTrackedFieldLabel"></span>
+        <span style="font-size:12px;font-weight:400;color:var(--sub);">(optional)</span>
+        <button type="button" class="info-btn" style="margin-left:auto;" onclick="window.openMealTrackedFieldPopup()" aria-label="Rename what you're tracking">&#9998;</button>
+      </div>
+      <input type="text" id="mealTrackedFieldValue" class="modal-input" placeholder="Value">
+    </div>
+
+    <div class="med-log-time-row" style="margin-top:10px;">
+      <label for="mealDate" style="font-size:12px;color:var(--sub);font-weight:600;">Date</label>
+      <input type="date" id="mealDate">
+      <label for="mealTime" style="font-size:12px;color:var(--sub);font-weight:600;">Time</label>
+      <input type="time" id="mealTime">
+    </div>
+
+    <div class="bp-error" id="mealError" hidden></div>
+    <button class="modal-btn primary" style="width:100%;margin-top:12px;margin-bottom:18px;" onclick="window.submitMeal()">Save Meal</button>
+
+    <div class="bp-history-label">Today's Logged Meals</div>
+    <div class="bp-history-list" id="mealHistoryTodayList"></div>
+
+    <button class="modal-btn secondary" style="width:100%;margin-bottom:10px;" onclick="window.openMealHistory()">View Meal History</button>
+    <button class="modal-btn secondary" style="width:100%" onclick="window.closeMealModal()">Close</button>
+  </div>
+</div>
+
+<!-- Tracked-field rename popup — layered above the Log Meal modal (z-index
+     60 > 50) so a reader mid-entry can rename what they're tracking
+     without losing anything else they've already typed. -->
+<div class="overlay" id="mealTrackedFieldPopupOverlay" hidden style="z-index:60;">
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#9333ea"></span>
+      What are you tracking?
+    </div>
+    <div class="modal-body" style="margin-bottom:10px;">
+      This label appears on every Log Meal screen from now on, and remembers whatever value you enter — pre-filling it next time so you're only updating it when it actually changes.
+    </div>
+    <input type="text" id="mealTrackedFieldNameInput" class="modal-input" placeholder="e.g. Sodium, Potassium, Portion size">
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="modal-btn secondary" onclick="window.closeMealTrackedFieldPopup()">Cancel</button>
+      <button class="modal-btn primary" onclick="window.saveMealTrackedFieldName()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Meal History overlay — every logged meal, all days -->
+<div class="graph-overlay" id="mealHistoryOverlay" hidden>
+  <div class="graph-header">
+    <button class="graph-back" onclick="window.closeMealHistory()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">Meal History</span>
+    <button class="graph-close" onclick="window.closeMealHistory()" aria-label="Close">&times;</button>
+  </div>
+  <div style="padding:10px 16px 0;">
+    <input type="text" id="mealHistorySearchBox" class="modal-input" placeholder="🔍 Search meals or notes..." oninput="window.filterMealHistory(this.value)">
+  </div>
+  <div class="sort-row" style="padding:10px 16px 0;">
+    <span class="sort-label">Sort:</span>
+    <button class="sort-btn active" id="mealHistSortNewest" onclick="window.setMealHistorySort('newest')">Newest</button>
+    <button class="sort-btn" id="mealHistSortOldest" onclick="window.setMealHistorySort('oldest')">Oldest</button>
+  </div>
+  <div id="mealHistoryFullList" style="padding:10px 16px 20px;"></div>
 </div>
 
 <!-- Log Activity modal (Lesson 7) -->
@@ -1193,7 +1297,7 @@
 
   const BUTTONS = [
     { key:'bp',          label:'Log BP',          color:'#10b981', active:true  },
-    { key:'meal',         label:'Log Meal',        color:'#9333ea', active:false },
+    { key:'meal',         label:'Log Meal',        color:'#9333ea', active:true  },
     { key:'fluid',        label:'Log Fluid',       color:'#3b82f6', active:true  },
     { key:'medicine',     label:'Log Medicine',    color:'#f59e0b', active:true  },
     { key:'weight',       label:'Log Weight',      color:'#f97316', active:false },
@@ -1205,10 +1309,6 @@
   ];
 
   const DISCLOSURES = {
-    meal: {
-      title:'Log Meal',
-      body:"This button will log what and when you eat. By the time you finish this course, it'll cross-reference meals against your BP and symptom timing, catching food-triggered patterns most people never think to connect."
-    },
     weight: {
       title:'Log Weight',
       body:"This button will log your weight. By the time you finish this course, it'll watch for sudden shifts that can signal fluid retention, days before it's visible or uncomfortable."
@@ -1299,7 +1399,8 @@
     conditions: [],
     customConditions: [],
     customSymptoms: [],
-    customActivities: []
+    customActivities: [],
+    mealTrackedFieldName: ''
   };
 
   function loadSettings(){
@@ -1341,6 +1442,49 @@
 
   function saveSymptomsList(list){
     localStorage.setItem('todaysStatus_symptoms', JSON.stringify(list));
+  }
+
+  // ---- Meals (Lesson 8) ----
+  // A standing history list, same reasoning as Symptoms — Meal History
+  // needs to search and sort across weeks, not just show today, so it
+  // isn't day-scoped the way BP/Fluid are.
+  //
+  // Each entry: { id, meal, fluidOz, notes, trackedFieldLabel,
+  //   trackedFieldValue, savedMealId, timestamp, _date, fluidEntryId }
+  //
+  // trackedFieldLabel is a SNAPSHOT of Settings' mealTrackedFieldName at
+  // the moment this entry was saved — not a live lookup. If the reader
+  // renames what they're tracking later, past entries keep showing the
+  // label (and value) they were actually logged with, instead of being
+  // silently relabeled.
+  function loadMeals(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_meals');
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch(e){ return []; }
+  }
+
+  function saveMealsList(list){
+    localStorage.setItem('todaysStatus_meals', JSON.stringify(list));
+  }
+
+  // Saved Meals — quick-pick shortcuts for meals eaten often. Type-grouped
+  // (breakfast/lunch/dinner/snack/meal) to match CardiacLens. Just a name
+  // + type + the text to drop into the "What did you eat?" box — nothing
+  // more, so this stays a shortcut and not a second data model to maintain.
+  const SAVED_MEAL_TYPES = ['breakfast','lunch','dinner','snack','meal'];
+
+  function loadSavedMeals(){
+    try{
+      const raw = localStorage.getItem('todaysStatus_savedMeals');
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch(e){ return []; }
+  }
+
+  function saveSavedMealsList(list){
+    localStorage.setItem('todaysStatus_savedMeals', JSON.stringify(list));
   }
 
   // ---- Activity (Lesson 7) ----
@@ -2200,6 +2344,10 @@
       title:'Medications',
       body:"How to use it: add each medication you take regularly — name, dosage, whether it's taken with food, how many times a day, the expected time for each dose, its peak-effect window, and when you started (and stopped, if you have). What it unlocks: Log Medicine shows a daily Taken / Coming up / Missed checklist, and the Medication Timeline graph brackets your BP and heart rate readings around each dose — using a peak-effect window rather than one fixed number, and saying so explicitly if no reading falls inside it rather than guessing. If you skip it: Log Medicine and the Medication Timeline stay empty — there's nothing to check in on or bracket without at least one medication saved."
     },
+    mealTracking: {
+      title:'Meal Tracking',
+      body:"How to use it: name the one thing your doctor or dietitian told you to watch — sodium, potassium, portion size, whatever applies to you — and save it. What it unlocks: Log Meal shows one optional field labeled with your own wording, and it remembers the last value you entered so you're only updating it when it actually changes, not retyping it every meal. You can rename it any time, either here or with the pencil icon right on the Log Meal screen — renaming only changes what new meals show; past entries keep the label and value they were actually logged with. If you skip it: Log Meal stays exactly as simple as the free-text box, optional fluid, and optional notes — no extra field at all."
+    },
     dataManagement: {
       title:'Your Data',
       body:"How to use it: export a backup file any time, and optionally email it to yourself for safekeeping. What it unlocks: a way to move your data to a new device or recover it after a reinstall — this is the only recovery option, since nothing is stored anywhere but this device. If you skip it: your data stays perfectly fine right here, but clearing browser data, reinstalling, or switching devices without a backup means it's gone for good."
@@ -2285,9 +2433,14 @@
     return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   }
 
-  function loadFluidData(){
+  // Date-aware versions — Log Meal needs to write a fluid entry into
+  // whatever day the meal was logged for (which may be backdated), not
+  // always today. loadFluidData()/saveFluidData() stay as today-only
+  // wrappers so every existing caller (Fluid modal, Activity linking)
+  // keeps working exactly as before.
+  function loadFluidDataForDate(dateStr){
     try{
-      const raw = localStorage.getItem('todaysStatus_fluid_' + todayKey());
+      const raw = localStorage.getItem('todaysStatus_fluid_' + dateStr);
       if(!raw) return { entries:[] };
       const parsed = JSON.parse(raw);
       if(!Array.isArray(parsed.entries)){
@@ -2298,7 +2451,7 @@
             amount: parsed.total,
             timestamp: parsed.lastLogged || Date.now()
           }] };
-          saveFluidData(migrated);
+          saveFluidDataForDate(dateStr, migrated);
           return migrated;
         }
         return { entries:[] };
@@ -2307,8 +2460,16 @@
     }catch(e){ return { entries:[] }; }
   }
 
+  function saveFluidDataForDate(dateStr, data){
+    localStorage.setItem('todaysStatus_fluid_' + dateStr, JSON.stringify(data));
+  }
+
+  function loadFluidData(){
+    return loadFluidDataForDate(todayKey());
+  }
+
   function saveFluidData(data){
-    localStorage.setItem('todaysStatus_fluid_' + todayKey(), JSON.stringify(data));
+    saveFluidDataForDate(todayKey(), data);
   }
 
   function fluidEntriesTotal(entries){
@@ -2367,11 +2528,15 @@
       const activityBadge = e.activityId
         ? `<span class="entry-time" style="display:block;margin-left:0;margin-top:2px;color:#0f766e;font-weight:600;">🏃 ${e.activityTiming.charAt(0).toUpperCase() + e.activityTiming.slice(1)}: ${escapeHtml(e.activityName)}</span>`
         : '';
+      const mealBadge = e.mealId
+        ? `<span class="entry-time" style="display:block;margin-left:0;margin-top:2px;color:#9333ea;font-weight:600;">🍽️ Meal: ${escapeHtml(e.mealName || '')}</span>`
+        : '';
       return `<div class="entry-row${highlightClass}" data-id="${e.id}">
         <div>
           <span class="entry-reading">${e.amount} oz</span>
           <span class="entry-time">${timeStr}</span>
           ${activityBadge}
+          ${mealBadge}
         </div>
         <div class="entry-actions">
           <button class="entry-edit-btn" onclick="window.startEditFluidEntry(${e.id})" aria-label="Edit entry">&#9998;</button>
@@ -2582,6 +2747,21 @@
   window.deleteFluidEntry = function(id){
     if(!confirm('Delete this fluid entry?')) return;
     const data = loadFluidData();
+    const entry = data.entries.find(e => e.id === id);
+    // If this fluid entry was logged with a meal, clear it from that meal
+    // record too — otherwise the meal would still claim a fluid amount
+    // that no longer exists anywhere in Fluid History.
+    if(entry && entry.mealId){
+      const meals = loadMeals();
+      const meal = meals.find(m => m.id === entry.mealId);
+      if(meal){
+        meal.fluidOz = 0;
+        meal.fluidEntryId = null;
+        saveMealsList(meals);
+        if(!document.getElementById('mealHistoryOverlay').hidden) window.renderMealHistory();
+        renderMealHistoryTodayList();
+      }
+    }
     data.entries = data.entries.filter(e => e.id !== id);
     saveFluidData(data);
     renderStatus();
@@ -3408,6 +3588,524 @@
     box.innerHTML = html;
   }
 
+  // ---- Log Meal (Lesson 8) ----
+
+  function shortMealName(text){
+    const firstLine = String(text || 'meal').split('\n')[0].trim();
+    return firstLine.length > 40 ? firstLine.slice(0, 40) + '…' : (firstLine || 'meal');
+  }
+
+  window.openMealModal = function(){
+    const s = loadSettings();
+    const descInput = document.getElementById('mealDesc');
+    descInput.value = '';
+    descInput._savedMealId = null;
+    descInput._savedMealName = null;
+    descInput._savedMealType = null;
+    descInput._savedMealOriginalText = null;
+    document.getElementById('mealFluid').value = '';
+    document.getElementById('mealNotes').value = '';
+    document.getElementById('mealDate').value = todayKey();
+    document.getElementById('mealDate').max = todayKey();
+    document.getElementById('mealTime').value = nowTimeString();
+    document.getElementById('mealError').hidden = true;
+    document.getElementById('mealSaveAsQuick').checked = false;
+    window.toggleMealSaveAsQuick(false);
+    document.getElementById('mealSaveName').value = '';
+    const savedMealPickerEl = document.getElementById('savedMealPicker');
+    if(savedMealPickerEl) savedMealPickerEl.value = '';
+
+    // Tracked field: only shown once the reader has named one in Settings.
+    // Sticky — pre-fills with whatever was entered last time so a reader
+    // who isn't changing anything doesn't have to retype it every meal.
+    const row = document.getElementById('mealTrackedFieldRow');
+    if(s.mealTrackedFieldName){
+      row.style.display = 'block';
+      document.getElementById('mealTrackedFieldLabel').textContent = s.mealTrackedFieldName;
+      const meals = loadMeals();
+      const lastWithValue = meals.slice().reverse().find(m => m.trackedFieldLabel === s.mealTrackedFieldName && m.trackedFieldValue);
+      document.getElementById('mealTrackedFieldValue').value = lastWithValue ? lastWithValue.trackedFieldValue : '';
+    } else {
+      row.style.display = 'none';
+    }
+
+    renderSavedMealPicker();
+    renderMealHistoryTodayList();
+    document.getElementById('mealOverlay').hidden = false;
+    setTimeout(() => { document.getElementById('mealDesc').focus(); }, 100);
+  };
+
+  window.closeMealModal = function(){
+    document.getElementById('mealOverlay').hidden = true;
+  };
+
+  window.toggleMealSaveAsQuick = function(checked){
+    document.getElementById('mealSaveAsQuickFields').style.display = checked ? 'block' : 'none';
+    if(checked){
+      const descInput = document.getElementById('mealDesc');
+      const nameInput = document.getElementById('mealSaveName');
+      // If this meal started from a saved recipe, default to updating that
+      // same recipe in place rather than making the reader retype its name
+      // exactly (a typo here would silently create a near-duplicate instead
+      // of updating the one they meant).
+      if(descInput._savedMealName && !nameInput.value){
+        nameInput.value = descInput._savedMealName;
+        document.getElementById('mealSaveType').value = descInput._savedMealType || 'meal';
+      }
+    }
+  };
+
+  // ---- Saved Meals quick-pick ----
+
+  function renderSavedMealPicker(){
+    const box = document.getElementById('savedMealPickerBox');
+    const picker = document.getElementById('savedMealPicker');
+    const saved = loadSavedMeals();
+    if(!saved.length){ box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    let html = '<option value="">— Select a saved meal —</option>';
+    SAVED_MEAL_TYPES.forEach(type => {
+      const group = saved.filter(m => m.type === type);
+      if(!group.length) return;
+      html += `<optgroup label="${type.charAt(0).toUpperCase() + type.slice(1)}">`;
+      group.forEach(m => { html += `<option value="${m.id}">${escapeHtml(m.name)}</option>`; });
+      html += '</optgroup>';
+    });
+    picker.innerHTML = html;
+  }
+
+  window.applySavedMeal = function(id){
+    const descInput = document.getElementById('mealDesc');
+    if(!id){
+      // Reader cleared the picker back to "Select a saved meal" — stop
+      // treating whatever's in the box as tied to a saved recipe.
+      descInput._savedMealId = null;
+      descInput._savedMealName = null;
+      descInput._savedMealType = null;
+      descInput._savedMealOriginalText = null;
+      return;
+    }
+    const meal = loadSavedMeals().find(m => String(m.id) === String(id));
+    if(!meal) return;
+    descInput.value = meal.text;
+    descInput._savedMealId = meal.id;
+    descInput._savedMealName = meal.name;
+    descInput._savedMealType = meal.type;
+    // Snapshot of the recipe as saved, at the moment it was picked — used
+    // to detect at save time whether the reader edited it before logging,
+    // so Meal History can show that this instance differed from the
+    // standard recipe without it looking like a silent mismatch.
+    descInput._savedMealOriginalText = meal.text;
+
+    // Fluid and Notes aren't part of the saved recipe itself (they vary
+    // meal to meal), but they're rarely different two times in a row for
+    // the same recipe — so pull them from the most recent logged entry
+    // that used this recipe, editable from there rather than typed fresh
+    // every time. Matched by name (not savedMealId) so this also finds
+    // the very first entry that created the recipe, which predates any
+    // savedMealId link existing.
+    const nameKey = meal.name.trim().toLowerCase();
+    const priorUses = loadMeals()
+      .filter(m => (m.mealName || '').trim().toLowerCase() === nameKey)
+      .sort((a,b) => (b.timestamp - a.timestamp) || (b.id - a.id));
+    const mostRecent = priorUses[0];
+    document.getElementById('mealFluid').value = (mostRecent && mostRecent.fluidOz > 0) ? mostRecent.fluidOz : '';
+    document.getElementById('mealNotes').value = mostRecent ? (mostRecent.notes || '') : '';
+  };
+
+  // ---- Tracked-field rename popup ----
+
+  window.openMealTrackedFieldPopup = function(){
+    const s = loadSettings();
+    document.getElementById('mealTrackedFieldNameInput').value = s.mealTrackedFieldName || '';
+    document.getElementById('mealTrackedFieldPopupOverlay').hidden = false;
+    setTimeout(() => { document.getElementById('mealTrackedFieldNameInput').focus(); }, 100);
+  };
+
+  window.closeMealTrackedFieldPopup = function(){
+    document.getElementById('mealTrackedFieldPopupOverlay').hidden = true;
+  };
+
+  // Renaming here only changes what future meals are labeled and pre-filled
+  // with — past Meal History entries keep the label and value they were
+  // actually logged under, since each entry stores its own snapshot rather
+  // than looking the label up live.
+  window.saveMealTrackedFieldName = function(){
+    const name = document.getElementById('mealTrackedFieldNameInput').value.trim();
+    const s = loadSettings();
+    s.mealTrackedFieldName = name;
+    saveSettingsObj(s);
+    window.closeMealTrackedFieldPopup();
+
+    const row = document.getElementById('mealTrackedFieldRow');
+    if(name){
+      row.style.display = 'block';
+      document.getElementById('mealTrackedFieldLabel').textContent = name;
+      // A brand-new label has no prior value to carry forward.
+      document.getElementById('mealTrackedFieldValue').value = '';
+    } else {
+      row.style.display = 'none';
+    }
+    showToast(name ? ('Now tracking "' + name + '."') : 'Tracked field turned off.');
+  };
+
+  // Same rename logic, reachable from Settings instead of the in-modal
+  // pencil icon — the pencil icon is the fast path while composing a
+  // meal; this is the full control for turning tracking on/off entirely.
+  window.saveMealTrackedFieldFromSettings = function(){
+    const name = document.getElementById('setMealTrackedFieldName').value.trim();
+    const s = loadSettings();
+    s.mealTrackedFieldName = name;
+    saveSettingsObj(s);
+    showToast(name ? ('Now tracking "' + name + '."') : 'Tracked field turned off.');
+  };
+
+  // ---- Save / submit ----
+
+  window.submitMeal = function(){
+    const descInput = document.getElementById('mealDesc');
+    const desc = descInput.value.trim();
+    const errorEl = document.getElementById('mealError');
+    const dateInput = document.getElementById('mealDate');
+    const timeInput = document.getElementById('mealTime');
+
+    if(!desc){
+      errorEl.textContent = 'Enter what you ate.';
+      errorEl.hidden = false;
+      descInput.focus();
+      return;
+    }
+    if(!dateInput.value){
+      errorEl.textContent = 'Enter the date.';
+      errorEl.hidden = false;
+      return;
+    }
+    if(dateInput.value > todayKey()){
+      errorEl.textContent = "Date can't be in the future.";
+      errorEl.hidden = false;
+      return;
+    }
+    if(!timeInput.value){
+      errorEl.textContent = 'Enter the time.';
+      errorEl.hidden = false;
+      return;
+    }
+    const fluidVal = parseFloat(document.getElementById('mealFluid').value) || 0;
+    if(fluidVal < 0){
+      errorEl.textContent = 'Fluid amount must be zero or more.';
+      errorEl.hidden = false;
+      return;
+    }
+    errorEl.hidden = true;
+
+    const s = loadSettings();
+    const timestamp = dateTimeStringToTimestamp(dateInput.value, timeInput.value);
+    const quickSaveChecked = document.getElementById('mealSaveAsQuick').checked;
+    const quickSaveName = quickSaveChecked ? document.getElementById('mealSaveName').value.trim() : '';
+    // If this meal started from a saved recipe, Meal History should show
+    // that recipe's name rather than the raw ingredient text — and if the
+    // reader edited the ingredients before logging, that's worth marking
+    // so a later read of history doesn't look like the standard recipe
+    // when it wasn't. modifiedFromSaved is a one-time snapshot taken here;
+    // it doesn't change later if the saved recipe itself is edited. A
+    // freshly-typed meal being named for the first time (not picked from
+    // the dropdown) also gets its new name as the title — it just isn't
+    // "modified," since this entry IS the recipe's first version.
+    const startedFromSaved = !!descInput._savedMealName;
+    const entry = {
+      id: Date.now(),
+      meal: desc,
+      mealName: startedFromSaved ? descInput._savedMealName : quickSaveName,
+      modifiedFromSaved: startedFromSaved && desc !== (descInput._savedMealOriginalText || '').trim(),
+      fluidOz: 0,
+      fluidEntryId: null,
+      notes: document.getElementById('mealNotes').value.trim(),
+      trackedFieldLabel: s.mealTrackedFieldName || '',
+      trackedFieldValue: s.mealTrackedFieldName ? document.getElementById('mealTrackedFieldValue').value.trim() : '',
+      savedMealId: descInput._savedMealId || null,
+      timestamp: timestamp,
+      _date: dateInput.value
+    };
+    descInput._savedMealId = null;
+    descInput._savedMealName = null;
+    descInput._savedMealType = null;
+    descInput._savedMealOriginalText = null;
+
+    // Fluid logged with this meal is mirrored into that day's Fluid store
+    // (same cross-screen pattern Lesson 7 used for Activity -> BP) so it
+    // counts toward the dashboard's daily total and shows up, tagged, in
+    // Fluid History for that day — not just trapped inside this meal entry.
+    if(fluidVal > 0){
+      const fluidData = loadFluidDataForDate(dateInput.value);
+      const fluidId = Date.now() + 1; // +1 guards against colliding with entry.id above
+      fluidData.entries.push({
+        id: fluidId,
+        amount: fluidVal,
+        timestamp: timestamp,
+        mealId: entry.id,
+        mealName: shortMealName(desc)
+      });
+      saveFluidDataForDate(dateInput.value, fluidData);
+      entry.fluidOz = fluidVal;
+      entry.fluidEntryId = fluidId;
+      if(dateInput.value === todayKey()) renderStatus();
+    }
+
+    const list = loadMeals();
+    list.push(entry);
+    saveMealsList(list);
+
+    // Save as a quick meal, if the reader checked that box. Matched by
+    // name (trimmed, case-insensitive) — if a saved meal with that name
+    // already exists, its recipe is updated in place rather than a
+    // duplicate being added, so "Baked Chicken Casserole" always resolves
+    // to exactly one, current, entry in the picker. A genuinely different
+    // recipe just needs a different name to save separately on purpose.
+    if(quickSaveChecked && quickSaveName){
+      const savedList = loadSavedMeals();
+      const nameKey = quickSaveName.toLowerCase();
+      const existing = savedList.find(m => m.name.trim().toLowerCase() === nameKey);
+      const type = document.getElementById('mealSaveType').value;
+      const now = new Date().toISOString();
+      if(existing){
+        existing.text = desc;
+        existing.type = type;
+        existing.updatedAt = now;
+      } else {
+        savedList.push({
+          id: Date.now() + 2,
+          name: quickSaveName,
+          type: type,
+          text: desc,
+          createdAt: now,
+          updatedAt: now
+        });
+      }
+      saveSavedMealsList(savedList);
+    }
+
+    // Reset the form but leave the modal open — same feedback pattern
+    // established for Fluid/BP/Symptoms: toast + highlight the new row.
+    descInput.value = '';
+    document.getElementById('mealFluid').value = '';
+    document.getElementById('mealNotes').value = '';
+    document.getElementById('mealDate').value = todayKey();
+    document.getElementById('mealTime').value = nowTimeString();
+    document.getElementById('mealSaveAsQuick').checked = false;
+    window.toggleMealSaveAsQuick(false);
+    document.getElementById('mealSaveName').value = '';
+    renderSavedMealPicker();
+    renderMealHistoryTodayList(entry.id);
+    const wasBackdated = entry._date !== todayKey();
+    showToast('Meal logged' + (wasBackdated ? ' for ' + friendlyDate(entry._date) + '.' : '.'));
+  };
+
+  function renderMealHistoryTodayList(highlightId){
+    const list = document.getElementById('mealHistoryTodayList');
+    const entries = loadMeals().filter(m => m._date === todayKey()).sort((a,b) => b.timestamp - a.timestamp);
+    if(!entries.length){
+      list.innerHTML = '<div class="bp-history-empty">No meals logged yet today.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(e => renderMealRow(e, highlightId, 'today')).join('');
+  }
+
+  function renderMealRow(e, highlightId, context){
+    const d = new Date(e.timestamp);
+    const timeStr = d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+    const dateStr = context === 'history' ? d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) + ', ' : '';
+    const highlightClass = (highlightId != null && e.id === highlightId) ? ' just-saved' : '';
+    const fluidStr = e.fluidOz > 0 ? ` · 💧 ${e.fluidOz} oz` : '';
+    const trackedStr = (e.trackedFieldLabel && e.trackedFieldValue)
+      ? `<div style="font-size:12.5px;color:var(--sub);margin-top:2px;">${escapeHtml(e.trackedFieldLabel)}: ${escapeHtml(e.trackedFieldValue)}</div>` : '';
+    const notesStr = e.notes ? `<div style="font-size:12.5px;color:var(--sub);margin-top:2px;">${escapeHtml(e.notes)}</div>` : '';
+    // A meal logged from a saved recipe shows that recipe's name as the
+    // title (what a reader recognizes at a glance) — the actual ingredient
+    // text still shows underneath so nothing is hidden, and a "modified"
+    // tag appears if what was logged doesn't match the saved recipe, so a
+    // deviation from the standard version is visible in history instead of
+    // looking identical to every other time it was logged.
+    const title = e.mealName || shortMealName(e.meal);
+    const modifiedTag = e.mealName && e.modifiedFromSaved
+      ? ' <span style="font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;padding:1px 7px;border-radius:999px;">modified</span>' : '';
+    const ingredientsStr = e.mealName
+      ? `<div style="font-size:12.5px;color:var(--sub);margin-top:2px;">${escapeHtml(shortMealName(e.meal))}</div>` : '';
+    return `<div class="entry-row${highlightClass}" data-id="${e.id}">
+      <div>
+        <span class="entry-reading">${escapeHtml(title)}</span>${modifiedTag}
+        <span class="entry-time">${dateStr}${timeStr}${fluidStr}</span>
+        ${ingredientsStr}
+        ${trackedStr}
+        ${notesStr}
+      </div>
+      <div class="entry-actions">
+        <button class="entry-edit-btn" onclick="window.startEditMealEntry(${e.id},'${context}')" aria-label="Edit meal">&#9998;</button>
+        <button class="entry-del-btn" onclick="window.deleteMealEntry(${e.id})" aria-label="Delete meal">&times;</button>
+      </div>
+    </div>`;
+  }
+
+  // Deletes the meal AND its linked fluid entry (if any) — unlike Activity's
+  // BP/Fluid links, a meal's fluid entry only exists because of the meal,
+  // so leaving it behind after the meal is gone would just be an orphaned
+  // "Meal:" reading nobody can trace back to anything.
+  window.deleteMealEntry = function(id){
+    if(!confirm('Delete this meal?')) return;
+    const list = loadMeals();
+    const entry = list.find(e => e.id === id);
+    if(entry && entry.fluidEntryId){
+      const fluidData = loadFluidDataForDate(entry._date);
+      fluidData.entries = fluidData.entries.filter(f => f.id !== entry.fluidEntryId);
+      saveFluidDataForDate(entry._date, fluidData);
+      if(entry._date === todayKey()) renderStatus();
+    }
+    saveMealsList(list.filter(e => e.id !== id));
+    renderMealHistoryTodayList();
+    if(!document.getElementById('mealHistoryOverlay').hidden) window.renderMealHistory();
+    showToast('Meal deleted.');
+  };
+
+  // Editing a saved meal changes historical data that Advanced Analytics
+  // will eventually read trends from, so — unlike a fresh entry — this
+  // asks first. The point isn't to block edits, it's to make sure the
+  // reader means "fix a mistake," not "log something different as if it
+  // happened then."
+  window.startEditMealEntry = function(id, context){
+    if(!confirm("Editing changes historical data. If you're fixing a typo or mistake, go ahead. If what you're logging today is genuinely different, cancel and log it as a new entry instead so your history stays accurate.")) return;
+    const entry = loadMeals().find(e => e.id === id);
+    if(!entry) return;
+    const selector = context === 'today'
+      ? '#mealHistoryTodayList .entry-row[data-id="' + id + '"]'
+      : '#mealHistoryFullList .entry-row[data-id="' + id + '"]';
+    const row = document.querySelector(selector);
+    if(!row) return;
+    const d = new Date(entry.timestamp);
+    const timeVal = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    const trackedRow = entry.trackedFieldLabel
+      ? `<input type="text" id="mealEditTracked_${id}" class="modal-input" placeholder="${escapeHtml(entry.trackedFieldLabel)}" value="${escapeHtml(entry.trackedFieldValue || '')}">`
+      : '';
+    row.innerHTML = `<div class="bp-edit-row">
+      <div class="bp-edit-fields" style="flex-direction:column;gap:6px;">
+        <textarea id="mealEditDesc_${id}" class="modal-input" rows="2">${escapeHtml(entry.meal)}</textarea>
+        <input type="number" id="mealEditFluid_${id}" class="modal-input" inputmode="numeric" placeholder="Fluid (oz)" value="${entry.fluidOz > 0 ? entry.fluidOz : ''}">
+        <input type="text" id="mealEditNotes_${id}" class="modal-input" placeholder="Notes (optional)" value="${escapeHtml(entry.notes || '')}">
+        ${trackedRow}
+        <div style="display:flex;gap:6px;">
+          <input type="date" id="mealEditDate_${id}" value="${entry._date}" max="${todayKey()}" style="flex:1;">
+          <input type="time" id="mealEditTime_${id}" value="${timeVal}" style="flex:1;">
+        </div>
+      </div>
+      <div class="bp-edit-actions">
+        <button class="entry-save-btn" onclick="window.saveEditMealEntry(${id},'${context}')">Save</button>
+        <button class="entry-cancel-btn" onclick="window.cancelEditMealEntry('${context}')">Cancel</button>
+      </div>
+    </div>`;
+  };
+
+  window.saveEditMealEntry = function(id, context){
+    const descInput = document.getElementById('mealEditDesc_' + id);
+    const dateInput = document.getElementById('mealEditDate_' + id);
+    const timeInput = document.getElementById('mealEditTime_' + id);
+    if(!descInput.value.trim() || !dateInput.value || !timeInput.value) return;
+
+    const list = loadMeals();
+    const entry = list.find(e => e.id === id);
+    if(!entry){ window.cancelEditMealEntry(context); return; }
+
+    const newFluidVal = parseFloat(document.getElementById('mealEditFluid_' + id).value) || 0;
+    const oldDate = entry._date;
+    const newDate = dateInput.value;
+    const newTimestamp = dateTimeStringToTimestamp(newDate, timeInput.value);
+
+    // Reconcile the linked fluid entry: remove the old one (it may live on
+    // a different day if the date changed), then write a fresh one if the
+    // edited meal still carries a fluid amount.
+    if(entry.fluidEntryId){
+      const oldFluidData = loadFluidDataForDate(oldDate);
+      oldFluidData.entries = oldFluidData.entries.filter(f => f.id !== entry.fluidEntryId);
+      saveFluidDataForDate(oldDate, oldFluidData);
+      entry.fluidEntryId = null;
+    }
+    if(newFluidVal > 0){
+      const newFluidData = loadFluidDataForDate(newDate);
+      const fluidId = Date.now();
+      newFluidData.entries.push({
+        id: fluidId,
+        amount: newFluidVal,
+        timestamp: newTimestamp,
+        mealId: entry.id,
+        mealName: shortMealName(descInput.value.trim())
+      });
+      saveFluidDataForDate(newDate, newFluidData);
+      entry.fluidEntryId = fluidId;
+    }
+    if(oldDate === todayKey() || newDate === todayKey()) renderStatus();
+
+    entry.meal = descInput.value.trim();
+    entry.fluidOz = newFluidVal;
+    entry.notes = document.getElementById('mealEditNotes_' + id).value.trim();
+    const trackedInput = document.getElementById('mealEditTracked_' + id);
+    if(trackedInput) entry.trackedFieldValue = trackedInput.value.trim();
+    entry.timestamp = newTimestamp;
+    entry._date = newDate;
+    saveMealsList(list);
+
+    window.cancelEditMealEntry(context);
+    showToast('Meal entry updated.');
+  };
+
+  window.cancelEditMealEntry = function(context){
+    if(context === 'today') renderMealHistoryTodayList();
+    else window.renderMealHistory();
+  };
+
+  // ---- Meal History screen (every logged meal, all days) ----
+
+  let mealHistorySearch = '';
+  let mealHistorySort = 'newest';
+
+  window.openMealHistory = function(){
+    mealHistorySearch = '';
+    mealHistorySort = 'newest';
+    document.getElementById('mealHistorySearchBox').value = '';
+    document.getElementById('mealHistSortNewest').classList.add('active');
+    document.getElementById('mealHistSortOldest').classList.remove('active');
+    window.renderMealHistory();
+    document.getElementById('mealHistoryOverlay').hidden = false;
+  };
+
+  window.closeMealHistory = function(){
+    document.getElementById('mealHistoryOverlay').hidden = true;
+  };
+
+  window.filterMealHistory = function(val){
+    mealHistorySearch = (val || '').toLowerCase();
+    window.renderMealHistory();
+  };
+
+  window.setMealHistorySort = function(order){
+    mealHistorySort = order;
+    document.getElementById('mealHistSortNewest').classList.toggle('active', order === 'newest');
+    document.getElementById('mealHistSortOldest').classList.toggle('active', order === 'oldest');
+    window.renderMealHistory();
+  };
+
+  window.renderMealHistory = function(){
+    const list = document.getElementById('mealHistoryFullList');
+    let entries = loadMeals().slice().sort((a,b) => mealHistorySort === 'newest' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
+    if(mealHistorySearch){
+      entries = entries.filter(e =>
+        e.meal.toLowerCase().indexOf(mealHistorySearch) !== -1 ||
+        (e.mealName || '').toLowerCase().indexOf(mealHistorySearch) !== -1 ||
+        (e.notes || '').toLowerCase().indexOf(mealHistorySearch) !== -1);
+    }
+    if(!entries.length){
+      list.innerHTML = `<div class="bp-history-empty">${mealHistorySearch ? 'No meals match this search.' : 'No meals logged yet.'}</div>`;
+      return;
+    }
+    list.innerHTML = entries.map(e => renderMealRow(e, null, 'history')).join('');
+  };
+
   // ---- Trend graphs: shared by Fluid and BP so both cards behave identically ----
 
   let graphType = null;       // 'fluid' | 'bp'
@@ -4168,7 +4866,7 @@
   }
 
   function todaysStatusDataStats(){
-    let bpCount = 0, fluidCount = 0, bytes = 0;
+    let bpCount = 0, fluidCount = 0, mealCount = 0, bytes = 0;
     for(let i=0; i<localStorage.length; i++){
       const k = localStorage.key(i);
       if(!k || k.indexOf('todaysStatus_') !== 0) continue;
@@ -4178,9 +4876,11 @@
         try{ bpCount += (JSON.parse(v).entries || []).length; }catch(e){}
       } else if(k.indexOf('todaysStatus_fluid_') === 0){
         try{ fluidCount += (JSON.parse(v).entries || []).length; }catch(e){}
+      } else if(k === 'todaysStatus_meals'){
+        try{ mealCount = (JSON.parse(v) || []).length; }catch(e){}
       }
     }
-    return { bpCount, fluidCount, kb: Math.max(1, Math.round(bytes / 1024)) };
+    return { bpCount, fluidCount, mealCount, kb: Math.max(1, Math.round(bytes / 1024)) };
   }
 
   function ghFile(repoPath, file){
@@ -4585,6 +5285,19 @@
 
       <div class="settings-section">
         <div class="settings-section-title">
+          <span>Meal Tracking</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('mealTracking')">i</button>
+        </div>
+        <div class="settings-hint">Your doctor or dietitian may have told you to watch something specific — sodium, potassium, portion size, or something else. Name it here and Log Meal will show one field for it, remembering the value you enter so you only update it when it actually changes.</div>
+        <div class="settings-field-label">What are you tracking? <span style="font-size:12px;font-weight:400;color:var(--sub);">(leave blank to turn this off)</span></div>
+        <div class="settings-input-row">
+          <input type="text" id="setMealTrackedFieldName" placeholder="e.g. Sodium" value="${s.mealTrackedFieldName || ''}">
+        </div>
+        <button class="settings-save-btn" onclick="window.saveMealTrackedFieldFromSettings()">Save</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">
           <span>Your Data</span>
           <button class="info-btn" onclick="window.openSettingsInfo('dataManagement')">i</button>
         </div>
@@ -4593,6 +5306,7 @@
         <div class="data-stat-row">
           <div class="data-stat"><div class="data-stat-num">${stats.bpCount}</div><div class="data-stat-label">BP readings</div></div>
           <div class="data-stat"><div class="data-stat-num">${stats.fluidCount}</div><div class="data-stat-label">Fluid entries</div></div>
+          <div class="data-stat"><div class="data-stat-num">${stats.mealCount}</div><div class="data-stat-label">Meals logged</div></div>
           <div class="data-stat"><div class="data-stat-num">${stats.kb}</div><div class="data-stat-label">KB stored</div></div>
         </div>
         <div class="settings-hint" style="margin-top:-8px;margin-bottom:12px;font-weight:600;">${lastBackupText()}</div>
@@ -4791,7 +5505,7 @@
   };
 
   function showImportPreview(data){
-    let bpCount = 0, fluidCount = 0, dayCount = 0;
+    let bpCount = 0, fluidCount = 0, dayCount = 0, mealCount = 0;
     const dayKeys = {};
     Object.keys(data).forEach(k => {
       if(k.match(/^todaysStatus_bp_\d{4}-\d{2}-\d{2}$/)){
@@ -4802,14 +5516,17 @@
         dayKeys[k.slice(-10)] = true;
         try{ fluidCount += (JSON.parse(data[k]).entries || []).length; }catch(e){}
       }
+      if(k === 'todaysStatus_meals'){
+        try{ mealCount = (JSON.parse(data[k]) || []).length; }catch(e){}
+      }
     });
     dayCount = Object.keys(dayKeys).length;
     const created = data['_backupCreated'] ? new Date(data['_backupCreated']).toLocaleString() : 'Unknown';
     const current = todaysStatusDataStats();
     document.getElementById('importPreviewBox').innerHTML =
-      `<strong>Backup file contains:</strong> ${bpCount} BP readings, ${fluidCount} fluid entries, across ${dayCount} day${dayCount===1?'':'s'}.<br>` +
+      `<strong>Backup file contains:</strong> ${bpCount} BP readings, ${fluidCount} fluid entries, ${mealCount} meals, across ${dayCount} day${dayCount===1?'':'s'}.<br>` +
       `<strong>Backup created:</strong> ${created}<br><br>` +
-      `<strong>This device currently has:</strong> ${current.bpCount} BP readings, ${current.fluidCount} fluid entries — this will be replaced.`;
+      `<strong>This device currently has:</strong> ${current.bpCount} BP readings, ${current.fluidCount} fluid entries, ${current.mealCount} meals — this will be replaced.`;
     document.getElementById('importPreviewOverlay').hidden = false;
   }
 
@@ -4853,6 +5570,8 @@
       window.openSymptomModal();
     } else if(key === 'activity'){
       window.openActivityModal();
+    } else if(key === 'meal'){
+      window.openMealModal();
     } else {
       window.openDisclosure(key);
     }
