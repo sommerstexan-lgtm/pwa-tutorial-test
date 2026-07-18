@@ -4956,8 +4956,14 @@
     return 'https://github.com/' + clean + '/edit/main/' + file;
   }
   function ghPagesUrl(repoPath){
-    if(repoPath.indexOf('http') === 0) return repoPath;
-    const parts = repoPath.replace(/\/+$/, '').split('/');
+    if(!repoPath) return '';
+    let clean = repoPath.trim().replace(/^https?:\/\//, '');
+    if(clean.indexOf('github.io') !== -1){
+      if(clean.slice(-1) !== '/') clean += '/';
+      return 'https://' + clean;
+    }
+    clean = clean.replace(/^github\.com\//, '').replace(/\/+$/, '');
+    const parts = clean.split('/');
     if(parts.length < 2) return '';
     return 'https://' + parts[0] + '.github.io/' + parts[1] + '/';
   }
