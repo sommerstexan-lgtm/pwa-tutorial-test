@@ -658,12 +658,21 @@
       <h1>Today's Status</h1>
       <p id="todayDate"></p>
     </div>
-    <button class="gear-btn" onclick="window.openSettings()" aria-label="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-    </button>
+    <div style="display:flex; gap:8px;">
+      <button class="gear-btn" onclick="window.openDataBackup()" aria-label="Data and Backup" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3z"/>
+          <path d="M9 12.5l2 2 4-4.5"/>
+        </svg>
+        <span id="dataUpdateDot" hidden style="position:absolute; top:5px; right:5px; width:9px; height:9px; border-radius:50%; background:#dc2626; border:2px solid #fff;"></span>
+      </button>
+      <button class="gear-btn" onclick="window.openSettings()" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -705,7 +714,7 @@
 <footer>
   Lesson 8 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v40</span>
+  <span style="opacity:0.6;font-size:11px;">Build v41</span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1209,6 +1218,65 @@
     <div class="modal-actions">
       <button class="modal-btn secondary" style="width:100%" onclick="window.cancelImport()">Cancel</button>
       <button class="modal-btn primary" style="width:100%" onclick="window.confirmImport()">Import &amp; Replace</button>
+    </div>
+  </div>
+</div>
+
+<!-- Data & Backup — version check, export, import, delete everything -->
+<div class="overlay" id="dataBackupOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#0ea5e9"></span>
+      Data &amp; Backup
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title"><span>Version</span></div>
+      <div class="settings-hint" id="dbVersionStatus">Build v41 on this device.</div>
+      <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title"><span>Your Data</span></div>
+      <div class="settings-hint">Everything below is stored only in this browser, on this device. There's no account and no cloud backup — export is the only way to protect it.</div>
+      <div class="data-stat-row" id="dbStatRow"></div>
+      <div class="settings-hint" style="margin-top:-4px;margin-bottom:10px;font-weight:600;" id="dbLastBackup"></div>
+      <div class="settings-field-label">Your email (optional, for the backup draft)</div>
+      <div class="settings-input-row">
+        <input type="email" id="setBackupEmail" placeholder="you@example.com" value="">
+      </div>
+      <div class="settings-btn-row">
+        <button class="settings-btn-primary" style="width:100%" onclick="window.exportBackup()">Export Backup</button>
+        <button class="settings-btn-secondary" style="width:100%" onclick="window.emailBackup()">Email Backup</button>
+      </div>
+      <div class="settings-btn-row">
+        <button class="settings-btn-secondary" style="width:100%" onclick="window.pickImportFile()">Import Backup</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title"><span style="color:#b91c1c">Delete Everything</span></div>
+      <div class="settings-hint">Erases all data on this device and starts clean. This cannot be undone.</div>
+      <button class="settings-btn-secondary" style="width:100%;margin-top:8px;border-color:#fecaca;color:#b91c1c" onclick="window.startDeleteEverything()">Delete Everything…</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-btn secondary" style="width:100%" onclick="window.closeDataBackup()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Everything — full preview before anything is erased -->
+<div class="overlay" id="deletePreviewOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#dc2626"></span>
+      Delete Everything
+    </div>
+    <div class="modal-body" id="deletePreviewBody"></div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" style="width:100%" onclick="window.cancelDeleteEverything()">Cancel</button>
+      <button class="modal-btn primary" style="width:100%;background:#dc2626" onclick="window.confirmDeleteEverythingStep1()">I understand, delete it</button>
     </div>
   </div>
 </div>
@@ -2350,7 +2418,7 @@
     },
     dataManagement: {
       title:'Your Data',
-      body:"How to use it: export a backup file any time, and optionally email it to yourself for safekeeping. What it unlocks: a way to move your data to a new device or recover it after a reinstall — this is the only recovery option, since nothing is stored anywhere but this device. If you skip it: your data stays perfectly fine right here, but clearing browser data, reinstalling, or switching devices without a backup means it's gone for good."
+      body:"How to use it: tap the shield icon next to Settings on the main screen — export a backup file any time, optionally email it to yourself, import one to restore, or delete everything and start clean. What it unlocks: a way to move your data to a new device or recover it after a reinstall — this is the only recovery option, since nothing is stored anywhere but this device. If you skip it: your data stays perfectly fine right here, but clearing browser data, reinstalling, or switching devices without a backup means it's gone for good."
     },
     githubLinks: {
       title:'GitHub Quick Links',
@@ -2362,7 +2430,7 @@
     },
     appUpdates: {
       title:'App Updates',
-      body:"How to use it: there's nothing to set here — this app checks for a new version automatically every time you open it while online. What it unlocks: you always see the current version without an app store or a manual update step. If you skip reading this: the only thing you might miss is knowing what to do on the rare occasion a new version doesn't show up on the very first reopen — close the app fully and try again, and if it still hasn't shown up after a couple of tries, remove and re-add the Home Screen icon."
+      body:"How to use it: set your GitHub repo path once, above — after that, this app checks for a new version quietly a few seconds after every open. A red dot appears on the shield icon next to Settings if one's available; tap it and use Check for Updates to see details. What it unlocks: you always know whether you're current, without an app store or a manual update step. If you skip reading this: the only thing you might miss is knowing what to do on the rare occasion a new version doesn't show up on the very first reopen — close the app fully and try again, and if it still hasn't shown up after a couple of tries, remove and re-add the Home Screen icon."
     }
   };
 
@@ -5213,7 +5281,6 @@
 
   function renderSettingsScreen(){
     const s = loadSettings();
-    const stats = todaysStatusDataStats();
     const scroll = document.getElementById('settingsScroll');
     scroll.innerHTML = `
       <div class="settings-section">
@@ -5301,34 +5368,11 @@
           <span>Your Data</span>
           <button class="info-btn" onclick="window.openSettingsInfo('dataManagement')">i</button>
         </div>
-        <div class="settings-hint">Everything below is stored only in this browser, on this device. Nothing is sent to a server — there's no account and no cloud backup. Protection comes from your device's own lock screen, not from this app. Clearing browser data, reinstalling, or switching devices without exporting first means this data is gone for good.</div>
-
-        <div class="data-stat-row">
-          <div class="data-stat"><div class="data-stat-num">${stats.bpCount}</div><div class="data-stat-label">BP readings</div></div>
-          <div class="data-stat"><div class="data-stat-num">${stats.fluidCount}</div><div class="data-stat-label">Fluid entries</div></div>
-          <div class="data-stat"><div class="data-stat-num">${stats.mealCount}</div><div class="data-stat-label">Meals logged</div></div>
-          <div class="data-stat"><div class="data-stat-num">${stats.kb}</div><div class="data-stat-label">KB stored</div></div>
-        </div>
-        <div class="settings-hint" style="margin-top:-8px;margin-bottom:12px;font-weight:600;">${lastBackupText()}</div>
-
-        <div class="settings-field-label">Your email (for the backup draft)</div>
-        <div class="settings-input-row">
-          <input type="email" id="setBackupEmail" placeholder="you@example.com" value="${s.backupEmail}">
-        </div>
-
-        <div class="settings-btn-row">
-          <button class="settings-btn-primary" onclick="window.exportBackup()">Export Backup</button>
-          <button class="settings-btn-secondary" onclick="window.emailBackup()">Email Backup</button>
-        </div>
-        <div class="settings-btn-row">
-          <button class="settings-btn-secondary" style="width:100%" onclick="window.pickImportFile()">Import Backup</button>
-        </div>
-
-        <div class="settings-field-label" style="margin-top:16px;">If you get a new device or reinstall</div>
+        <div class="settings-hint">Backup, restore, and delete are all one tap away from the main screen now — tap the shield icon next to Settings. ${lastBackupText()}.</div>
+        <div class="settings-field-label" style="margin-top:10px;">If you get a new device or reinstall</div>
         <ol class="recovery-list">
           <li>Go back to your GitHub Pages link and tap "Add to Home Screen" again.</li>
-          <li>Open the backup email, save the attached file (or find it in Downloads).</li>
-          <li>Open the app, go to Settings &rarr; Your Data &rarr; Import Backup, and pick that file.</li>
+          <li>Open the shield icon &rarr; Import Backup, and pick your saved backup file.</li>
           <li>Review the preview screen, then confirm.</li>
         </ol>
       </div>
@@ -5352,13 +5396,12 @@
           <span>App Updates</span>
           <button class="info-btn" onclick="window.openSettingsInfo('appUpdates')">i</button>
         </div>
-        <div class="settings-hint">This app checks for a new version every time you open it, as long as you're online. If a newer version has been pushed to GitHub, you should see it right away — no separate "update" button needed, no app store to check.</div>
+        <div class="settings-hint">This app checks for a new version a few seconds after you open it, as long as you're online and have a repo path saved above. A red dot appears on the shield icon next to Settings if one's available — tap it, then Check for Updates for details.</div>
         <div class="settings-hint" style="margin-top:10px;">Occasionally, right after a new version goes live, it can take closing the app fully and reopening it once or twice before the new version actually shows up. That's a known quirk of how phones handle installed web apps, not something wrong with your device — and it should only happen around a fresh update, not every time you open the app.</div>
-        <div class="settings-field-label" style="margin-top:14px;">How to check for updates</div>
+        <div class="settings-field-label" style="margin-top:14px;">Still not showing the new version?</div>
         <ol class="recovery-list">
           <li>Fully close the app — swipe it away in your app switcher, don't just switch to another app.</li>
           <li>Reopen it from your Home Screen icon.</li>
-          <li>Scroll to the very bottom of the main screen and check the build number.</li>
           <li>Still showing the old number after 2-3 tries? Remove the app from your Home Screen and add it again from your GitHub Pages link — that always gets the current version.</li>
         </ol>
       </div>
@@ -5547,6 +5590,100 @@
     renderBPStatus();
     renderSettingsScreen();
     showToast('Data imported successfully.');
+  };
+
+  const CURRENT_BUILD = 'v41';
+
+  function _buildNum(v){
+    const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  window.openDataBackup = function(){
+    const stats = todaysStatusDataStats();
+    document.getElementById('dbStatRow').innerHTML =
+      `<div class="data-stat"><div class="data-stat-num">${stats.bpCount}</div><div class="data-stat-label">BP readings</div></div>` +
+      `<div class="data-stat"><div class="data-stat-num">${stats.fluidCount}</div><div class="data-stat-label">Fluid entries</div></div>` +
+      `<div class="data-stat"><div class="data-stat-num">${stats.mealCount}</div><div class="data-stat-label">Meals logged</div></div>` +
+      `<div class="data-stat"><div class="data-stat-num">${stats.kb}</div><div class="data-stat-label">KB stored</div></div>`;
+    document.getElementById('dbLastBackup').textContent = lastBackupText();
+    document.getElementById('dbVersionStatus').textContent = 'Build ' + CURRENT_BUILD + ' on this device.';
+    const emailField = document.getElementById('setBackupEmail');
+    if(emailField) emailField.value = loadSettings().backupEmail || '';
+    document.getElementById('dataBackupOverlay').hidden = false;
+  };
+  window.closeDataBackup = function(){
+    document.getElementById('dataBackupOverlay').hidden = true;
+  };
+
+  // Version check — fetches version.json from the reader's own GitHub Pages
+  // repo (set once in Settings → GitHub). Requires internet; fails gracefully
+  // and plainly when offline rather than pretending to know the answer.
+  window.checkForUpdatesNow = function(){
+    const statusEl = document.getElementById('dbVersionStatus');
+    const s = loadSettings();
+    if(!s.githubRepoPath){
+      statusEl.textContent = 'Add your GitHub repo path in Settings → GitHub first, then updates can be checked automatically.';
+      return;
+    }
+    const base = ghPagesUrl(s.githubRepoPath);
+    if(!base){
+      statusEl.textContent = 'That repo path doesn\'t look right — check it in Settings → GitHub.';
+      return;
+    }
+    statusEl.textContent = 'Checking…';
+    fetch(base + 'version.json?_=' + Date.now(), { cache: 'no-store' })
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        const dot = document.getElementById('dataUpdateDot');
+        if(data.version && _buildNum(data.version) > _buildNum(CURRENT_BUILD)){
+          statusEl.textContent = '🆕 ' + data.version + ' is available. Reload the page to update — your data is stored locally and won\'t be affected.';
+          if(dot) dot.hidden = false;
+        } else {
+          statusEl.textContent = '✅ You\'re on the latest version (' + CURRENT_BUILD + ').';
+          if(dot) dot.hidden = true;
+        }
+      })
+      .catch(() => {
+        statusEl.textContent = '⚠️ Could not check for updates — check your connection and try again. (Airplane Mode or no wifi is fine for everything else in this app, just not this check.)';
+      });
+  };
+
+  // ---- Delete Everything: full preview, then two plain confirmations ----
+  window.startDeleteEverything = function(){
+    const stats = todaysStatusDataStats();
+    let keyCount = 0;
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf('todaysStatus_') === 0) keyCount++;
+    }
+    document.getElementById('deletePreviewBody').innerHTML =
+      `<strong>This will permanently erase, on this device only:</strong><br>` +
+      `• ${stats.bpCount} BP reading${stats.bpCount===1?'':'s'}<br>` +
+      `• ${stats.fluidCount} fluid entr${stats.fluidCount===1?'y':'ies'}<br>` +
+      `• ${stats.mealCount} meal${stats.mealCount===1?'':'s'} logged, including saved quick meals<br>` +
+      `• All medications, symptoms, activities, and Gotchas<br>` +
+      `• All settings and preferences<br><br>` +
+      `<strong>${keyCount} stored item${keyCount===1?'':'s'} total.</strong> The app will reload to a clean start. This cannot be undone — export a backup first if you're not sure.`;
+    document.getElementById('deletePreviewOverlay').hidden = false;
+  };
+  window.cancelDeleteEverything = function(){
+    document.getElementById('deletePreviewOverlay').hidden = true;
+  };
+  window.confirmDeleteEverythingStep1 = function(){
+    // Second, separate confirmation — deliberately not a typed word, since
+    // this app is built for readers who may not want to type to confirm.
+    if(!confirm('Final check: delete everything on this device? This cannot be undone.')) return;
+    const toRemove = [];
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf('todaysStatus_') === 0) toRemove.push(k);
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+    document.getElementById('deletePreviewOverlay').hidden = true;
+    document.getElementById('dataBackupOverlay').hidden = true;
+    showToast('Everything deleted. Reloading…');
+    setTimeout(() => location.reload(), 800);
   };
 
   window.openSettings = function(){
@@ -6018,6 +6155,26 @@
   renderGrid();
   renderStatus();
   renderBPStatus();
+
+  // Silent startup version check — matches the Settings copy that promises
+  // this happens automatically. Only touches the badge dot and the panel's
+  // status line; never interrupts with an alert. Skips quietly if no repo
+  // path is set yet or there's no connection, same as CardiacLens.
+  setTimeout(function(){
+    const s = loadSettings();
+    if(!s.githubRepoPath) return;
+    const base = ghPagesUrl(s.githubRepoPath);
+    if(!base) return;
+    fetch(base + 'version.json?_=' + Date.now(), { cache: 'no-store' })
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        if(data.version && _buildNum(data.version) > _buildNum(CURRENT_BUILD)){
+          const dot = document.getElementById('dataUpdateDot');
+          if(dot) dot.hidden = false;
+        }
+      })
+      .catch(() => {}); // offline or unreachable — fail silently on startup, the panel's manual check explains why if tapped
+  }, 3000);
 
   // ---- Register service worker ----
   if('serviceWorker' in navigator){

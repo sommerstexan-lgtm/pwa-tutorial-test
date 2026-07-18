@@ -1,6 +1,6 @@
-// Today's Status — Lesson 8 service worker
+// Today's Status — Lesson 9 service worker
 // Keeps the app installable and usable offline.
-const CACHE_NAME = 'todays-status-v40';
+const CACHE_NAME = 'todays-status-v41';
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,6 +26,16 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+
+  // version.json must always come straight from the network — it's the
+  // whole mechanism the update check relies on. Caching it here would
+  // mean the app could report "you're up to date" from a stale copy
+  // even while requesting cache:'no-store' in the page's own fetch call.
+  if (req.url.indexOf('version.json') !== -1) {
+    event.respondWith(fetch(req).catch(() => new Response('{}', { headers: { 'Content-Type': 'application/json' } })));
+    return;
+  }
+
   const isHTML = req.mode === 'navigate' ||
     req.destination === 'document' ||
     req.url.endsWith('/') ||
