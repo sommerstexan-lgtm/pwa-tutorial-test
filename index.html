@@ -1225,9 +1225,10 @@
 <!-- Data & Backup — version check, export, import, delete everything -->
 <div class="overlay" id="dataBackupOverlay" hidden>
   <div class="modal">
-    <div class="modal-title">
+    <div class="modal-title" style="position:relative; padding-right:34px;">
       <span class="modal-dot" style="background:#0ea5e9"></span>
       Data &amp; Backup
+      <button onclick="window.closeDataBackup()" aria-label="Close" style="position:absolute; top:-4px; right:0; width:30px; height:30px; border:none; background:#f1f5f9; border-radius:50%; font-size:18px; line-height:1; color:#475569; cursor:pointer;">&times;</button>
     </div>
 
     <div class="settings-section">
