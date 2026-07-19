@@ -286,6 +286,47 @@
     position:fixed; inset:0; background:#fff; z-index:70;
     display:flex; flex-direction:column;
   }
+
+  /* Lock Screen takeover - must always render above everything else in the app */
+  #lockTakeover{
+    position:fixed; inset:0; z-index:2147483647;
+    background:#0f172a; display:flex; align-items:center; justify-content:center;
+    padding:24px; box-sizing:border-box;
+  }
+  .lock-card{
+    width:100%; max-width:360px; background:#fff; border-radius:20px;
+    padding:28px 24px; box-shadow:0 12px 40px rgba(0,0,0,0.35);
+  }
+  .lock-title{ font-size:20px; font-weight:800; color:#1e293b; text-align:center; margin-bottom:4px; }
+  .lock-sub{ font-size:14px; color:#64748b; text-align:center; margin-bottom:22px; }
+  .lock-dots{ display:flex; justify-content:center; gap:16px; margin-bottom:22px; }
+  .lock-dot{ width:16px; height:16px; border-radius:50%; background:#e2e8f0; border:2px solid #cbd5e1; box-sizing:border-box; }
+  .lock-dot.filled{ background:#1e293b; border-color:#1e293b; }
+  .lock-keypad{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+  .lock-key{
+    height:60px; border:none; border-radius:14px; background:#f1f5f9; color:#1e293b;
+    font-size:22px; font-weight:700; cursor:pointer;
+  }
+  .lock-key:active{ background:#e2e8f0; }
+  .lock-key.wide{ font-size:15px; font-weight:700; color:#475569; }
+  .lock-status{ text-align:center; font-size:13.5px; color:#b91c1c; min-height:18px; margin-bottom:6px; font-weight:600; }
+  .lock-cooldown{
+    background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:10px;
+    padding:10px; font-size:13.5px; font-weight:700; text-align:center; margin-bottom:14px;
+  }
+  .lock-forgot{ display:block; width:100%; text-align:center; background:none; border:none; color:#1e293b; text-decoration:underline; font-size:14px; font-weight:600; padding:10px 4px; cursor:pointer; }
+  .recovery-code-box{
+    background:#f8fafc; border:2px dashed #94a3b8; border-radius:12px; padding:18px;
+    text-align:center; font-size:24px; font-weight:800; letter-spacing:2px; color:#1e293b;
+    margin:16px 0; font-family:monospace;
+  }
+
+  /* Guard Dog banner */
+  #gdBanner{
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%); z-index:9999999;
+    background:#fff; border:2px solid #d97706; border-radius:14px; padding:12px 16px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.18); max-width:380px; width:calc(100% - 40px); box-sizing:border-box;
+  }
   .graph-header{
     display:flex; align-items:center; justify-content:center;
     padding:14px 16px; border-bottom:1px solid var(--line); flex-shrink:0;
@@ -498,6 +539,7 @@
      small-modal layer (z-index 50) shared with Log Fluid / Log BP / etc. */
   #settingsInfoOverlay, #importPreviewOverlay{ z-index:80; }
   #activityDetailOverlay{ z-index:75; }
+  #lockSetupOverlay{ z-index:75; }
 
   /* Same class of bug: My Gotchas has its own "+ New Gotcha" button, so the
      capture form (a z-50 .overlay) can be triggered while My Gotchas (a
@@ -714,7 +756,7 @@
 <footer>
   Lesson 8 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v41</span>
+  <span style="opacity:0.6;font-size:11px;">Build v42 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1233,7 +1275,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v41 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v42 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -1281,6 +1323,20 @@
     </div>
   </div>
 </div>
+
+<!-- Lock Screen setup - PIN entry twice, then a one-time recovery code -->
+<div class="overlay" id="lockSetupOverlay" hidden>
+  <div class="modal" style="position:relative; padding-top:34px;">
+    <button onclick="window.closeLockSetup()" aria-label="Close" style="position:absolute; top:8px; right:16px; width:30px; height:30px; border:none; background:#f1f5f9; border-radius:50%; font-size:18px; line-height:1; color:#475569; cursor:pointer;">&times;</button>
+    <div id="lockSetupBody"></div>
+  </div>
+</div>
+
+<!-- Lock takeover - the actual gate, renders above everything, populated by JS -->
+<div id="lockTakeover" hidden></div>
+
+<!-- Guard Dog banner container, populated by JS -->
+<div id="gdBanner" hidden></div>
 
 <!-- Gotcha — new entry form (bottom sheet, like BP/Fluid/Medicine) -->
 <div class="overlay" id="gotchaFormOverlay" hidden>
@@ -2421,6 +2477,10 @@
       title:'Your Data',
       body:"How to use it: tap the shield icon next to Settings on the main screen — export a backup file any time, optionally email it to yourself, import one to restore, or delete everything and start clean. What it unlocks: a way to move your data to a new device or recover it after a reinstall — this is the only recovery option, since nothing is stored anywhere but this device. If you skip it: your data stays perfectly fine right here, but clearing browser data, reinstalling, or switching devices without a backup means it's gone for good."
     },
+    lockScreen: {
+      title:'Lock Screen',
+      body:"How to use it: set a 4-digit PIN in Settings, right here. The next time the app opens, it asks for that PIN before showing anything else. When you set it, you'll see a one-time recovery code, save that somewhere safe, it's the only way back in if you forget your PIN. What it unlocks: a real barrier against a casual glance at your phone, on top of whatever lock your phone already has. If you skip it: the app opens straight to your data every time, same as it does today. If you lose both the PIN and the recovery code, there's no third way in. That's the honest tradeoff of setting this up yourself, not something this lesson is going to paper over."
+    },
     githubLinks: {
       title:'GitHub Quick Links',
       body:"How to use it: paste in your GitHub repo path once. What it unlocks: one-tap links to your live app and to GitHub's own web editor for each file, so pasting in a new lesson's code takes one tap to get to the right place instead of hunting for it. If you skip it: everything still works, you'll just navigate to GitHub manually each time."
@@ -2432,6 +2492,10 @@
     appUpdates: {
       title:'App Updates',
       body:"How to use it: set your GitHub repo path once, above — after that, this app checks for a new version quietly a few seconds after every open. A red dot appears on the shield icon next to Settings if one's available; tap it and use Check for Updates to see details. What it unlocks: you always know whether you're current, without an app store or a manual update step. If you skip reading this: the only thing you might miss is knowing what to do on the rare occasion a new version doesn't show up on the very first reopen — close the app fully and try again, and if it still hasn't shown up after a couple of tries, remove and re-add the Home Screen icon."
+    },
+    guardDog: {
+      title:'Guard Dog',
+      body:"How to use it: nothing to set up, it's already watching. Check the footer at the bottom of the main screen for its status, it either shows a recent check-in time or says it hasn't checked in yet. What it unlocks: if something breaks silently, like a save that fails or a screen that stops working right, a plain banner tells you instead of the app just quietly misbehaving. You can send a report by email straight from that banner, or dismiss it. If you skip it: nothing changes day to day, but if something does go wrong, you won't find out from the app itself."
     }
   };
 
@@ -5386,6 +5450,14 @@
 
       <div class="settings-section">
         <div class="settings-section-title">
+          <span>Lock Screen</span>
+          <button class="info-btn" onclick="window.openSettingsInfo('lockScreen')">i</button>
+        </div>
+        <div id="lockScreenSettingsBody">${renderLockScreenSettingsBody()}</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">
           <span>GitHub Quick Links</span>
           <button class="info-btn" onclick="window.openSettingsInfo('githubLinks')">i</button>
         </div>
@@ -5599,7 +5671,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v41';
+  const CURRENT_BUILD = 'v42';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
@@ -5692,6 +5764,403 @@
     showToast('Everything deleted. Reloading…');
     setTimeout(() => location.reload(), 800);
   };
+
+  // ---- Lock Screen ----
+  const LOCK_PIN_KEY = 'todaysStatus_lockPin';
+  const LOCK_ENABLED_KEY = 'todaysStatus_lockEnabled';
+  const LOCK_RECOVERY_KEY = 'todaysStatus_recoveryCode';
+  const LOCK_FAILS_KEY = 'todaysStatus_lockFails';
+  const LOCK_COOLDOWN_KEY = 'todaysStatus_lockCooldownUntil';
+  let _lockEntry = '';
+  let _lockSessionUnlocked = false;
+
+  function _genRecoveryCode(){
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O/1/I/L, easy to write down
+    let out = '';
+    for(let i=0; i<8; i++){
+      if(i===4) out += '-';
+      out += chars[Math.floor(Math.random()*chars.length)];
+    }
+    return out;
+  }
+
+  function renderLockScreenSettingsBody(){
+    const enabled = localStorage.getItem(LOCK_ENABLED_KEY) === '1';
+    if(!enabled){
+      return `<div class="settings-hint">Off. Set a 4-digit PIN to require it every time the app opens.</div>
+        <button class="settings-btn-primary" style="width:100%;margin-top:8px" onclick="window.startLockSetup()">Set Up Lock Screen</button>`;
+    }
+    return `<div class="settings-hint" style="font-weight:600;">On. The app asks for your PIN on every open.</div>
+      <div class="settings-btn-row" style="margin-top:8px">
+        <button class="settings-btn-secondary" style="width:100%" onclick="window.startLockSetup()">Change PIN</button>
+      </div>
+      <div class="settings-btn-row">
+        <button class="settings-btn-secondary" style="width:100%;border-color:#fecaca;color:#b91c1c" onclick="window.turnOffLock()">Turn Off Lock Screen</button>
+      </div>`;
+  }
+
+  window.turnOffLock = function(){
+    if(!confirm('Turn off the lock screen? Your PIN and recovery code will be cleared.')) return;
+    localStorage.removeItem(LOCK_PIN_KEY);
+    localStorage.removeItem(LOCK_ENABLED_KEY);
+    localStorage.removeItem(LOCK_RECOVERY_KEY);
+    localStorage.removeItem(LOCK_FAILS_KEY);
+    localStorage.removeItem(LOCK_COOLDOWN_KEY);
+    const body = document.getElementById('lockScreenSettingsBody');
+    if(body) body.innerHTML = renderLockScreenSettingsBody();
+    showToast('Lock screen turned off.');
+  };
+
+  // Setup flow lives in the Data & Backup style bottom-sheet pattern, reusing
+  // the same .overlay/.modal shell as everything else in this panel family.
+  window.startLockSetup = function(){
+    _lockEntry = '';
+    document.getElementById('lockSetupBody').innerHTML = _renderLockSetupStep1();
+    document.getElementById('lockSetupOverlay').hidden = false;
+  };
+  window.closeLockSetup = function(){
+    document.getElementById('lockSetupOverlay').hidden = true;
+  };
+
+  function _renderLockSetupStep1(){
+    return `<div class="lock-title" style="text-align:left;">Choose a 4-digit PIN</div>
+      <div class="lock-sub" style="text-align:left;">You'll enter this every time the app opens.</div>
+      <div class="lock-dots" id="setupDots1">${_dotsHtml(0)}</div>
+      ${_keypadHtml('window._lockSetupTap1')}`;
+  }
+  let _lockFirstPin = '';
+  window._lockSetupTap1 = function(v){
+    if(v === 'del'){ _lockEntry = _lockEntry.slice(0,-1); }
+    else if(v !== '' && _lockEntry.length < 4){ _lockEntry += v; }
+    document.getElementById('setupDots1').innerHTML = _dotsHtml(_lockEntry.length);
+    if(_lockEntry.length === 4){
+      _lockFirstPin = _lockEntry;
+      _lockEntry = '';
+      setTimeout(() => {
+        document.getElementById('lockSetupBody').innerHTML = _renderLockSetupStep2();
+      }, 150);
+    }
+  };
+  function _renderLockSetupStep2(){
+    return `<div class="lock-title" style="text-align:left;">Enter it again</div>
+      <div class="lock-sub" style="text-align:left;">Just to make sure.</div>
+      <div class="lock-dots" id="setupDots2">${_dotsHtml(0)}</div>
+      <div class="lock-status" id="setupStatus2"></div>
+      ${_keypadHtml('window._lockSetupTap2')}`;
+  }
+  window._lockSetupTap2 = function(v){
+    if(v === 'del'){ _lockEntry = _lockEntry.slice(0,-1); }
+    else if(v !== '' && _lockEntry.length < 4){ _lockEntry += v; }
+    document.getElementById('setupDots2').innerHTML = _dotsHtml(_lockEntry.length);
+    if(_lockEntry.length === 4){
+      if(_lockEntry !== _lockFirstPin){
+        document.getElementById('setupStatus2').textContent = "Didn't match. Try again.";
+        _lockEntry = '';
+        setTimeout(() => document.getElementById('setupDots2').innerHTML = _dotsHtml(0), 400);
+        return;
+      }
+      const code = _genRecoveryCode();
+      localStorage.setItem(LOCK_PIN_KEY, _lockFirstPin);
+      localStorage.setItem(LOCK_RECOVERY_KEY, code);
+      localStorage.setItem(LOCK_ENABLED_KEY, '1');
+      localStorage.removeItem(LOCK_FAILS_KEY);
+      localStorage.removeItem(LOCK_COOLDOWN_KEY);
+      setTimeout(() => {
+        document.getElementById('lockSetupBody').innerHTML = _renderLockSetupStep3(code);
+      }, 150);
+    }
+  };
+  function _renderLockSetupStep3(code){
+    return `<div class="lock-title" style="text-align:left;">Save this recovery code</div>
+      <div class="lock-sub" style="text-align:left;">If you forget your PIN, this code is the only way back in. Write it down or save it somewhere you'll actually find it, not just on this phone.</div>
+      <div class="recovery-code-box">${code}</div>
+      <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:16px;">
+        <input type="checkbox" id="lockSetupAck" style="margin-top:3px;">
+        <label for="lockSetupAck" style="font-size:13.5px; color:#374151;">I've saved this code somewhere safe. I understand there's no other way to recover my PIN.</label>
+      </div>
+      <button class="settings-btn-primary" style="width:100%" onclick="window._finishLockSetup()">Done</button>`;
+  }
+  window._finishLockSetup = function(){
+    if(!document.getElementById('lockSetupAck').checked){
+      showToast("Check the box first, that code won't be shown again.");
+      return;
+    }
+    window.closeLockSetup();
+    const body = document.getElementById('lockScreenSettingsBody');
+    if(body) body.innerHTML = renderLockScreenSettingsBody();
+    showToast('Lock screen is on.');
+  };
+
+  function _dotsHtml(filled){
+    let h = '';
+    for(let i=0;i<4;i++) h += `<span class="lock-dot${i<filled?' filled':''}"></span>`;
+    return h;
+  }
+  function _keypadHtml(tapFn){
+    const keys = ['1','2','3','4','5','6','7','8','9','','0','del'];
+    return `<div class="lock-keypad">` + keys.map(k => {
+      if(k === '') return `<div></div>`;
+      if(k === 'del') return `<button type="button" class="lock-key wide" onclick="${tapFn}('del')">&larr;</button>`;
+      return `<button type="button" class="lock-key" onclick="${tapFn}('${k}')">${k}</button>`;
+    }).join('') + `</div>`;
+  }
+
+  // ---- Lock takeover: the actual gate shown on app open ----
+  function _lockCooldownSeconds(failCount){
+    return failCount >= 5 ? 30 : 0;
+  }
+  window.showLockTakeover = function(){
+    if(_lockSessionUnlocked) return;
+    if(localStorage.getItem(LOCK_ENABLED_KEY) !== '1') return;
+    _lockEntry = '';
+    const el = document.getElementById('lockTakeover');
+    el.innerHTML = _renderLockTakeoverBody();
+    el.hidden = false;
+    _lockTickCooldown();
+  };
+  function _renderLockTakeoverBody(showForgot){
+    const fails = parseInt(localStorage.getItem(LOCK_FAILS_KEY) || '0', 10);
+    const cooldownUntil = parseInt(localStorage.getItem(LOCK_COOLDOWN_KEY) || '0', 10);
+    const inCooldown = cooldownUntil > Date.now();
+    return `<div class="lock-card">
+      <div class="lock-title">Enter your PIN</div>
+      <div class="lock-sub">Today's Status is locked.</div>
+      <div class="lock-dots" id="tkDots">${_dotsHtml(0)}</div>
+      <div class="lock-status" id="tkStatus"></div>
+      <div class="lock-cooldown" id="tkCooldown" ${inCooldown ? '' : 'hidden'}></div>
+      ${_keypadHtml('window._lockTakeoverTap')}
+      <button class="lock-forgot" onclick="window.showLockRecovery()">Forgot PIN?</button>
+    </div>`;
+  }
+  function _lockTickCooldown(){
+    const cooldownUntil = parseInt(localStorage.getItem(LOCK_COOLDOWN_KEY) || '0', 10);
+    const box = document.getElementById('tkCooldown');
+    if(!box) return;
+    if(cooldownUntil > Date.now()){
+      const rem = Math.ceil((cooldownUntil - Date.now())/1000);
+      box.hidden = false;
+      box.textContent = `Too many tries. Wait ${rem}s.`;
+      setTimeout(_lockTickCooldown, 500);
+    } else {
+      box.hidden = true;
+    }
+  }
+  window._lockTakeoverTap = function(v){
+    const cooldownUntil = parseInt(localStorage.getItem(LOCK_COOLDOWN_KEY) || '0', 10);
+    if(cooldownUntil > Date.now()) return;
+    if(v === 'del'){ _lockEntry = _lockEntry.slice(0,-1); }
+    else if(v !== '' && _lockEntry.length < 4){ _lockEntry += v; }
+    const dotsEl = document.getElementById('tkDots');
+    if(dotsEl) dotsEl.innerHTML = _dotsHtml(_lockEntry.length);
+    if(_lockEntry.length === 4){
+      const real = localStorage.getItem(LOCK_PIN_KEY);
+      if(_lockEntry === real){
+        _lockSessionUnlocked = true;
+        localStorage.removeItem(LOCK_FAILS_KEY);
+        localStorage.removeItem(LOCK_COOLDOWN_KEY);
+        document.getElementById('lockTakeover').hidden = true;
+      } else {
+        const fails = parseInt(localStorage.getItem(LOCK_FAILS_KEY) || '0', 10) + 1;
+        localStorage.setItem(LOCK_FAILS_KEY, String(fails));
+        const sec = _lockCooldownSeconds(fails);
+        if(sec){
+          localStorage.setItem(LOCK_COOLDOWN_KEY, String(Date.now() + sec*1000));
+        }
+        _lockEntry = '';
+        const statusEl = document.getElementById('tkStatus');
+        if(statusEl) statusEl.textContent = 'Wrong PIN.';
+        setTimeout(() => { if(dotsEl) dotsEl.innerHTML = _dotsHtml(0); }, 300);
+        if(sec) _lockTickCooldown();
+      }
+    }
+  };
+
+  window.showLockRecovery = function(){
+    document.getElementById('lockTakeover').innerHTML = `<div class="lock-card">
+      <div class="lock-title">Enter your recovery code</div>
+      <div class="lock-sub">The one you saved when you set up your PIN. There's no other way in.</div>
+      <input type="text" id="recoveryInput" placeholder="XXXX-XXXX" style="width:100%; box-sizing:border-box; padding:14px; font-size:18px; text-align:center; font-family:monospace; letter-spacing:2px; border:2px solid #cbd5e1; border-radius:12px; margin-bottom:12px; text-transform:uppercase;">
+      <div class="lock-status" id="recoveryStatus"></div>
+      <button class="settings-btn-primary" style="width:100%; margin-bottom:10px;" onclick="window._checkRecoveryCode()">Continue</button>
+      <button class="lock-forgot" onclick="window.showLockTakeover()">Back to PIN</button>
+    </div>`;
+  };
+  window._checkRecoveryCode = function(){
+    const entered = document.getElementById('recoveryInput').value.trim().toUpperCase();
+    const real = localStorage.getItem(LOCK_RECOVERY_KEY);
+    if(entered === real){
+      localStorage.removeItem(LOCK_FAILS_KEY);
+      localStorage.removeItem(LOCK_COOLDOWN_KEY);
+      _lockSessionUnlocked = true;
+      document.getElementById('lockTakeover').hidden = true;
+      showToast('Recovery accepted. Set a new PIN in Settings.');
+    } else {
+      document.getElementById('recoveryStatus').textContent = "That code doesn't match.";
+    }
+  };
+
+  // ---- Guard Dog ----
+  const GD_QUEUE_KEY = 'todaysStatus_guardDogQueue';
+  const GD_BEAT_KEY = 'todaysStatus_gdHeartbeat';
+  const GD_BEAT_VERIFIED_KEY = 'todaysStatus_gdHeartbeatVerified';
+  const GD_EMAIL = 'you@example.com'; // reader sets this via Settings > Your Data email field
+  let _gdErrCount = 0;
+  const GD_MAX_SESSION = 10;
+  const GD_MAX_QUEUE = 10;
+
+  function _gdQueue(type, msg, detail){
+    if(_gdErrCount >= GD_MAX_SESSION) return;
+    _gdErrCount++;
+    try{
+      let q = [];
+      try{ q = JSON.parse(localStorage.getItem(GD_QUEUE_KEY) || '[]'); } catch(e){}
+      const isDup = q.some(item => item.type === type && item.msg === String(msg).slice(0,300));
+      if(isDup) return;
+      if(q.length >= GD_MAX_QUEUE) q.shift();
+      q.push({
+        ts: new Date().toISOString(),
+        type: type,
+        ver: CURRENT_BUILD,
+        msg: String(msg).slice(0,300),
+        detail: String(detail || '').slice(0,500)
+      });
+      localStorage.setItem(GD_QUEUE_KEY, JSON.stringify(q));
+      _gdShowBanner();
+    } catch(e){}
+  }
+
+  function _gdBuildReportText(){
+    let q = [];
+    try{ q = JSON.parse(localStorage.getItem(GD_QUEUE_KEY) || '[]'); } catch(e){}
+    let body = "Today's Status Guard Dog Report\n================================\n";
+    body += 'Version: ' + CURRENT_BUILD + '\n';
+    body += 'Device: ' + (navigator.userAgent || '').slice(0,120) + '\n\n';
+    q.forEach((r,i) => {
+      body += '--- Report ' + (i+1) + ' ---\n';
+      body += 'Time: ' + r.ts + '\n';
+      body += 'Type: ' + r.type + '\n';
+      body += 'Message: ' + r.msg + '\n';
+      if(r.detail) body += 'Detail: ' + r.detail + '\n';
+      body += '\n';
+    });
+    return body;
+  }
+
+  function _gdShowBanner(){
+    const b = document.getElementById('gdBanner');
+    if(!b) return;
+    b.innerHTML = `<div style="display:flex; align-items:flex-start; gap:10px;">
+      <span style="font-size:24px; line-height:1;">🐕</span>
+      <div style="flex:1;">
+        <div style="font-size:15px; font-weight:700; color:#1e293b; margin-bottom:3px;">Guard Dog noticed something</div>
+        <div style="font-size:13px; color:#475569; line-height:1.5; margin-bottom:8px;">Your data is safe. Something didn't work the way it should have.</div>
+        <div id="gdBannerStatus" style="font-size:12px; color:#166534; font-weight:600; margin-bottom:6px; display:none;"></div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="window._gdSendReport()" style="flex:1; background:#d97706; color:#fff; border:none; border-radius:8px; padding:9px 8px; font-size:12.5px; font-weight:700; cursor:pointer;">Send Report</button>
+          <button onclick="window._gdCopyReport()" style="flex:1; background:#f1f5f9; color:#1e293b; border:none; border-radius:8px; padding:9px 8px; font-size:12.5px; font-weight:700; cursor:pointer;">Copy</button>
+          <button onclick="window._gdDismiss()" style="background:#f1f5f9; color:#64748b; border:none; border-radius:8px; padding:9px 8px; font-size:12.5px; font-weight:600; cursor:pointer;">Dismiss</button>
+        </div>
+      </div>
+    </div>`;
+    b.hidden = false;
+  }
+
+  window._gdCopyReport = function(){
+    const txt = _gdBuildReportText();
+    const statusEl = document.getElementById('gdBannerStatus');
+    const done = (ok) => {
+      if(!statusEl) return;
+      statusEl.style.display = 'block';
+      statusEl.style.color = ok ? '#166534' : '#b91c1c';
+      statusEl.textContent = ok
+        ? 'Copied. Paste it into an email, note, or message.'
+        : "Couldn't copy automatically. Try Send Report instead.";
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(() => done(true)).catch(() => done(false));
+    } else {
+      // Fallback for browsers without the Clipboard API: a hidden textarea,
+      // select its contents, and use the older execCommand copy path.
+      try{
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(ok);
+      } catch(e){ done(false); }
+    }
+  };
+
+  window._gdSendReport = function(){
+    const body = _gdBuildReportText();
+    const email = loadSettings().backupEmail || '';
+    window.location.href = 'mailto:' + email
+      + '?subject=' + encodeURIComponent("Today's Status Guard Dog - " + CURRENT_BUILD)
+      + '&body=' + encodeURIComponent(body);
+    localStorage.removeItem(GD_QUEUE_KEY);
+    window._gdDismiss();
+  };
+  window._gdDismiss = function(){
+    const b = document.getElementById('gdBanner');
+    if(b) b.hidden = true;
+    localStorage.removeItem(GD_QUEUE_KEY);
+    _gdErrCount = 0;
+  };
+
+  window.addEventListener('error', function(ev){
+    if(_gdErrCount >= GD_MAX_SESSION) return;
+    const src = String(ev.filename || '').replace(/.*\//, '');
+    if(src.indexOf('sw.js') !== -1) return; // network transient on deploy, not an app bug
+    _gdQueue('js_error', String(ev.message || 'Unknown error'),
+      'Line ' + (ev.lineno || '?') + (ev.error && ev.error.stack ? '\n' + String(ev.error.stack).slice(0,300) : ''));
+  });
+  window.addEventListener('unhandledrejection', function(ev){
+    if(_gdErrCount >= GD_MAX_SESSION) return;
+    const reason = ev.reason;
+    const msg = (reason && reason.message) ? reason.message : String(reason);
+    _gdQueue('promise_rejection', String(msg).slice(0,200), reason && reason.stack ? String(reason.stack).slice(0,300) : '');
+  });
+
+  function _gdHealthCheck(){
+    try{
+      const issues = [];
+      ['exportBackup','openSettings','openDataBackup','saveEditBPEntry'].forEach(fn => {
+        if(typeof window[fn] !== 'function') issues.push('Missing function: ' + fn);
+      });
+      try{
+        const tk = '_gd_' + Date.now();
+        localStorage.setItem(tk, '1');
+        if(localStorage.getItem(tk) !== '1') issues.push('localStorage rw mismatch');
+        localStorage.removeItem(tk);
+      } catch(e){ issues.push('localStorage error: ' + String(e.message).slice(0,60)); }
+
+      if(issues.length > 0) _gdQueue('health_check', issues[0], issues.join(' | '));
+
+      const now = Date.now().toString();
+      localStorage.setItem(GD_BEAT_KEY, now);
+      localStorage.setItem(GD_BEAT_VERIFIED_KEY, now);
+      _gdUpdateHeartbeat();
+    } catch(e){} // the watchdog itself must never throw
+  }
+  function _gdUpdateHeartbeat(){
+    const el = document.getElementById('gdHeartbeat');
+    if(!el) return;
+    const ts = localStorage.getItem(GD_BEAT_KEY);
+    const verified = localStorage.getItem(GD_BEAT_VERIFIED_KEY);
+    if(!ts){ el.textContent = 'not checked in yet'; return; }
+    if(!verified || parseInt(verified,10) < parseInt(ts,10)){ el.textContent = 'checking in...'; return; }
+    const age = Date.now() - parseInt(ts,10);
+    if(age > 30*60*1000){ el.textContent = "hasn't checked in for a while"; return; }
+    const d = new Date(parseInt(verified,10));
+    let h = d.getHours(); const m = d.getMinutes().toString().padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    el.textContent = 'last checked in ' + h + ':' + m + ' ' + ampm;
+  }
 
   window.openSettings = function(){
     renderSettingsScreen();
@@ -6162,6 +6631,28 @@
   renderGrid();
   renderStatus();
   renderBPStatus();
+
+  // Lock Screen: check before anything else is meaningfully visible.
+  // The overlay renders on top regardless, but checking here means a
+  // reader coming back to the app sees the lock the instant it loads,
+  // not after a flash of their own data.
+  window.showLockTakeover();
+
+  // Guard Dog: provisional heartbeat write immediately, so the footer
+  // never flashes "hasn't checked in" during the first few seconds while
+  // the real health check hasn't run yet.
+  (function(){
+    try{ localStorage.setItem(GD_BEAT_KEY, Date.now().toString()); } catch(e){}
+  })();
+  setTimeout(_gdUpdateHeartbeat, 300);
+  setTimeout(_gdHealthCheck, 8000);
+  setInterval(_gdHealthCheck, 5 * 60 * 1000);
+  setInterval(_gdUpdateHeartbeat, 2 * 60 * 1000);
+  // Surface any unsent report left over from a previous session.
+  try{
+    const prevQ = JSON.parse(localStorage.getItem(GD_QUEUE_KEY) || '[]');
+    if(prevQ.length > 0) setTimeout(_gdShowBanner, 4000);
+  } catch(e){}
 
   // Silent startup version check — matches the Settings copy that promises
   // this happens automatically. Only touches the badge dot and the panel's

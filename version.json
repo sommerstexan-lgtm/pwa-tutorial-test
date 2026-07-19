@@ -1,5 +1,5 @@
 {
-  "version": "v41",
-  "releaseDate": "2026-07-21",
-  "summary": "Lesson 9: Data & Backup — export, import, delete everything, and automatic update checks."
+  "version": "v42",
+  "releaseDate": "2026-07-23",
+  "summary": "Lesson 10: Guard Dog and a Lock Screen. A quiet watchdog that tells you plainly if something breaks, and an optional 4-digit PIN with a one-time recovery code."
 }
