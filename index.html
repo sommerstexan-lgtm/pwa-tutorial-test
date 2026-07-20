@@ -101,6 +101,40 @@
   .status-hr-number{ font-size:14px; font-weight:700; color:var(--ink); }
   .status-hr-unit{ font-size:10px; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:0.02em; }
 
+  .planday-strip{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:11px 14px;
+    margin-bottom:14px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    font-size:13.5px;
+    font-weight:600;
+    transition:background-color .12s ease;
+  }
+  .planday-strip:active{ background:#f3f4f6; }
+  .planday-strip.pd-missed{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+  .planday-strip .pd-chevron{ color:#cbd5e1; font-size:16px; font-weight:700; }
+  .pd-section-label{
+    font-size:11px; color:var(--sub); font-weight:700; text-transform:uppercase;
+    letter-spacing:0.03em; margin:14px 0 6px 0;
+  }
+  .pd-section-label:first-of-type{ margin-top:4px; }
+  .pd-checkbox{
+    width:22px; height:22px; border-radius:6px; border:2px solid #cbd5e1;
+    flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    background:#fff; margin-right:2px;
+  }
+  .pd-checkbox.checked{ background:#059669; border-color:#059669; color:#fff; font-weight:700; }
+  .pd-row{ display:flex; align-items:center; gap:10px; }
+  .pd-row.pd-done .entry-reading, .pd-row.pd-done .entry-time{ opacity:0.5; text-decoration:line-through; }
+  .pd-row.pd-missed-row{ border-left:3px solid #dc2626; padding-left:8px; }
+
   .grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -751,12 +785,17 @@
 </div>
 </div>
 
+<div class="planday-strip" id="planDayStrip" onclick="window.openPlanDay()" role="button" tabindex="0" aria-label="Plan My Day status" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openPlanDay();}">
+  <span id="planDayStripText">Nothing planned for today</span>
+  <span class="pd-chevron">&rsaquo;</span>
+</div>
+
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 8 of the build-along series.<br>
+  Lesson 11 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v42 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v43 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -937,6 +976,32 @@
   </div>
   <div id="symHistListSection" style="padding:0 16px 20px;"></div>
   <div id="symHistFreqSection" style="padding:0 16px 20px;display:none;"></div>
+</div>
+
+<!-- Plan My Day modal (Lesson 11) -->
+<div class="overlay" id="planDayOverlay" hidden>
+  <div class="modal">
+    <div class="modal-title">
+      <span class="modal-dot" style="background:#06b6d4"></span>
+      Plan My Day
+    </div>
+
+    <div class="med-field-label" style="margin-top:0;">What's happening?</div>
+    <input type="text" id="planDayLabel" class="modal-input" placeholder="e.g. Take a walk, Call the doctor" maxlength="60">
+
+    <div style="margin-top:10px;">
+      <label for="planDayTime" style="font-size:12px;color:var(--sub);font-weight:600;">Time</label>
+      <input type="time" id="planDayTime">
+    </div>
+
+    <div class="bp-error" id="planDayError" hidden></div>
+    <button class="modal-btn primary" id="planDaySaveBtn" style="width:100%;margin-top:12px;margin-bottom:6px;" onclick="window.savePlanDayEvent()">Add to Today</button>
+    <button class="modal-btn secondary" id="planDayCancelEditBtn" style="width:100%;margin-bottom:18px;display:none;" onclick="window.cancelEditPlanDayEvent()">Cancel Edit</button>
+
+    <div id="planDayListWrap"></div>
+
+    <button class="modal-btn secondary" style="width:100%;margin-top:14px;" onclick="window.closePlanDay()">Close</button>
+  </div>
 </div>
 
 <!-- Log Meal modal (Lesson 8) -->
@@ -1429,7 +1494,7 @@
     { key:'symptoms',     label:'Log Symptoms',    color:'#ec4899', active:true  },
     { key:'activity',     label:'Log Activity',    color:'#14b8a6', active:true  },
     { key:'appointment',  label:'Log Appointment', color:'#6366f1', active:false },
-    { key:'planday',      label:'Plan My Day',     color:'#06b6d4', active:false },
+    { key:'planday',      label:'Plan My Day',     color:'#06b6d4', active:true  },
     { key:'gotcha',      label:'Gotcha',        color:'#dc2626', active:true  },
   ];
 
@@ -1441,10 +1506,6 @@
     appointment: {
       title:'Log Appointment',
       body:"This button will log your upcoming and past appointments. By the time you finish this course, it'll pull together everything logged since your last visit into one summary you can hand your doctor — nothing forgotten."
-    },
-    planday: {
-      title:'Plan My Day',
-      body:"This button will set reminders and events for today. By the time you finish this course, it'll actively watch your day unfold and change color if something gets missed — so nothing important slips through."
     },
   };
 
@@ -5671,7 +5732,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v42';
+  const CURRENT_BUILD = 'v43';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
@@ -6185,6 +6246,8 @@
       window.openActivityModal();
     } else if(key === 'meal'){
       window.openMealModal();
+    } else if(key === 'planday'){
+      window.openPlanDay();
     } else {
       window.openDisclosure(key);
     }
@@ -6626,11 +6689,226 @@
     });
   };
 
+  // ---- Plan My Day (Lesson 11) ----
+  // Single source only: events added directly here for today. No recurring
+  // schedule, no Settings panel to configure before first use. The list
+  // hard-resets at midnight (checked against a stored date, not a timer).
+  // Yesterday's plan doesn't carry forward.
+  const PLANDAY_KEY = 'todaysStatus_planDayEvents';
+  const PLANDAY_DUE_GRACE_MIN = 30; // minutes past event time before it flips to "missed"
+
+  let planDayEditId = null;
+
+  function loadPlanDayEvents(){
+    let stored;
+    try{ stored = JSON.parse(localStorage.getItem(PLANDAY_KEY) || 'null'); } catch(e){ stored = null; }
+    if(!stored || stored.date !== todayKey()){
+      stored = { date: todayKey(), events: [] };
+      localStorage.setItem(PLANDAY_KEY, JSON.stringify(stored));
+    }
+    return stored.events;
+  }
+
+  function savePlanDayEvents(events){
+    localStorage.setItem(PLANDAY_KEY, JSON.stringify({ date: todayKey(), events: events }));
+  }
+
+  function timeStringToMinutes(t){
+    const parts = t.split(':').map(Number);
+    return parts[0] * 60 + parts[1];
+  }
+
+  function nowMinutes(){
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+
+  // Buckets: done (user checked it off) > due (within grace window of its
+  // time) > missed (past grace window, never checked off) > upcoming
+  // (time hasn't arrived yet). Order matters, a done event stays "done"
+  // even if its time has long since passed.
+  function planDayBucket(ev, nowMin){
+    if(ev.done) return 'done';
+    const evMin = timeStringToMinutes(ev.time);
+    if(evMin > nowMin) return 'upcoming';
+    if(nowMin - evMin <= PLANDAY_DUE_GRACE_MIN) return 'due';
+    return 'missed';
+  }
+
+  window.openPlanDay = function(){
+    planDayEditId = null;
+    document.getElementById('planDayLabel').value = '';
+    document.getElementById('planDayTime').value = nowTimeString();
+    document.getElementById('planDayError').hidden = true;
+    document.getElementById('planDaySaveBtn').textContent = 'Add to Today';
+    document.getElementById('planDayCancelEditBtn').style.display = 'none';
+    renderPlanDayList();
+    document.getElementById('planDayOverlay').hidden = false;
+  };
+
+  window.closePlanDay = function(){
+    document.getElementById('planDayOverlay').hidden = true;
+  };
+
+  window.savePlanDayEvent = function(){
+    const labelInput = document.getElementById('planDayLabel');
+    const timeInput = document.getElementById('planDayTime');
+    const errorEl = document.getElementById('planDayError');
+    const label = labelInput.value.trim();
+    const time = timeInput.value;
+
+    if(!label){
+      errorEl.textContent = 'Give it a short label first.';
+      errorEl.hidden = false;
+      return;
+    }
+    if(!time){
+      errorEl.textContent = 'Pick a time for it.';
+      errorEl.hidden = false;
+      return;
+    }
+    errorEl.hidden = true;
+
+    const events = loadPlanDayEvents();
+    if(planDayEditId != null){
+      const ev = events.find(e => e.id === planDayEditId);
+      if(ev){ ev.label = label; ev.time = time; }
+    } else {
+      events.push({ id: Date.now(), label: label, time: time, done: false });
+    }
+    savePlanDayEvents(events);
+    window.cancelEditPlanDayEvent();
+    renderPlanDayList();
+    renderPlanDayStatus();
+  };
+
+  window.startEditPlanDayEvent = function(id){
+    const events = loadPlanDayEvents();
+    const ev = events.find(e => e.id === id);
+    if(!ev) return;
+    planDayEditId = id;
+    document.getElementById('planDayLabel').value = ev.label;
+    document.getElementById('planDayTime').value = ev.time;
+    document.getElementById('planDayError').hidden = true;
+    document.getElementById('planDaySaveBtn').textContent = 'Update Event';
+    document.getElementById('planDayCancelEditBtn').style.display = 'block';
+    document.getElementById('planDayLabel').focus();
+  };
+
+  window.cancelEditPlanDayEvent = function(){
+    planDayEditId = null;
+    document.getElementById('planDayLabel').value = '';
+    document.getElementById('planDayTime').value = nowTimeString();
+    document.getElementById('planDayError').hidden = true;
+    document.getElementById('planDaySaveBtn').textContent = 'Add to Today';
+    document.getElementById('planDayCancelEditBtn').style.display = 'none';
+  };
+
+  window.deletePlanDayEvent = function(id){
+    const events = loadPlanDayEvents().filter(e => e.id !== id);
+    savePlanDayEvents(events);
+    if(planDayEditId === id) window.cancelEditPlanDayEvent();
+    renderPlanDayList();
+    renderPlanDayStatus();
+  };
+
+  window.togglePlanDayDone = function(id){
+    const events = loadPlanDayEvents();
+    const ev = events.find(e => e.id === id);
+    if(!ev) return;
+    ev.done = !ev.done;
+    savePlanDayEvents(events);
+    renderPlanDayList();
+    renderPlanDayStatus();
+  };
+
+  function planDaySectionHtml(title, list){
+    if(!list.length) return '';
+    const rows = list.map(ev => {
+      const checkedClass = ev.done ? ' checked' : '';
+      const rowDoneClass = ev.done ? ' pd-done' : '';
+      const rowMissedClass = (!ev.done && planDayBucket(ev, nowMinutes()) === 'missed') ? ' pd-missed-row' : '';
+      return `<div class="entry-row pd-row${rowDoneClass}${rowMissedClass}" data-id="${ev.id}">
+        <div class="pd-row-main" style="display:flex;align-items:center;gap:10px;">
+          <span class="pd-checkbox${checkedClass}" role="checkbox" aria-checked="${ev.done}" aria-label="Mark ${escapeHtml(ev.label)} done" tabindex="0" onclick="window.togglePlanDayDone(${ev.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.togglePlanDayDone(${ev.id});}">${ev.done ? '&#10003;' : ''}</span>
+          <div><span class="entry-reading">${escapeHtml(ev.label)}</span><span class="entry-time">${formatTimeLabel(ev.time)}</span></div>
+        </div>
+        <div class="entry-actions">
+          <button class="entry-edit-btn" onclick="window.startEditPlanDayEvent(${ev.id})" aria-label="Edit event">&#9998;</button>
+          <button class="entry-del-btn" onclick="window.deletePlanDayEvent(${ev.id})" aria-label="Delete event">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="pd-section-label">${title}</div>${rows}`;
+  }
+
+  function renderPlanDayList(){
+    const events = loadPlanDayEvents();
+    const nowMin = nowMinutes();
+    const wrap = document.getElementById('planDayListWrap');
+
+    if(!events.length){
+      wrap.innerHTML = '<div class="history-empty">Nothing planned for today yet.</div>';
+      return;
+    }
+
+    const buckets = { due: [], upcoming: [], missed: [], done: [] };
+    events.forEach(ev => buckets[planDayBucket(ev, nowMin)].push(ev));
+    ['due','upcoming','missed','done'].forEach(k => buckets[k].sort((a,b) => timeStringToMinutes(a.time) - timeStringToMinutes(b.time)));
+
+    wrap.innerHTML =
+      planDaySectionHtml('Due Now', buckets.due) +
+      planDaySectionHtml('Coming Up', buckets.upcoming) +
+      planDaySectionHtml('Missed', buckets.missed) +
+      planDaySectionHtml('Done', buckets.done);
+  }
+
+  // The dashboard line, the actual point of the feature. Priority order:
+  // missed takes precedence (it's the thing most worth surfacing), then
+  // due now, then what's coming up next, then an honest "nothing left."
+  function renderPlanDayStatus(){
+    const events = loadPlanDayEvents();
+    const nowMin = nowMinutes();
+    const strip = document.getElementById('planDayStrip');
+    const textEl = document.getElementById('planDayStripText');
+    if(!strip || !textEl) return;
+
+    const missed = events.filter(ev => planDayBucket(ev, nowMin) === 'missed');
+    const due = events.filter(ev => planDayBucket(ev, nowMin) === 'due').sort((a,b) => timeStringToMinutes(a.time) - timeStringToMinutes(b.time));
+    const upcoming = events.filter(ev => planDayBucket(ev, nowMin) === 'upcoming').sort((a,b) => timeStringToMinutes(a.time) - timeStringToMinutes(b.time));
+
+    strip.classList.toggle('pd-missed', missed.length > 0);
+
+    if(missed.length > 0){
+      const nextLabel = due[0] || upcoming[0];
+      textEl.textContent = '⚠ ' + missed.length + ' missed' +
+        (nextLabel ? ' · Next: ' + nextLabel.label + ' at ' + formatTimeLabel(nextLabel.time) : '');
+    } else if(due.length > 0){
+      textEl.textContent = 'Due now: ' + due[0].label;
+    } else if(upcoming.length > 0){
+      textEl.textContent = 'Next: ' + upcoming[0].label + ' at ' + formatTimeLabel(upcoming[0].time);
+    } else if(events.length > 0){
+      textEl.textContent = 'Nothing left for today';
+    } else {
+      textEl.textContent = 'Nothing planned for today';
+    }
+  }
+
   // ---- Init ----
   renderDate();
   renderGrid();
   renderStatus();
   renderBPStatus();
+  renderPlanDayStatus();
+  // Bucketing (due now / missed) depends on wall-clock time, not just user
+  // action, so the dashboard line and open modal both need a periodic
+  // nudge, otherwise "due now" would silently sit stale until the next tap.
+  setInterval(function(){
+    renderPlanDayStatus();
+    if(document.getElementById('planDayOverlay') && !document.getElementById('planDayOverlay').hidden){
+      renderPlanDayList();
+    }
+  }, 60 * 1000);
 
   // Lock Screen: check before anything else is meaningfully visible.
   // The overlay renders on top regardless, but checking here means a
