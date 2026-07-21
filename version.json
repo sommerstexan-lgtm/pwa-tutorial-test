@@ -1,5 +1,5 @@
 {
-  "version": "v44",
+  "version": "v46",
   "releaseDate": "2026-07-21",
-  "summary": "Lesson 12: Advanced Analytics. A new home for patterns, starting with BP Trend (first-half vs second-half average, 7/14/30 day toggle)."
+  "summary": "Lesson 12: Advanced Analytics. Fixed the trend delta rounding mismatch, and fixed the footer/version text that was still hardcoded to Lesson 11 / v42."
 }

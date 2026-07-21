@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status — Lesson 8 build-along app - single file PWA -->
+<!-- Today's Status - Lesson 12 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -813,9 +813,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 11 of the build-along series.<br>
-  One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v44 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  Lesson 12 of the build-along series.<br>
+  One more piece comes online every lesson.<br>
+  <span style="opacity:0.6;font-size:11px;">Build v46 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1377,7 +1377,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v42 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v46 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -5028,12 +5028,24 @@
     const firstAvgDia = halfAverage(firstHalf, 'diastolic');
     const secondAvgDia = halfAverage(secondHalf, 'diastolic');
 
-    const sysTrend = secondAvgSys - firstAvgSys;
-    const diaTrend = secondAvgDia - firstAvgDia;
+    // Round the before/after averages first, then derive the delta from
+    // THOSE rounded numbers. Rounding doesn't distribute over subtraction,
+    // so rounding the raw delta separately from the raw averages can
+    // produce a delta that doesn't match what "before -> after" shows on
+    // screen (e.g. "98 -> 95" but a delta of "-2" instead of the real -3).
+    // Using the same rounded numbers everywhere guarantees the two never
+    // disagree.
+    const dispFirstSys = Math.round(firstAvgSys);
+    const dispSecondSys = Math.round(secondAvgSys);
+    const dispFirstDia = Math.round(firstAvgDia);
+    const dispSecondDia = Math.round(secondAvgDia);
+    const sysTrend = dispSecondSys - dispFirstSys;
+    const diaTrend = dispSecondDia - dispFirstDia;
 
     return {
       sufficient:true,
-      firstAvgSys, secondAvgSys, firstAvgDia, secondAvgDia,
+      firstAvgSys:dispFirstSys, secondAvgSys:dispSecondSys,
+      firstAvgDia:dispFirstDia, secondAvgDia:dispSecondDia,
       sysTrend, diaTrend
     };
   }
@@ -5057,16 +5069,16 @@
       '<div>' +
         '<div class="trend-label">Systolic Trend</div>' +
         '<div class="trend-value" style="color:' + sysDir.color + '">' +
-          sysDir.icon + ' ' + (t.sysTrend > 0 ? '+' : '') + Math.round(t.sysTrend) + ' mmHg' +
+          sysDir.icon + ' ' + (t.sysTrend > 0 ? '+' : '') + t.sysTrend + ' mmHg' +
         '</div>' +
-        '<div class="trend-sub">' + Math.round(t.firstAvgSys) + ' \u2192 ' + Math.round(t.secondAvgSys) + ' mmHg</div>' +
+        '<div class="trend-sub">' + t.firstAvgSys + ' \u2192 ' + t.secondAvgSys + ' mmHg</div>' +
       '</div>' +
       '<div>' +
         '<div class="trend-label">Diastolic Trend</div>' +
         '<div class="trend-value" style="color:' + diaDir.color + '">' +
-          diaDir.icon + ' ' + (t.diaTrend > 0 ? '+' : '') + Math.round(t.diaTrend) + ' mmHg' +
+          diaDir.icon + ' ' + (t.diaTrend > 0 ? '+' : '') + t.diaTrend + ' mmHg' +
         '</div>' +
-        '<div class="trend-sub">' + Math.round(t.firstAvgDia) + ' \u2192 ' + Math.round(t.secondAvgDia) + ' mmHg</div>' +
+        '<div class="trend-sub">' + t.firstAvgDia + ' \u2192 ' + t.secondAvgDia + ' mmHg</div>' +
       '</div>' +
       '</div></div>';
   }
@@ -5883,7 +5895,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v44';
+  const CURRENT_BUILD = 'v46';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
