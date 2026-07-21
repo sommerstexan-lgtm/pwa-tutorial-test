@@ -436,6 +436,20 @@
   }
   .settings-scroll{ flex:1; overflow-y:auto; padding:4px 16px 40px 16px; }
 
+  /* ---- Advanced Analytics (Lesson 12) ---- */
+  .analytics-empty{
+    padding:40px 20px; text-align:center; color:var(--sub); font-size:15px; line-height:1.5;
+  }
+  .trend-card{
+    padding:16px; background:#f9fafb; border-radius:12px; margin:16px; border:1px solid var(--line);
+  }
+  .trend-card h4{ margin:0 0 12px 0; color:#374151; font-size:16px; }
+  .trend-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .trend-label{ font-size:13px; color:var(--sub); margin-bottom:4px; }
+  .trend-value{ font-size:22px; font-weight:800; }
+  .trend-sub{ font-size:12.5px; color:var(--sub); margin-top:4px; }
+  .trend-insufficient{ font-size:14px; color:var(--sub); padding:8px 0; }
+
   /* ---- Gotcha (Lesson 5) ---- */
 
   .gotcha-thumb-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
@@ -735,6 +749,12 @@
       <p id="todayDate"></p>
     </div>
     <div style="display:flex; gap:8px;">
+      <button class="gear-btn" onclick="window.openAnalytics()" aria-label="Advanced Analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18"/>
+          <path d="M7 14l4-4 3 3 5-6"/>
+        </svg>
+      </button>
       <button class="gear-btn" onclick="window.openDataBackup()" aria-label="Data and Backup" style="position:relative;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3z"/>
@@ -795,7 +815,7 @@
 <footer>
   Lesson 11 of the build-along series.<br>
   One more button comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v43 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v44 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1297,6 +1317,23 @@
     <button class="graph-close" onclick="window.closeSettings()" aria-label="Close settings">&times;</button>
   </div>
   <div class="settings-scroll" id="settingsScroll"></div>
+</div>
+
+<!-- Advanced Analytics — same shell pattern as the trend graph overlay. A
+     container built to hold multiple cards over future lessons; this
+     lesson ships exactly one (BP Trend). -->
+<div class="graph-overlay" id="analyticsOverlay" hidden>
+  <div class="graph-header">
+    <button class="graph-back" onclick="window.closeAnalytics()" aria-label="Back">&lsaquo; Back</button>
+    <span class="graph-title">Advanced Analytics</span>
+    <button class="graph-close" onclick="window.closeAnalytics()" aria-label="Close">&times;</button>
+  </div>
+  <div class="graph-range-row">
+    <button class="range-btn" id="analyticsRange7" onclick="window.setAnalyticsRange(7)">7D</button>
+    <button class="range-btn" id="analyticsRange14" onclick="window.setAnalyticsRange(14)">14D</button>
+    <button class="range-btn" id="analyticsRange30" onclick="window.setAnalyticsRange(30)">30D</button>
+  </div>
+  <div class="settings-scroll" id="analyticsScroll"></div>
 </div>
 
 <!-- Settings info popup — reused for every (i) button -->
@@ -4933,6 +4970,120 @@
     document.getElementById('graphOverlay').hidden = true;
   };
 
+  // ---- Advanced Analytics (Lesson 12) ----
+  // A container screen built to hold multiple pattern cards over future
+  // lessons. This lesson ships exactly one: BP Trend, matching CardiacLens's
+  // real generateTrendAnalysis logic (first-half vs second-half average,
+  // +/-5 mmHg threshold for rising/falling vs stable).
+
+  let analyticsRangeDays = 7; // 7 | 14 | 30
+
+  window.openAnalytics = function(){
+    analyticsRangeDays = 7;
+    updateAnalyticsRangeButtons();
+    renderAnalyticsScreen();
+    document.getElementById('analyticsOverlay').hidden = false;
+  };
+
+  window.closeAnalytics = function(){
+    document.getElementById('analyticsOverlay').hidden = true;
+  };
+
+  window.setAnalyticsRange = function(days){
+    analyticsRangeDays = days;
+    updateAnalyticsRangeButtons();
+    renderAnalyticsScreen();
+  };
+
+  function updateAnalyticsRangeButtons(){
+    document.getElementById('analyticsRange7').classList.toggle('active', analyticsRangeDays === 7);
+    document.getElementById('analyticsRange14').classList.toggle('active', analyticsRangeDays === 14);
+    document.getElementById('analyticsRange30').classList.toggle('active', analyticsRangeDays === 30);
+  }
+
+  // Splits a chronologically-sorted array into first/second half by count
+  // (Math.floor(length/2) split point), matching CardiacLens exactly.
+  function halfAverage(entries, field){
+    if(!entries.length) return null;
+    const sum = entries.reduce((s,e) => s + e[field], 0);
+    return sum / entries.length;
+  }
+
+  function computeBPTrend(days){
+    const cutoff = Date.now() - days * 86400000;
+    const windowBP = getAllBPEntriesAllDays()
+      .filter(e => e.timestamp >= cutoff)
+      .sort((a,b) => a.timestamp - b.timestamp);
+
+    if(windowBP.length < 7){
+      return { sufficient:false, count:windowBP.length };
+    }
+
+    const mid = Math.floor(windowBP.length / 2);
+    const firstHalf = windowBP.slice(0, mid);
+    const secondHalf = windowBP.slice(mid);
+
+    const firstAvgSys = halfAverage(firstHalf, 'systolic');
+    const secondAvgSys = halfAverage(secondHalf, 'systolic');
+    const firstAvgDia = halfAverage(firstHalf, 'diastolic');
+    const secondAvgDia = halfAverage(secondHalf, 'diastolic');
+
+    const sysTrend = secondAvgSys - firstAvgSys;
+    const diaTrend = secondAvgDia - firstAvgDia;
+
+    return {
+      sufficient:true,
+      firstAvgSys, secondAvgSys, firstAvgDia, secondAvgDia,
+      sysTrend, diaTrend
+    };
+  }
+
+  function trendDirection(delta){
+    if(delta > 5) return { icon:'↑', label:'rising', color:'#dc2626' };
+    if(delta < -5) return { icon:'↓', label:'falling', color:'#10b981' };
+    return { icon:'→', label:'stable', color:'#6b7280' };
+  }
+
+  function renderBPTrendCard(days){
+    const t = computeBPTrend(days);
+    if(!t.sufficient){
+      return '<div class="trend-card"><h4>Blood Pressure Trend</h4>' +
+        '<div class="trend-insufficient">Not enough data yet (' + t.count + ' of 7 readings needed).</div></div>';
+    }
+    const sysDir = trendDirection(t.sysTrend);
+    const diaDir = trendDirection(t.diaTrend);
+    return '<div class="trend-card"><h4>Blood Pressure Trend</h4>' +
+      '<div class="trend-grid">' +
+      '<div>' +
+        '<div class="trend-label">Systolic Trend</div>' +
+        '<div class="trend-value" style="color:' + sysDir.color + '">' +
+          sysDir.icon + ' ' + (t.sysTrend > 0 ? '+' : '') + Math.round(t.sysTrend) + ' mmHg' +
+        '</div>' +
+        '<div class="trend-sub">' + Math.round(t.firstAvgSys) + ' \u2192 ' + Math.round(t.secondAvgSys) + ' mmHg</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="trend-label">Diastolic Trend</div>' +
+        '<div class="trend-value" style="color:' + diaDir.color + '">' +
+          diaDir.icon + ' ' + (t.diaTrend > 0 ? '+' : '') + Math.round(t.diaTrend) + ' mmHg' +
+        '</div>' +
+        '<div class="trend-sub">' + Math.round(t.firstAvgDia) + ' \u2192 ' + Math.round(t.secondAvgDia) + ' mmHg</div>' +
+      '</div>' +
+      '</div></div>';
+  }
+
+  function renderAnalyticsScreen(){
+    const bpTrend = computeBPTrend(analyticsRangeDays);
+    const scroll = document.getElementById('analyticsScroll');
+
+    if(!bpTrend.sufficient){
+      scroll.innerHTML = renderBPTrendCard(analyticsRangeDays) +
+        '<div class="analytics-empty">Patterns show up here as you log more. Nothing has enough data yet.</div>';
+      return;
+    }
+
+    scroll.innerHTML = renderBPTrendCard(analyticsRangeDays);
+  }
+
   // Returns to whichever log modal the graph was opened from, rather than
   // dropping the reader all the way back to the dashboard.
   window.goBackFromGraph = function(){
@@ -5732,7 +5883,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v43';
+  const CURRENT_BUILD = 'v44';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
