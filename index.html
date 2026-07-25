@@ -815,7 +815,7 @@
 <footer>
   Lesson 13 of the build-along series.<br>
   One more piece comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v47 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v48 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -992,8 +992,10 @@
       <option value="">All symptoms</option>
     </select>
   </div>
-  <div id="symHistListSection" style="padding:0 16px 20px;"></div>
-  <div id="symHistFreqSection" style="padding:0 16px 20px;display:none;"></div>
+  <div class="settings-scroll" style="padding:0 16px 20px;">
+    <div id="symHistListSection"></div>
+    <div id="symHistFreqSection" style="display:none;"></div>
+  </div>
 </div>
 
 <!-- Plan My Day modal (Lesson 11) -->
@@ -1382,7 +1384,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v47 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v48 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -6154,7 +6156,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v47';
+  const CURRENT_BUILD = 'v48';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);

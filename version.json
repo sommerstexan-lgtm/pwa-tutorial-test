@@ -1,5 +1,5 @@
 {
-  "version": "v47",
+  "version": "v48",
   "releaseDate": "2026-07-25",
-  "summary": "Lesson 13: Advanced Analytics gets BP and HR graphs, reusing the existing chart engine instead of building a new one. Range control unified to 7/30/90/custom (was 7/14/30) across the Trend card and both graphs. LTTB decimation added so 90-day windows stay readable. Retired the old standalone 'View BP Trends'/'View HR Trends' buttons now that Advanced Analytics covers that."
+  "summary": "Lesson 13: Advanced Analytics gets BP and HR graphs, reusing the existing chart engine instead of building a new one. Range control unified to 7/30/90/custom (was 7/14/30) across the Trend card and both graphs. LTTB decimation added so 90-day windows stay readable. Retired the old standalone 'View BP Trends'/'View HR Trends' buttons now that Advanced Analytics covers that. Also fixed a pre-existing bug: Symptom History had no scroll container, so entries past roughly the first 9 were completely unreachable once enough symptoms were logged."
 }
