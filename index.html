@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status - Lesson 12 build-along app - single file PWA -->
+<!-- Today's Status - Lesson 13 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -813,9 +813,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 12 of the build-along series.<br>
+  Lesson 13 of the build-along series.<br>
   One more piece comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v46 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v47 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -881,8 +881,6 @@
     <div class="bp-history-label">Today's Readings</div>
     <div class="bp-history-list" id="bpHistoryList"></div>
 
-    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openBPGraph()">View BP Trends</button>
-    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openHRGraph()">View HR Trends</button>
     <button class="modal-btn secondary" style="width:100%" onclick="window.closeBPModal()">Close</button>
   </div>
 </div>
@@ -1330,8 +1328,15 @@
   </div>
   <div class="graph-range-row">
     <button class="range-btn" id="analyticsRange7" onclick="window.setAnalyticsRange(7)">7D</button>
-    <button class="range-btn" id="analyticsRange14" onclick="window.setAnalyticsRange(14)">14D</button>
     <button class="range-btn" id="analyticsRange30" onclick="window.setAnalyticsRange(30)">30D</button>
+    <button class="range-btn" id="analyticsRange90" onclick="window.setAnalyticsRange(90)">90D</button>
+    <button class="range-btn" id="analyticsRangeCustom" onclick="window.setAnalyticsRange('custom')">Custom</button>
+  </div>
+  <div class="graph-custom-row" id="analyticsCustomRow" hidden>
+    <input type="date" id="analyticsCustomStart">
+    <span>to</span>
+    <input type="date" id="analyticsCustomEnd">
+    <button onclick="window.applyAnalyticsCustomRange()">Apply</button>
   </div>
   <div class="settings-scroll" id="analyticsScroll"></div>
 </div>
@@ -1377,7 +1382,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v46 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v47 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -4359,15 +4364,18 @@
     }catch(e){ return null; }
   }
 
-  function getGraphDateList(){
+  // Pure date-list builder — takes an explicit range instead of reading
+  // module-level state, so both the legacy raw graph and Advanced Analytics
+  // can share it without fighting over which range variable is "current."
+  function computeDateList(rangeDays, customRange){
     let start, end;
-    if(graphRangeDays === 'custom' && graphCustomRange){
-      start = new Date(graphCustomRange.start + 'T00:00:00');
-      end = new Date(graphCustomRange.end + 'T00:00:00');
+    if(rangeDays === 'custom' && customRange){
+      start = new Date(customRange.start + 'T00:00:00');
+      end = new Date(customRange.end + 'T00:00:00');
     } else {
       end = new Date();
       start = new Date();
-      const days = (typeof graphRangeDays === 'number') ? graphRangeDays : 30;
+      const days = (typeof rangeDays === 'number') ? rangeDays : 30;
       start.setDate(end.getDate() - (days - 1));
     }
     const list = [];
@@ -4378,6 +4386,10 @@
       cur.setDate(cur.getDate() + 1);
     }
     return list;
+  }
+
+  function getGraphDateList(){
+    return computeDateList(graphRangeDays, graphCustomRange);
   }
 
   function updateRangeButtons(){
@@ -4392,6 +4404,49 @@
   // labels stay readable no matter how far the reader has scrolled.
   // ---- Shared chart-drawing helpers (used by both the BP line chart and the Fluid bar chart) ----
 
+  // Largest-Triangle-Three-Buckets decimation: thins a dense point set down
+  // to `threshold` points while preserving the visual shape of the line
+  // (peaks, valleys, direction changes survive; it isn't just "every Nth
+  // point"). Always keeps the first and last point. No-op if there's
+  // nothing to thin.
+  function lttbDecimate(data, valueAccessor, threshold){
+    const n = data.length;
+    if(!threshold || threshold >= n || threshold <= 2) return data;
+    const sampled = [data[0]];
+    const bucketSize = (n - 2) / (threshold - 2);
+    let a = 0;
+    for(let i = 0; i < threshold - 2; i++){
+      let avgX = 0, avgY = 0;
+      let rangeStart = Math.floor((i + 1) * bucketSize) + 1;
+      let rangeEnd = Math.floor((i + 2) * bucketSize) + 1;
+      rangeEnd = rangeEnd < n ? rangeEnd : n;
+      const rangeLen = rangeEnd - rangeStart;
+      for(let j = rangeStart; j < rangeEnd; j++){
+        avgX += j;
+        avgY += valueAccessor(data[j]);
+      }
+      avgX /= rangeLen;
+      avgY /= rangeLen;
+
+      const rangeOffsStart = Math.floor(i * bucketSize) + 1;
+      const rangeOffsEnd = Math.floor((i + 1) * bucketSize) + 1;
+      const pointAX = a, pointAY = valueAccessor(data[a]);
+
+      let maxArea = -1, nextA = rangeOffsStart;
+      for(let j = rangeOffsStart; j < rangeOffsEnd; j++){
+        const area = Math.abs(
+          (pointAX - avgX) * (valueAccessor(data[j]) - pointAY) -
+          (pointAX - j) * (avgY - pointAY)
+        ) * 0.5;
+        if(area > maxArea){ maxArea = area; nextA = j; }
+      }
+      sampled.push(data[nextA]);
+      a = nextA;
+    }
+    sampled.push(data[n - 1]);
+    return sampled;
+  }
+
   function makeYScale(yMin, yMax, topPad, plotHeight){
     return function(val){
       const clamped = Math.max(yMin, Math.min(yMax, val));
@@ -4400,8 +4455,8 @@
     };
   }
 
-  function drawAxisAndGrid(yMin, yMax, width, height, yFor){
-    const axisSvg = document.getElementById('chartAxisSvg');
+  function drawAxisAndGrid(yMin, yMax, width, height, yFor, axisSvgId){
+    const axisSvg = document.getElementById(axisSvgId || 'chartAxisSvg');
     axisSvg.setAttribute('height', height);
     const gridCount = 4;
     let axisMarkup = '';
@@ -4416,8 +4471,8 @@
     return gridMarkup;
   }
 
-  function scrollChartToRight(){
-    const scrollContainer = document.getElementById('chartScroll');
+  function scrollChartToRight(scrollId){
+    const scrollContainer = document.getElementById(scrollId || 'chartScroll');
     setTimeout(() => {
       scrollContainer.scrollLeft = scrollContainer.scrollWidth;
     }, 0);
@@ -4498,7 +4553,7 @@
     const yFor = makeYScale(cfg.yMin, cfg.yMax, topPad, plotHeight);
     function xFor(i){ return pointWidth / 2 + i * pointWidth; }
 
-    const gridMarkup = drawAxisAndGrid(cfg.yMin, cfg.yMax, width, height, yFor);
+    const gridMarkup = drawAxisAndGrid(cfg.yMin, cfg.yMax, width, height, yFor, cfg.axisSvgId);
 
     // Background reference band(s) — general orientation only, not a diagnosis.
     let bandMarkup = '';
@@ -4545,7 +4600,7 @@
       avgMarkup += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="${a.color}" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.8"/>`;
     });
 
-    const plotSvg = document.getElementById('chartPlotSvg');
+    const plotSvg = document.getElementById(cfg.plotSvgId || 'chartPlotSvg');
     plotSvg.setAttribute('width', width);
     plotSvg.setAttribute('height', height);
     plotSvg.innerHTML = gridMarkup + bandMarkup + avgMarkup + seriesMarkup + xLabelMarkup;
@@ -4559,7 +4614,7 @@
       });
     });
 
-    scrollChartToRight();
+    scrollChartToRight(cfg.scrollId);
   }
 
   // Fluid bar chart — one bar per day, shaded lighter on below-average days,
@@ -4905,6 +4960,11 @@
     }).join('');
   }
 
+  // Lesson 13: the plain 'bp'/'hr' graphType branches were removed here —
+  // their only entry points (openBPGraph/openHRGraph, the "View BP/HR
+  // Trends" modal buttons) are gone, superseded by the BP/HR graphs now in
+  // Advanced Analytics. 'medbp'/'medhr' still use renderBPChart/renderHRChart
+  // directly (Medication Timeline), so those functions themselves stay.
   function renderGraph(){
     const dates = getGraphDateList();
     const chartRow = document.getElementById('chartRow');
@@ -4913,11 +4973,6 @@
       document.getElementById('medBracketList').hidden = true;
       chartRow.style.flex = '';
       renderFluidChart(dates);
-    } else if(graphType === 'hr'){
-      document.getElementById('graphTitle').textContent = 'Heart Rate Trend';
-      document.getElementById('medBracketList').hidden = true;
-      chartRow.style.flex = '';
-      renderHRChart(dates);
     } else if(graphType === 'medbp'){
       document.getElementById('graphTitle').textContent = 'Medication Timeline (BP)';
       chartRow.style.flex = '0 0 190px';
@@ -4929,10 +4984,7 @@
       renderHRChart(dates);
       renderMedBracketList(dates, 'hr');
     } else {
-      document.getElementById('graphTitle').textContent = 'Blood Pressure Trend';
-      document.getElementById('medBracketList').hidden = true;
-      chartRow.style.flex = '';
-      renderBPChart(dates);
+      console.warn('renderGraph: unexpected graphType', graphType);
     }
   }
 
@@ -4956,30 +5008,27 @@
     openGraph('fluid');
   };
 
-  window.openBPGraph = function(){
-    window.closeBPModal();
-    openGraph('bp');
-  };
-
-  window.openHRGraph = function(){
-    window.closeBPModal();
-    openGraph('hr');
-  };
-
   window.closeGraph = function(){
     document.getElementById('graphOverlay').hidden = true;
   };
 
-  // ---- Advanced Analytics (Lesson 12) ----
+  // ---- Advanced Analytics (Lesson 12 + Lesson 13) ----
   // A container screen built to hold multiple pattern cards over future
-  // lessons. This lesson ships exactly one: BP Trend, matching CardiacLens's
-  // real generateTrendAnalysis logic (first-half vs second-half average,
-  // +/-5 mmHg threshold for rising/falling vs stable).
+  // lessons. Lesson 12 shipped BP Trend (CardiacLens's real
+  // generateTrendAnalysis logic: first-half vs second-half average, +/-5
+  // mmHg threshold). Lesson 13 adds a BP graph and an HR graph beneath it,
+  // reusing the same drawLineChart engine the old standalone BP/HR graphs
+  // used, rather than building a second charting system. Range control
+  // matches CardiacLens's own real Advanced Analytics range: 7/30/90/custom,
+  // shared by the trend card and both graphs — replaces the old 7/14/30.
 
-  let analyticsRangeDays = 7; // 7 | 14 | 30
+  let analyticsRangeDays = 7; // 7 | 30 | 90 | 'custom'
+  let analyticsCustomRange = null; // { start:'YYYY-MM-DD', end:'YYYY-MM-DD' } | null
 
   window.openAnalytics = function(){
     analyticsRangeDays = 7;
+    analyticsCustomRange = null;
+    document.getElementById('analyticsCustomRow').hidden = true;
     updateAnalyticsRangeButtons();
     renderAnalyticsScreen();
     document.getElementById('analyticsOverlay').hidden = false;
@@ -4989,16 +5038,53 @@
     document.getElementById('analyticsOverlay').hidden = true;
   };
 
-  window.setAnalyticsRange = function(days){
-    analyticsRangeDays = days;
+  window.setAnalyticsRange = function(range){
+    if(range === 'custom'){
+      const startInput = document.getElementById('analyticsCustomStart');
+      const endInput = document.getElementById('analyticsCustomEnd');
+      if(!endInput.value) endInput.value = todayKey();
+      if(!startInput.value){
+        const d = new Date();
+        d.setDate(d.getDate() - 29);
+        startInput.value = formatDateKey(d);
+      }
+      document.getElementById('analyticsCustomRow').hidden = false;
+      analyticsRangeDays = 'custom';
+      if(analyticsCustomRange) renderAnalyticsScreen();
+    } else {
+      document.getElementById('analyticsCustomRow').hidden = true;
+      analyticsRangeDays = range;
+      analyticsCustomRange = null;
+      renderAnalyticsScreen();
+    }
+    updateAnalyticsRangeButtons();
+  };
+
+  window.applyAnalyticsCustomRange = function(){
+    const startVal = document.getElementById('analyticsCustomStart').value;
+    const endVal = document.getElementById('analyticsCustomEnd').value;
+    if(!startVal || !endVal || startVal > endVal){
+      alert('Pick a start date on or before the end date.');
+      return;
+    }
+    analyticsCustomRange = { start:startVal, end:endVal };
+    analyticsRangeDays = 'custom';
     updateAnalyticsRangeButtons();
     renderAnalyticsScreen();
   };
 
   function updateAnalyticsRangeButtons(){
     document.getElementById('analyticsRange7').classList.toggle('active', analyticsRangeDays === 7);
-    document.getElementById('analyticsRange14').classList.toggle('active', analyticsRangeDays === 14);
     document.getElementById('analyticsRange30').classList.toggle('active', analyticsRangeDays === 30);
+    document.getElementById('analyticsRange90').classList.toggle('active', analyticsRangeDays === 90);
+    document.getElementById('analyticsRangeCustom').classList.toggle('active', analyticsRangeDays === 'custom');
+  }
+
+  // Current Advanced Analytics range as a single argument, usable by both
+  // computeBPTrend (numeric days or {start,end}) and the two graph cards
+  // (via computeDateList, which already accepts 'custom' + a range object).
+  function currentAnalyticsRangeArg(){
+    return analyticsRangeDays === 'custom' ? analyticsCustomRange : analyticsRangeDays;
   }
 
   // Splits a chronologically-sorted array into first/second half by count
@@ -5009,11 +5095,27 @@
     return sum / entries.length;
   }
 
-  function computeBPTrend(days){
-    const cutoff = Date.now() - days * 86400000;
-    const windowBP = getAllBPEntriesAllDays()
-      .filter(e => e.timestamp >= cutoff)
+  // rangeArg is either a plain number of days, or a custom {start,end}
+  // date-string range (same shape analyticsCustomRange/graphCustomRange
+  // use elsewhere). Centralizes "what counts as the current window" so
+  // computeBPTrend and the two graph cards can never quietly disagree.
+  function getBPWindowEntries(rangeArg){
+    let cutoffStart, cutoffEnd;
+    if(rangeArg && typeof rangeArg === 'object' && rangeArg.start && rangeArg.end){
+      cutoffStart = new Date(rangeArg.start + 'T00:00:00').getTime();
+      cutoffEnd = new Date(rangeArg.end + 'T23:59:59').getTime();
+    } else {
+      const days = (typeof rangeArg === 'number') ? rangeArg : 30;
+      cutoffStart = Date.now() - days * 86400000;
+      cutoffEnd = Date.now();
+    }
+    return getAllBPEntriesAllDays()
+      .filter(e => e.timestamp >= cutoffStart && e.timestamp <= cutoffEnd)
       .sort((a,b) => a.timestamp - b.timestamp);
+  }
+
+  function computeBPTrend(rangeArg){
+    const windowBP = getBPWindowEntries(rangeArg);
 
     if(windowBP.length < 7){
       return { sufficient:false, count:windowBP.length };
@@ -5083,17 +5185,174 @@
       '</div></div>';
   }
 
-  function renderAnalyticsScreen(){
-    const bpTrend = computeBPTrend(analyticsRangeDays);
-    const scroll = document.getElementById('analyticsScroll');
+  // Same date-list mechanism the legacy raw graph uses (computeDateList),
+  // just fed Advanced Analytics' own range state instead of the old
+  // graphRangeDays/graphCustomRange pair.
+  function getAnalyticsDateList(){
+    return computeDateList(analyticsRangeDays, analyticsCustomRange);
+  }
 
-    if(!bpTrend.sufficient){
-      scroll.innerHTML = renderBPTrendCard(analyticsRangeDays) +
-        '<div class="analytics-empty">Patterns show up here as you log more. Nothing has enough data yet.</div>';
+  // Markup shell for a graph card — mirrors the legacy graphOverlay's chart
+  // markup (legend / disclaimer / axis+scroll / empty state / readout) but
+  // with card-scoped ids so BP and HR can render side by side instead of
+  // sharing one overlay's element set.
+  function graphCardShell(idPrefix, titleText){
+    return '<div class="trend-card">' +
+      '<h4>' + titleText + '</h4>' +
+      '<div class="graph-legend" id="' + idPrefix + 'Legend"></div>' +
+      '<div class="graph-disclaimer" id="' + idPrefix + 'Disclaimer" hidden></div>' +
+      '<div class="chart-row" id="' + idPrefix + 'ChartRow">' +
+        '<svg class="chart-axis" id="' + idPrefix + 'ChartAxisSvg" width="34" height="220"></svg>' +
+        '<div class="chart-scroll" id="' + idPrefix + 'ChartScroll">' +
+          '<svg id="' + idPrefix + 'ChartPlotSvg" height="220"></svg>' +
+        '</div>' +
+      '</div>' +
+      '<div class="chart-empty" id="' + idPrefix + 'ChartEmptyMsg" hidden></div>' +
+      '<div class="graph-readout" id="' + idPrefix + 'Readout">Tap a point to see its value.</div>' +
+    '</div>';
+  }
+
+  // Points above this get LTTB-decimated before drawing — keeps a 90-day,
+  // several-readings-a-day window readable instead of an 8000px scroll.
+  const ANALYTICS_CHART_DECIMATE_THRESHOLD = 180;
+
+  function renderAnalyticsBPGraph(){
+    const idp = 'anaBp';
+    const points = getBPEntriesInRange(getAnalyticsDateList());
+    const legend = document.getElementById(idp + 'Legend');
+    const chartRow = document.getElementById(idp + 'ChartRow');
+    const emptyMsg = document.getElementById(idp + 'ChartEmptyMsg');
+    const readout = document.getElementById(idp + 'Readout');
+
+    if(!points.length){
+      legend.innerHTML =
+        '<span class="legend-item"><span class="legend-swatch" style="background:#1d4ed8"></span>Systolic</span>' +
+        '<span class="legend-item"><span class="legend-swatch" style="background:#059669"></span>Diastolic</span>';
+      document.getElementById(idp + 'Disclaimer').hidden = true;
+      chartRow.style.display = 'none';
+      emptyMsg.hidden = false;
+      emptyMsg.textContent = 'No BP data logged in this range yet. Keep logging and this fills in day by day.';
+      readout.textContent = 'Tap a point to see its value.';
       return;
     }
 
-    scroll.innerHTML = renderBPTrendCard(analyticsRangeDays);
+    const rng = loadSettings();
+    const sysAvg = Math.round(points.reduce((s,p) => s + p.systolic, 0) / points.length);
+    const diaAvg = Math.round(points.reduce((s,p) => s + p.diastolic, 0) / points.length);
+    const allVals = points.flatMap(p => [p.systolic, p.diastolic]);
+    const yMin = Math.max(0, Math.floor((Math.min(...allVals, rng.bpDiaMin) - 10) / 10) * 10);
+    const yMax = Math.ceil((Math.max(...allVals, rng.bpSysMax) + 10) / 10) * 10;
+    const outOfBandCount = points.filter(p => p.systolic < rng.bpSysMin || p.systolic > rng.bpSysMax || p.diastolic < rng.bpDiaMin || p.diastolic > rng.bpDiaMax).length;
+    const bandLabel = 'Sys ' + rng.bpSysMin + '&ndash;' + rng.bpSysMax + ' / Dia ' + rng.bpDiaMin + '&ndash;' + rng.bpDiaMax;
+
+    legend.innerHTML =
+      '<span class="legend-item"><span class="legend-swatch" style="background:#1d4ed8"></span>Systolic avg ' + sysAvg + '</span>' +
+      '<span class="legend-item"><span class="legend-swatch" style="background:#059669"></span>Diastolic avg ' + diaAvg + '</span>' +
+      '<span class="legend-item"><span class="legend-swatch" style="background:rgba(16,185,129,0.25)"></span>' + bandLabel + ' your range</span>';
+    const disclaimerEl = document.getElementById(idp + 'Disclaimer');
+    disclaimerEl.hidden = false;
+    disclaimerEl.textContent = points.length > ANALYTICS_CHART_DECIMATE_THRESHOLD
+      ? 'Shaded band is your range from Settings, not a diagnosis. Chart is thinned for readability — every reading still counts toward the average.'
+      : 'Shaded band is your range from Settings, not a diagnosis. Talk to your doctor about your own numbers.';
+    chartRow.style.display = '';
+    emptyMsg.hidden = true;
+
+    const drawPoints = lttbDecimate(points, p => p.systolic, ANALYTICS_CHART_DECIMATE_THRESHOLD);
+
+    drawLineChart({
+      points: drawPoints,
+      yMin: yMin, yMax: yMax,
+      plotSvgId: idp + 'ChartPlotSvg', axisSvgId: idp + 'ChartAxisSvg', scrollId: idp + 'ChartScroll',
+      bands: [{ min:rng.bpDiaMin, max:rng.bpSysMax, color:'rgba(16,185,129,0.06)' }],
+      series: [
+        { key:'systolic', color:'#1d4ed8', normalMin:rng.bpSysMin, normalMax:rng.bpSysMax },
+        { key:'diastolic', color:'#059669', normalMin:rng.bpDiaMin, normalMax:rng.bpDiaMax }
+      ],
+      avgLines: [ { value:sysAvg, color:'#1d4ed8' }, { value:diaAvg, color:'#059669' } ],
+      onPointTap: (p) => {
+        const dt = new Date(p.timestamp);
+        const label = dt.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' }) +
+          ' ' + dt.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+        const pulseStr = p.pulse ? ' · ' + p.pulse + ' bpm' : '';
+        readout.innerHTML = label + ': <strong>' + p.systolic + '/' + p.diastolic + '</strong> mmHg' + pulseStr;
+      }
+    });
+
+    let summary = 'Average: <strong>' + sysAvg + '/' + diaAvg + '</strong> mmHg <span class="readout-sub">across ' + points.length + ' reading' + (points.length === 1 ? '' : 's') + '</span>';
+    if(outOfBandCount > 0) summary += '<br><span class="readout-sub">' + outOfBandCount + ' reading' + (outOfBandCount === 1 ? '' : 's') + ' outside your range</span>';
+    readout.innerHTML = summary;
+  }
+
+  function renderAnalyticsHRGraph(){
+    const idp = 'anaHr';
+    const points = getHREntriesInRange(getAnalyticsDateList());
+    const legend = document.getElementById(idp + 'Legend');
+    const chartRow = document.getElementById(idp + 'ChartRow');
+    const emptyMsg = document.getElementById(idp + 'ChartEmptyMsg');
+    const readout = document.getElementById(idp + 'Readout');
+
+    if(!points.length){
+      legend.innerHTML = '<span class="legend-item"><span class="legend-swatch" style="background:#0891b2"></span>Heart Rate (bpm)</span>';
+      document.getElementById(idp + 'Disclaimer').hidden = true;
+      chartRow.style.display = 'none';
+      emptyMsg.hidden = false;
+      emptyMsg.textContent = 'No heart rate data logged in this range yet. Log a pulse with your BP readings and this fills in day by day.';
+      readout.textContent = 'Tap a point to see its value.';
+      return;
+    }
+
+    const rng = loadSettings();
+    const avg = Math.round(points.reduce((s,p) => s + p.pulse, 0) / points.length);
+    const allVals = points.map(p => p.pulse);
+    const yMin = Math.max(0, Math.floor((Math.min(...allVals, rng.hrMin) - 10) / 10) * 10);
+    const yMax = Math.ceil((Math.max(...allVals, rng.hrMax) + 10) / 10) * 10;
+    const outOfBandCount = points.filter(p => p.pulse < rng.hrMin || p.pulse > rng.hrMax).length;
+
+    legend.innerHTML =
+      '<span class="legend-item"><span class="legend-swatch" style="background:#0891b2"></span>Heart Rate avg ' + avg + ' bpm</span>' +
+      '<span class="legend-item"><span class="legend-swatch" style="background:rgba(8,145,178,0.25)"></span>' + rng.hrMin + '&ndash;' + rng.hrMax + ' your range</span>';
+    const disclaimerEl = document.getElementById(idp + 'Disclaimer');
+    disclaimerEl.hidden = false;
+    disclaimerEl.textContent = points.length > ANALYTICS_CHART_DECIMATE_THRESHOLD
+      ? 'Shaded band is your range from Settings, not a diagnosis. Chart is thinned for readability — every reading still counts toward the average.'
+      : 'Shaded band is your range from Settings, not a diagnosis. Talk to your doctor about your own numbers.';
+    chartRow.style.display = '';
+    emptyMsg.hidden = true;
+
+    const drawPoints = lttbDecimate(points, p => p.pulse, ANALYTICS_CHART_DECIMATE_THRESHOLD);
+
+    drawLineChart({
+      points: drawPoints,
+      yMin: yMin, yMax: yMax,
+      plotSvgId: idp + 'ChartPlotSvg', axisSvgId: idp + 'ChartAxisSvg', scrollId: idp + 'ChartScroll',
+      bands: [{ min:rng.hrMin, max:rng.hrMax, color:'rgba(8,145,178,0.06)' }],
+      series: [{ key:'pulse', color:'#0891b2', normalMin:rng.hrMin, normalMax:rng.hrMax }],
+      avgLines: [{ value:avg, color:'#0891b2' }],
+      onPointTap: (p) => {
+        const dt = new Date(p.timestamp);
+        const label = dt.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' }) +
+          ' ' + dt.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+        readout.innerHTML = label + ': <strong>' + p.pulse + ' bpm</strong>';
+      }
+    });
+
+    let summary = 'Average: <strong>' + avg + ' bpm</strong> <span class="readout-sub">across ' + points.length + ' reading' + (points.length === 1 ? '' : 's') + '</span>';
+    if(outOfBandCount > 0) summary += '<br><span class="readout-sub">' + outOfBandCount + ' reading' + (outOfBandCount === 1 ? '' : 's') + ' outside your range</span>';
+    readout.innerHTML = summary;
+  }
+
+  function renderAnalyticsScreen(){
+    const rangeArg = currentAnalyticsRangeArg();
+    const bpTrend = computeBPTrend(rangeArg);
+    const scroll = document.getElementById('analyticsScroll');
+
+    scroll.innerHTML = renderBPTrendCard(rangeArg) +
+      (!bpTrend.sufficient ? '<div class="analytics-empty">Patterns show up here as you log more. Nothing has enough data yet.</div>' : '') +
+      graphCardShell('anaBp', 'Blood Pressure Graph') +
+      graphCardShell('anaHr', 'Heart Rate Graph');
+
+    renderAnalyticsBPGraph();
+    renderAnalyticsHRGraph();
   }
 
   // Returns to whichever log modal the graph was opened from, rather than
@@ -5895,7 +6154,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v46';
+  const CURRENT_BUILD = 'v47';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);

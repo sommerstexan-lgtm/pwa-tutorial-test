@@ -1,5 +1,5 @@
 {
-  "version": "v46",
-  "releaseDate": "2026-07-21",
-  "summary": "Lesson 12: Advanced Analytics. Fixed the trend delta rounding mismatch, and fixed the footer/version text that was still hardcoded to Lesson 11 / v42."
+  "version": "v47",
+  "releaseDate": "2026-07-25",
+  "summary": "Lesson 13: Advanced Analytics gets BP and HR graphs, reusing the existing chart engine instead of building a new one. Range control unified to 7/30/90/custom (was 7/14/30) across the Trend card and both graphs. LTTB decimation added so 90-day windows stay readable. Retired the old standalone 'View BP Trends'/'View HR Trends' buttons now that Advanced Analytics covers that."
 }
