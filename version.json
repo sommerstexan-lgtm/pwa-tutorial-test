@@ -1,5 +1,5 @@
 {
-  "version": "v48",
-  "releaseDate": "2026-07-25",
-  "summary": "Lesson 13: Advanced Analytics gets BP and HR graphs, reusing the existing chart engine instead of building a new one. Range control unified to 7/30/90/custom (was 7/14/30) across the Trend card and both graphs. LTTB decimation added so 90-day windows stay readable. Retired the old standalone 'View BP Trends'/'View HR Trends' buttons now that Advanced Analytics covers that. Also fixed a pre-existing bug: Symptom History had no scroll container, so entries past roughly the first 9 were completely unreachable once enough symptoms were logged."
+  "version": "v49",
+  "releaseDate": "2026-07-27",
+  "summary": "Lesson 14: Fluid Timeline, alongside Medication Timeline BP/HR. Reuses the same before/nearest-in-window-after bracket pairing, generalized off fluid log entries instead of med doses. Entries logged within 10 minutes are combined into one drinking event (summed ounces, earliest timestamp); events at or above 8oz get a bracket card. Fixed 90-minute window, grounded in the water-pressor response literature (Jordan et al.) rather than the meal-based PPH window. BP cards flag a systolic change of 20+ mmHg in either direction, rise or drop, since the evidence points to rise as the more likely direction for cardiac/older patients. HR cards stay neutral, no established threshold to flag against. Honest 'no reading in window' message when there isn't one, same rule as meds."
 }

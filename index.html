@@ -737,6 +737,9 @@
   .med-bracket-row strong{ color:var(--ink); }
   .med-bracket-miss{ color:#b91c1c; font-weight:600; }
   .med-bracket-hit{ color:#047857; font-weight:600; }
+  .fluid-bracket-flag{ margin-top:8px; padding:6px 10px; border-radius:6px; font-size:12.5px; font-weight:700; }
+  .fluid-bracket-flag-rise{ background:#fff7ed; color:#c2410c; }
+  .fluid-bracket-flag-drop{ background:#fef2f2; color:#b91c1c; }
 </style>
 </head>
 <body>
@@ -815,7 +818,7 @@
 <footer>
   Lesson 13 of the build-along series.<br>
   One more piece comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v48 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v49 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -844,6 +847,8 @@
     <div class="history-list" id="fluidHistoryList"></div>
 
     <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openFluidGraph()">View Fluid Trends</button>
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openFluidTimelineGraph('bp')">View Fluid Timeline (BP)</button>
+    <button class="modal-btn secondary" style="width:100%; margin-bottom:10px;" onclick="window.openFluidTimelineGraph('hr')">View Fluid Timeline (HR)</button>
     <button class="modal-btn secondary" style="width:100%" onclick="window.closeFluidModal()">Close</button>
   </div>
 </div>
@@ -1384,7 +1389,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v48 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v49 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -1658,6 +1663,24 @@
     '4-6': { startHr:4, endHr:6, label:'4–6 hours after' }
   };
   const MED_MISSED_GRACE_MIN = 90; // minutes past an expected time before a dose counts as "Missed"
+
+  // Lesson 14: Fluid Timeline constants. Unlike medications, fluid has no per-item
+  // pharmacodynamic peak window to choose from, so it uses one fixed window instead
+  // of PEAK_WINDOWS. Grounded in the water-pressor response literature (Jordan et al.,
+  // Circulation 2000 / AJP-Regu 2010): pressor onset within 5-10 min, peak at 20-40 min,
+  // sustained beyond 60 min in autonomic-dysfunction and older patients specifically.
+  const FLUID_TIMELINE_WINDOW_MIN = 90; // covers onset through peak with margin, tight
+    // enough that paced same-day fluid entries don't straddle into each other's window.
+  const FLUID_COMBINE_WINDOW_MIN = 10; // entries this close together are one drinking
+    // event (summed, earliest timestamp) — the source studies dosed water as a single
+    // sitting (under 5 min), not sipped increments.
+  const FLUID_EVENT_MIN_OZ = 8; // combined-event minimum to generate a bracket card
+    // (the smaller of two clinically tested doses, 240mL/8oz vs 480mL/16oz, that still
+    // produced a measurable pressor response).
+  const FLUID_FLAG_THRESHOLD_MMHG = 20; // systolic change, either direction, that flags
+    // the card. Same magnitude as the established PPH drop threshold; applied to rises
+    // too because the water-pressor evidence points to rise as the more likely direction
+    // for cardiac/older patients, not drop.
 
   // Symptoms are a standing history list, like Medications — not day-scoped
   // like BP/Fluid — because Symptom History needs to trend across weeks,
@@ -2552,6 +2575,74 @@
     });
 
     return { before:before, after:after, windowStart:windowStart, windowEnd:windowEnd, windowLabel:win.label };
+  }
+
+  // Lesson 14: Fluid Timeline. Same idea as Medication Timeline, one bracket per
+  // qualifying fluid event instead of one per dose, but fluid needed two extra steps
+  // medications didn't: combining entries logged close together into one event, and a
+  // minimum amount so a single ounce of water doesn't generate its own card.
+  function getAllFluidEntriesAllDays(){
+    const all = [];
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!k || k.indexOf('todaysStatus_fluid_') !== 0) continue;
+      try{
+        const parsed = JSON.parse(localStorage.getItem(k));
+        (parsed.entries || []).forEach(e => all.push(e));
+      }catch(err){}
+    }
+    all.sort((a,b) => a.timestamp - b.timestamp);
+    return all;
+  }
+
+  // Groups entries logged within FLUID_COMBINE_WINDOW_MIN of each other into one
+  // "drinking event" (summed ounces, earliest timestamp), matching how the clinical
+  // studies dosed water: a single sitting, not sipped increments. Only combined
+  // events at or above FLUID_EVENT_MIN_OZ come back, everything smaller is real
+  // fluid data but too small to say anything about a BP/HR reading near it.
+  function getCombinedFluidEvents(){
+    const entries = getAllFluidEntriesAllDays();
+    const events = [];
+    let current = null;
+    entries.forEach(e => {
+      if(current && (e.timestamp - current.lastTimestamp) <= FLUID_COMBINE_WINDOW_MIN * 60000){
+        current.amount += e.amount;
+        current.lastTimestamp = e.timestamp;
+      } else {
+        current = { timestamp:e.timestamp, lastTimestamp:e.timestamp, amount:e.amount };
+        events.push(current);
+      }
+    });
+    return events.filter(ev => ev.amount >= FLUID_EVENT_MIN_OZ);
+  }
+
+  // Same before / nearest-in-window-after pairing as getDoseBracket, fixed to
+  // FLUID_TIMELINE_WINDOW_MIN since fluid doesn't have a per-item peak window to
+  // pick from the way a medication does. If nothing falls in the window, after
+  // comes back null on purpose, same rule as meds: never substitute a nearby
+  // reading for a real one.
+  function getFluidBracket(eventTimestamp, kind){
+    let pool = getAllBPEntriesAllDays();
+    if(kind === 'hr') pool = pool.filter(e => typeof e.pulse === 'number' && !isNaN(e.pulse));
+
+    let before = null;
+    pool.forEach(e => {
+      if(e.timestamp < eventTimestamp && (!before || e.timestamp > before.timestamp)) before = e;
+    });
+
+    const windowStart = eventTimestamp;
+    const windowEnd = eventTimestamp + FLUID_TIMELINE_WINDOW_MIN * 60000;
+    const windowMid = (windowStart + windowEnd) / 2;
+
+    let after = null, bestDist = Infinity;
+    pool.forEach(e => {
+      if(e.timestamp >= windowStart && e.timestamp <= windowEnd){
+        const dist = Math.abs(e.timestamp - windowMid);
+        if(dist < bestDist){ bestDist = dist; after = e; }
+      }
+    });
+
+    return { before:before, after:after, windowStart:windowStart, windowEnd:windowEnd };
   }
 
   function formatElapsed(fromTs, toTs){
@@ -4962,7 +5053,68 @@
     }).join('');
   }
 
-  // Lesson 13: the plain 'bp'/'hr' graphType branches were removed here —
+  // Renders one bracket card per qualifying combined fluid event (see
+  // getCombinedFluidEvents): amount, time, before reading, after reading or an
+  // explicit "no reading in window" message. BP cards also carry a flag when the
+  // systolic change crosses FLUID_FLAG_THRESHOLD_MMHG in either direction. HR stays
+  // neutral, informational only, there's no established clinical threshold tying
+  // fluid intake to a specific heart-rate change the way there is for BP.
+  function renderFluidBracketList(dates, kind){
+    const box = document.getElementById('medBracketList');
+    box.hidden = false;
+    const dateSet = {};
+    dates.forEach(d => { dateSet[d] = true; });
+    const events = getCombinedFluidEvents().filter(e => dateSet[formatDateKey(new Date(e.timestamp))]);
+
+    if(!events.length){
+      box.innerHTML = '<div class="chart-empty">No fluid events of ' + FLUID_EVENT_MIN_OZ + '+ oz logged in this range yet.</div>';
+      return;
+    }
+
+    const sorted = events.slice().sort((a,b) => b.timestamp - a.timestamp);
+    box.innerHTML = sorted.map(ev => {
+      const bracket = getFluidBracket(ev.timestamp, kind);
+      const evTimeStr = new Date(ev.timestamp).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+
+      let beforeHtml, afterHtml, flagHtml = '';
+      if(kind === 'hr'){
+        beforeHtml = bracket.before
+          ? `<strong>${bracket.before.pulse}</strong> bpm, ${formatElapsed(bracket.before.timestamp, ev.timestamp)} before`
+          : 'No heart rate logged before this event';
+        afterHtml = bracket.after
+          ? `<span class="med-bracket-hit"><strong>${bracket.after.pulse}</strong> bpm</span>, ${formatElapsed(ev.timestamp, bracket.after.timestamp)} after`
+          : `<span class="med-bracket-miss">No reading in the ${FLUID_TIMELINE_WINDOW_MIN}-minute window</span>`;
+      } else {
+        beforeHtml = bracket.before
+          ? `<strong>${bracket.before.systolic}/${bracket.before.diastolic}</strong> mmHg, ${formatElapsed(bracket.before.timestamp, ev.timestamp)} before`
+          : 'No reading logged before this event';
+        afterHtml = bracket.after
+          ? `<span class="med-bracket-hit"><strong>${bracket.after.systolic}/${bracket.after.diastolic}</strong> mmHg</span>, ${formatElapsed(ev.timestamp, bracket.after.timestamp)} after`
+          : `<span class="med-bracket-miss">No reading in the ${FLUID_TIMELINE_WINDOW_MIN}-minute window</span>`;
+
+        if(bracket.before && bracket.after){
+          const delta = bracket.after.systolic - bracket.before.systolic;
+          if(Math.abs(delta) >= FLUID_FLAG_THRESHOLD_MMHG){
+            flagHtml = delta > 0
+              ? `<div class="fluid-bracket-flag fluid-bracket-flag-rise">Rose ${delta} mmHg systolic within the window</div>`
+              : `<div class="fluid-bracket-flag fluid-bracket-flag-drop">Dropped ${Math.abs(delta)} mmHg systolic within the window</div>`;
+          }
+        }
+      }
+
+      return `<div class="med-bracket-card">
+        <div class="med-bracket-head">
+          <span class="med-bracket-name">Fluid, ${ev.amount} oz</span>
+          <span class="med-bracket-time">${evTimeStr}</span>
+        </div>
+        <div class="med-bracket-row">Before: ${beforeHtml}</div>
+        <div class="med-bracket-row">After (within ${FLUID_TIMELINE_WINDOW_MIN} min): ${afterHtml}</div>
+        ${flagHtml}
+      </div>`;
+    }).join('');
+  }
+
+  // Lesson 13: the plain 'bp'/'hr' graphType branches were removed here,
   // their only entry points (openBPGraph/openHRGraph, the "View BP/HR
   // Trends" modal buttons) are gone, superseded by the BP/HR graphs now in
   // Advanced Analytics. 'medbp'/'medhr' still use renderBPChart/renderHRChart
@@ -4985,6 +5137,16 @@
       chartRow.style.flex = '0 0 190px';
       renderHRChart(dates);
       renderMedBracketList(dates, 'hr');
+    } else if(graphType === 'fluidbp'){
+      document.getElementById('graphTitle').textContent = 'Fluid Timeline (BP)';
+      chartRow.style.flex = '0 0 190px';
+      renderBPChart(dates);
+      renderFluidBracketList(dates, 'bp');
+    } else if(graphType === 'fluidhr'){
+      document.getElementById('graphTitle').textContent = 'Fluid Timeline (HR)';
+      chartRow.style.flex = '0 0 190px';
+      renderHRChart(dates);
+      renderFluidBracketList(dates, 'hr');
     } else {
       console.warn('renderGraph: unexpected graphType', graphType);
     }
@@ -5008,6 +5170,11 @@
   window.openFluidGraph = function(){
     window.closeFluidModal();
     openGraph('fluid');
+  };
+
+  window.openFluidTimelineGraph = function(kind){
+    window.closeFluidModal();
+    openGraph(kind === 'hr' ? 'fluidhr' : 'fluidbp');
   };
 
   window.closeGraph = function(){
@@ -5214,7 +5381,7 @@
     '</div>';
   }
 
-  // Points above this get LTTB-decimated before drawing — keeps a 90-day,
+  // Points above this get LTTB-decimated before drawing, keeps a 90-day,
   // several-readings-a-day window readable instead of an 8000px scroll.
   const ANALYTICS_CHART_DECIMATE_THRESHOLD = 180;
 
@@ -6156,7 +6323,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v48';
+  const CURRENT_BUILD = 'v49';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
