@@ -740,6 +740,14 @@
   .fluid-bracket-flag{ margin-top:8px; padding:6px 10px; border-radius:6px; font-size:12.5px; font-weight:700; }
   .fluid-bracket-flag-rise{ background:#fff7ed; color:#c2410c; }
   .fluid-bracket-flag-drop{ background:#fef2f2; color:#b91c1c; }
+  @keyframes chartPointFlash{
+    0%{ r:4; opacity:1; stroke-width:2.5; }
+    100%{ r:18; opacity:0; stroke-width:0; }
+  }
+  .chart-point-flash-ring{ fill:none; stroke:#f59e0b; stroke-width:2.5; opacity:1; animation: chartPointFlash 0.65s ease-out 2; pointer-events:none; }
+  .med-bracket-card-tappable{ cursor:pointer; }
+  .med-bracket-card-tappable:active{ background:#f1f5f9; }
+  .med-bracket-jump-hint{ font-size:11.5px; color:#2563eb; font-weight:600; margin-top:6px; }
 </style>
 </head>
 <body>
@@ -818,7 +826,7 @@
 <footer>
   Lesson 13 of the build-along series.<br>
   One more piece comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v50 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v51 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1389,7 +1397,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v50 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v51 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -4679,7 +4687,7 @@
         const v = p[s.key];
         const outOfBand = (s.normalMin !== undefined) && (v < s.normalMin || v > s.normalMax);
         const r = outOfBand ? 5.5 : 3.5;
-        seriesMarkup += `<circle cx="${xFor(i)}" cy="${yFor(v)}" r="14" fill="transparent" data-index="${i}" data-timestamp="${p.timestamp}" class="chart-point-hit"/>`;
+        seriesMarkup += `<circle cx="${xFor(i)}" cy="${yFor(v)}" r="14" fill="transparent" data-index="${i}" data-timestamp="${p.timestamp}" id="chartPoint-${s.key}-${p.timestamp}" class="chart-point-hit"/>`;
         if(outOfBand){
           seriesMarkup += `<circle cx="${xFor(i)}" cy="${yFor(v)}" r="${r + 2.5}" fill="none" stroke="${s.color}" stroke-width="1.5" opacity="0.4" style="pointer-events:none"/>`;
         }
@@ -5042,13 +5050,21 @@
           : `<span class="med-bracket-miss">No reading in the ${win.label} window</span>`;
       }
 
-      return `<div class="med-bracket-card">
+      const seriesKey = kind === 'hr' ? 'pulse' : 'systolic';
+      const tappable = !!bracket.after;
+      const cardAttrs = tappable
+        ? ` class="med-bracket-card med-bracket-card-tappable" onclick="window.highlightChartPoint('${seriesKey}', ${bracket.after.timestamp})"`
+        : ` class="med-bracket-card"`;
+      const jumpHint = tappable ? '<div class="med-bracket-jump-hint">Tap to see on graph &uarr;</div>' : '';
+
+      return `<div${cardAttrs}>
         <div class="med-bracket-head">
           <span class="med-bracket-name">${escapeHtml(dose.medName)}${dose.dosage ? ' · ' + escapeHtml(dose.dosage) : ''}</span>
           <span class="med-bracket-time">${doseTimeStr}</span>
         </div>
         <div class="med-bracket-row">Before: ${beforeHtml}</div>
         <div class="med-bracket-row">After (peak ${win.label}): ${afterHtml}</div>
+        ${jumpHint}
       </div>`;
     }).join('');
   }
@@ -5102,7 +5118,14 @@
         }
       }
 
-      return `<div class="med-bracket-card">
+      const seriesKey = kind === 'hr' ? 'pulse' : 'systolic';
+      const tappable = !!bracket.after;
+      const cardAttrs = tappable
+        ? ` class="med-bracket-card med-bracket-card-tappable" onclick="window.highlightChartPoint('${seriesKey}', ${bracket.after.timestamp})"`
+        : ` class="med-bracket-card"`;
+      const jumpHint = tappable ? '<div class="med-bracket-jump-hint">Tap to see on graph &uarr;</div>' : '';
+
+      return `<div${cardAttrs}>
         <div class="med-bracket-head">
           <span class="med-bracket-name">Fluid, ${ev.amount} oz</span>
           <span class="med-bracket-time">${evTimeStr}</span>
@@ -5110,6 +5133,7 @@
         <div class="med-bracket-row">Before: ${beforeHtml}</div>
         <div class="med-bracket-row">After (within ${FLUID_TIMELINE_WINDOW_MIN} min): ${afterHtml}</div>
         ${flagHtml}
+        ${jumpHint}
       </div>`;
     }).join('');
   }
@@ -5129,22 +5153,26 @@
       renderFluidChart(dates);
     } else if(graphType === 'medbp'){
       document.getElementById('graphTitle').textContent = 'Medication Timeline (BP)';
-      chartRow.style.flex = '0 0 190px';
+      // 220px, not 190px: drawLineChart always renders its SVG at a fixed
+      // height of 220 and draws date labels 8px from that bottom edge. A
+      // shorter container clips them off entirely, which is why dates were
+      // invisible on every compact timeline chart, not just this one.
+      chartRow.style.flex = '0 0 220px';
       renderBPChart(dates);
       renderMedBracketList(dates, 'bp');
     } else if(graphType === 'medhr'){
       document.getElementById('graphTitle').textContent = 'Medication Timeline (HR)';
-      chartRow.style.flex = '0 0 190px';
+      chartRow.style.flex = '0 0 220px';
       renderHRChart(dates);
       renderMedBracketList(dates, 'hr');
     } else if(graphType === 'fluidbp'){
       document.getElementById('graphTitle').textContent = 'Fluid Timeline (BP)';
-      chartRow.style.flex = '0 0 190px';
+      chartRow.style.flex = '0 0 220px';
       renderBPChart(dates);
       renderFluidBracketList(dates, 'bp');
     } else if(graphType === 'fluidhr'){
       document.getElementById('graphTitle').textContent = 'Fluid Timeline (HR)';
-      chartRow.style.flex = '0 0 190px';
+      chartRow.style.flex = '0 0 220px';
       renderHRChart(dates);
       renderFluidBracketList(dates, 'hr');
     } else {
@@ -5523,6 +5551,30 @@
     renderAnalyticsBPGraph();
     renderAnalyticsHRGraph();
   }
+
+  // Lets a bracket card jump straight to the exact point on the chart above
+  // it it's describing, rather than leaving the reader to scroll and hunt
+  // for it themselves. seriesKey matches drawLineChart's series.key
+  // ('systolic'/'diastolic'/'pulse'), timestamp identifies the specific
+  // reading. Scrolls it into view, flashes a ring around it, and reuses
+  // the chart's own existing tap handler (via a synthetic click) so the
+  // readout line updates exactly the way a manual tap would.
+  window.highlightChartPoint = function(seriesKey, timestamp){
+    const circle = document.getElementById('chartPoint-' + seriesKey + '-' + timestamp);
+    if(!circle) return;
+    circle.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+    const svg = circle.closest('svg');
+    if(svg){
+      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ring.setAttribute('cx', circle.getAttribute('cx'));
+      ring.setAttribute('cy', circle.getAttribute('cy'));
+      ring.setAttribute('r', '4');
+      ring.setAttribute('class', 'chart-point-flash-ring');
+      svg.appendChild(ring);
+      setTimeout(() => { if(ring.parentNode) ring.parentNode.removeChild(ring); }, 1300);
+    }
+    circle.dispatchEvent(new Event('click'));
+  };
 
   // Returns to whichever log modal the graph was opened from, rather than
   // dropping the reader all the way back to the dashboard.
@@ -6323,7 +6375,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v50';
+  const CURRENT_BUILD = 'v51';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);

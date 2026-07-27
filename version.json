@@ -1,5 +1,5 @@
 {
-  "version": "v50",
+  "version": "v51",
   "releaseDate": "2026-07-27",
-  "summary": "Lesson 14 bugfix: goBackFromGraph() didn't have cases for the new fluidbp/fluidhr graph types added in v49, so tapping Back from Fluid Timeline (BP) or Fluid Timeline (HR) fell through to the BP modal instead of returning to the Fluid modal it was opened from. Both new graph types now route back to openFluidModal(), same as the existing 'fluid' (Fluid Trend) type. No other changes; Fluid Timeline logic itself (bracket pairing, combining, flagging) is unchanged from v49."
+  "summary": "Lesson 14, two fixes from on-device testing of v50. (1) Compact timeline charts (Medication Timeline BP/HR, Fluid Timeline BP/HR) were clipping their own date labels: drawLineChart always renders at a fixed 220px height with labels drawn 8px from that bottom edge, but the compact container was capped at 190px with overflow hidden, cutting every date label off. Container is now 220px, matching the chart exactly. Affects all four timeline views, not just fluid. (2) Bracket cards (both Medication and Fluid Timeline) are now tappable when an after-reading exists: tapping scrolls the matching point into view on the chart above, flashes a ring around it, and updates the readout line via the chart's existing tap handler. Cards without an after-reading (a miss) aren't tappable, there's nothing to jump to."
 }
