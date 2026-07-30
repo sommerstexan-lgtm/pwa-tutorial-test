@@ -2692,7 +2692,20 @@
   }
 
   function detectHRLevelShift(){
-    const daily = getDailyPulseMeans();
+    // Respect the Advanced Analytics range (7D / 30D / 90D / Custom).
+    // Without this the detector always used the most recent days on the
+    // device clock, so a historical shift inside a Custom range never
+    // appeared.
+    let daily = getDailyPulseMeans();
+    try{
+      const dateList = (typeof getAnalyticsDateList === 'function') ? getAnalyticsDateList() : null;
+      if(dateList && dateList.length){
+        const allow = {};
+        dateList.forEach(d => { allow[d] = true; });
+        daily = daily.filter(d => allow[d.day]);
+      }
+    }catch(err){}
+
     if(daily.length < HR_SHIFT_MIN_DAYS * 2) return null;
 
     const recent = daily.slice(-HR_SHIFT_RECENT_DAYS);
