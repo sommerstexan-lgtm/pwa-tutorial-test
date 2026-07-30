@@ -826,7 +826,7 @@
 <footer>
   Lesson 15 of the build-along series.<br>
   One more piece comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v53 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v54 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1397,7 +1397,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v53 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v54 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -2692,10 +2692,7 @@
   }
 
   function detectHRLevelShift(){
-    // Respect the Advanced Analytics range (7D / 30D / 90D / Custom).
-    // Without this the detector always used the most recent days on the
-    // device clock, so a historical shift inside a Custom range never
-    // appeared.
+    // Respect Advanced Analytics range (7D / 30D / 90D / Custom).
     let daily = getDailyPulseMeans();
     try{
       const dateList = (typeof getAnalyticsDateList === 'function') ? getAnalyticsDateList() : null;
@@ -2706,34 +2703,51 @@
       }
     }catch(err){}
 
+    // Need enough days on both sides of a candidate split.
     if(daily.length < HR_SHIFT_MIN_DAYS * 2) return null;
 
-    const recent = daily.slice(-HR_SHIFT_RECENT_DAYS);
-    if(recent.length < HR_SHIFT_MIN_DAYS) return null;
+    // Scan for the strongest sustained step inside the selected range.
+    // recent window = up to 7 consecutive days ending at a candidate end
+    // baseline window = up to 14 consecutive days immediately before that
+    // (never fewer than 6 in either). Pick the split with the largest
+    // absolute mean difference that meets the threshold.
+    let best = null;
+    let bestAbs = 0;
 
-    const priorPool = daily.slice(0, daily.length - recent.length);
-    if(priorPool.length < HR_SHIFT_MIN_DAYS) return null;
+    for(let endIdx = daily.length - 1; endIdx >= HR_SHIFT_MIN_DAYS * 2 - 1; endIdx--){
+      const recentLen = Math.min(HR_SHIFT_RECENT_DAYS, endIdx + 1 - HR_SHIFT_MIN_DAYS);
+      if(recentLen < HR_SHIFT_MIN_DAYS) continue;
+      const recentStartIdx = endIdx - recentLen + 1;
+      const recent = daily.slice(recentStartIdx, endIdx + 1);
 
-    const baseline = priorPool.slice(-Math.min(HR_SHIFT_BASELINE_DAYS, priorPool.length));
-    if(baseline.length < HR_SHIFT_MIN_DAYS) return null;
+      const priorEndIdx = recentStartIdx - 1;
+      if(priorEndIdx < HR_SHIFT_MIN_DAYS - 1) continue;
+      const baselineLen = Math.min(HR_SHIFT_BASELINE_DAYS, priorEndIdx + 1);
+      if(baselineLen < HR_SHIFT_MIN_DAYS) continue;
+      const baselineStartIdx = priorEndIdx - baselineLen + 1;
+      const baseline = daily.slice(baselineStartIdx, priorEndIdx + 1);
 
-    const recentMean = recent.reduce((s,d) => s + d.mean, 0) / recent.length;
-    const baselineMean = baseline.reduce((s,d) => s + d.mean, 0) / baseline.length;
-    const delta = recentMean - baselineMean;
-    if(Math.abs(delta) < HR_SHIFT_MIN_BPM) return null;
-
-    return {
-      recentMean: Math.round(recentMean * 10) / 10,
-      baselineMean: Math.round(baselineMean * 10) / 10,
-      delta: Math.round(delta * 10) / 10,
-      direction: delta > 0 ? 'up' : 'down',
-      recentStart: recent[0].day,
-      recentEnd: recent[recent.length - 1].day,
-      baselineStart: baseline[0].day,
-      baselineEnd: baseline[baseline.length - 1].day,
-      recentDays: recent.length,
-      baselineDays: baseline.length
-    };
+      const recentMean = recent.reduce((s,d) => s + d.mean, 0) / recent.length;
+      const baselineMean = baseline.reduce((s,d) => s + d.mean, 0) / baseline.length;
+      const delta = recentMean - baselineMean;
+      const abs = Math.abs(delta);
+      if(abs >= HR_SHIFT_MIN_BPM && abs > bestAbs){
+        bestAbs = abs;
+        best = {
+          recentMean: Math.round(recentMean * 10) / 10,
+          baselineMean: Math.round(baselineMean * 10) / 10,
+          delta: Math.round(delta * 10) / 10,
+          direction: delta > 0 ? 'up' : 'down',
+          recentStart: recent[0].day,
+          recentEnd: recent[recent.length - 1].day,
+          baselineStart: baseline[0].day,
+          baselineEnd: baseline[baseline.length - 1].day,
+          recentDays: recent.length,
+          baselineDays: baseline.length
+        };
+      }
+    }
+    return best;
   }
 
   function getMedCorrelationNotes(shift){
@@ -2794,9 +2808,25 @@
   function renderHRLevelShiftCard(){
     const shift = detectHRLevelShift();
     if(!shift){
+      // Diagnostic: prove which code path is live and how many days the
+      // detector actually sees inside the current Analytics range.
+      let diagDays = 0;
+      let diagRange = 'all data';
+      try{
+        let daily = getDailyPulseMeans();
+        const dateList = (typeof getAnalyticsDateList === 'function') ? getAnalyticsDateList() : null;
+        if(dateList && dateList.length){
+          const allow = {};
+          dateList.forEach(d => { allow[d] = true; });
+          daily = daily.filter(d => allow[d.day]);
+          diagRange = dateList[0] + ' to ' + dateList[dateList.length-1] + ' (' + dateList.length + ' calendar days)';
+        }
+        diagDays = daily.length;
+      }catch(err){}
       return '<div class="trend-card" id="hrLevelShiftCard">' +
         '<h4>HR Rate Detector</h4>' +
         '<div class="trend-insufficient">No sustained level shift detected in the current data. Need at least 6 days of pulse readings in a recent window and 6 in a prior baseline window, with a mean difference of 8 bpm or more.</div>' +
+        '<div class="trend-sub" style="margin-top:8px">Debug: ' + diagDays + ' days with pulse inside range [' + diagRange + ']. Build v54-scan.</div>' +
         '<div class="trend-sub" style="margin-top:8px">This is observational only. Worth discussing with your doctor if a shift appears.</div>' +
         '</div>';
     }
@@ -5410,9 +5440,17 @@
   let analyticsCustomRange = null; // { start:'YYYY-MM-DD', end:'YYYY-MM-DD' } | null
 
   window.openAnalytics = function(){
-    analyticsRangeDays = 7;
-    analyticsCustomRange = null;
-    document.getElementById('analyticsCustomRow').hidden = true;
+    // Do not reset the user's range every open — that wiped Custom
+    // selections and made historical shifts appear to "disappear."
+    if(analyticsRangeDays === 'custom' && analyticsCustomRange){
+      document.getElementById('analyticsCustomRow').hidden = false;
+      const s = document.getElementById('analyticsCustomStart');
+      const e = document.getElementById('analyticsCustomEnd');
+      if(s) s.value = analyticsCustomRange.start;
+      if(e) e.value = analyticsCustomRange.end;
+    } else {
+      document.getElementById('analyticsCustomRow').hidden = analyticsRangeDays !== 'custom';
+    }
     updateAnalyticsRangeButtons();
     renderAnalyticsScreen();
     document.getElementById('analyticsOverlay').hidden = false;
@@ -6563,7 +6601,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v53';
+  const CURRENT_BUILD = 'v54';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);

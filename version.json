@@ -1,5 +1,5 @@
 {
-  "version": "v53",
+  "version": "v54",
   "releaseDate": "2026-07-30",
-  "summary": "Lesson 15: HR Rate Detector. Detects sustained heart-rate level/baseline shifts (mean of recent 7 days with pulse data vs prior baseline window, flag at >= 8 bpm). Surfaces observational medication timing/start/stop and fluid-volume notes around the shift. Save as Gotcha for doctor visits. Informational only — never diagnoses or advises medication/fluid changes. Reuses existing pulse field on BP entries, Advanced Analytics shell, and Gotcha storage."
+  "summary": "Lesson 15 fix: HR Rate Detector now scans the selected Advanced Analytics range (7D/30D/90D/Custom) for the strongest sustained level shift (>=8 bpm, >=6 days each window). Observational Losartan stop and fluid-volume notes. Save as Gotcha. Informational only."
 }
