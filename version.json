@@ -1,5 +1,5 @@
 {
-  "version": "v52",
-  "releaseDate": "2026-07-27",
-  "summary": "Lesson 14, two refinements after review. (1) Chart point flash on bracket-card tap is now bigger (max radius 26 vs 18), brighter (solid orange #ea580c vs amber #f59e0b), thicker (stroke-width starts at 4 vs 2.5), and lasts longer (3 cycles at 0.85s vs 2 cycles at 0.65s, total ~2.55s vs ~1.3s). The JS timeout that removes the ring from the DOM was extended to match, so the longer animation isn't cut short. (2) Narrowed an overstated population claim in the BP flag comments: the water-pressor rise evidence is specific to autonomic-dysfunction and older patients, not \"cardiac patients\" broadly. Not every cardiac patient has autonomic involvement, and this app's users are a wider group than the studied population. No behavior change from this fix, comment-only, but it matters for the article's accuracy."
+  "version": "v53",
+  "releaseDate": "2026-07-30",
+  "summary": "Lesson 15: HR Rate Detector. Detects sustained heart-rate level/baseline shifts (mean of recent 7 days with pulse data vs prior baseline window, flag at >= 8 bpm). Surfaces observational medication timing/start/stop and fluid-volume notes around the shift. Save as Gotcha for doctor visits. Informational only — never diagnoses or advises medication/fluid changes. Reuses existing pulse field on BP entries, Advanced Analytics shell, and Gotcha storage."
 }

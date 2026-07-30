@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Today's Status - Lesson 13 build-along app - single file PWA -->
+<!-- Today's Status - Lesson 15 build-along app - single file PWA -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -824,9 +824,9 @@
 <div class="grid" id="buttonGrid"></div>
 
 <footer>
-  Lesson 13 of the build-along series.<br>
+  Lesson 15 of the build-along series.<br>
   One more piece comes online every lesson.<br>
-  <span style="opacity:0.6;font-size:11px;">Build v52 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
+  <span style="opacity:0.6;font-size:11px;">Build v53 &middot; 🐕 <span id="gdHeartbeat">not checked in yet</span></span>
 </footer>
 
 <!-- Fluid quick-add modal -->
@@ -1397,7 +1397,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title"><span>Version</span></div>
-      <div class="settings-hint" id="dbVersionStatus">Build v52 on this device.</div>
+      <div class="settings-hint" id="dbVersionStatus">Build v53 on this device.</div>
       <button class="settings-btn-secondary" style="width:100%;margin-top:8px" onclick="window.checkForUpdatesNow()">Check for Updates</button>
     </div>
 
@@ -2662,6 +2662,177 @@
     const h = Math.floor(mins / 60), m = mins % 60;
     return h + 'h' + (m ? ' ' + m + 'm' : '');
   }
+
+  // ---- Lesson 15: HR Rate Detector (level / baseline shift) ----
+  // Pulse already lives as the optional pulse field on BP entries.
+  // This detector looks across days for a sustained mean shift, not a
+  // single-session spike. Language stays observational only.
+
+  const HR_SHIFT_MIN_BPM = 8;
+  const HR_SHIFT_RECENT_DAYS = 7;
+  const HR_SHIFT_BASELINE_DAYS = 14;
+  const HR_SHIFT_MIN_DAYS = 6;
+
+  function getAllPulseEntriesAllDays(){
+    return getAllBPEntriesAllDays().filter(e => typeof e.pulse === 'number' && !isNaN(e.pulse));
+  }
+
+  function getDailyPulseMeans(){
+    const byDay = {};
+    getAllPulseEntriesAllDays().forEach(e => {
+      const day = formatDateKey(new Date(e.timestamp));
+      if(!byDay[day]) byDay[day] = [];
+      byDay[day].push(e.pulse);
+    });
+    return Object.keys(byDay).sort().map(day => {
+      const vals = byDay[day];
+      const mean = vals.reduce((s,v) => s + v, 0) / vals.length;
+      return { day: day, mean: mean, count: vals.length, timestamp: new Date(day + 'T12:00:00').getTime() };
+    });
+  }
+
+  function detectHRLevelShift(){
+    const daily = getDailyPulseMeans();
+    if(daily.length < HR_SHIFT_MIN_DAYS * 2) return null;
+
+    const recent = daily.slice(-HR_SHIFT_RECENT_DAYS);
+    if(recent.length < HR_SHIFT_MIN_DAYS) return null;
+
+    const priorPool = daily.slice(0, daily.length - recent.length);
+    if(priorPool.length < HR_SHIFT_MIN_DAYS) return null;
+
+    const baseline = priorPool.slice(-Math.min(HR_SHIFT_BASELINE_DAYS, priorPool.length));
+    if(baseline.length < HR_SHIFT_MIN_DAYS) return null;
+
+    const recentMean = recent.reduce((s,d) => s + d.mean, 0) / recent.length;
+    const baselineMean = baseline.reduce((s,d) => s + d.mean, 0) / baseline.length;
+    const delta = recentMean - baselineMean;
+    if(Math.abs(delta) < HR_SHIFT_MIN_BPM) return null;
+
+    return {
+      recentMean: Math.round(recentMean * 10) / 10,
+      baselineMean: Math.round(baselineMean * 10) / 10,
+      delta: Math.round(delta * 10) / 10,
+      direction: delta > 0 ? 'up' : 'down',
+      recentStart: recent[0].day,
+      recentEnd: recent[recent.length - 1].day,
+      baselineStart: baseline[0].day,
+      baselineEnd: baseline[baseline.length - 1].day,
+      recentDays: recent.length,
+      baselineDays: baseline.length
+    };
+  }
+
+  function getMedCorrelationNotes(shift){
+    if(!shift) return [];
+    const notes = [];
+    const shiftStart = new Date(shift.recentStart + 'T00:00:00').getTime();
+    const bandStart = shiftStart - 7 * 24 * 60 * 60 * 1000;
+    const bandEnd = shiftStart + 7 * 24 * 60 * 60 * 1000;
+    const meds = loadMedications();
+    meds.forEach(m => {
+      if(m.startDate){
+        const t = new Date(m.startDate + 'T00:00:00').getTime();
+        if(t >= bandStart && t <= bandEnd){
+          notes.push('Observed near ' + m.name + ' start on ' + m.startDate + '.');
+        }
+      }
+      if(m.stopDate){
+        const t = new Date(m.stopDate + 'T00:00:00').getTime();
+        if(t >= bandStart && t <= bandEnd){
+          notes.push('Observed near ' + m.name + ' stop on ' + m.stopDate + '.');
+        }
+      }
+    });
+    return notes;
+  }
+
+  function getFluidCorrelationNotes(shift){
+    if(!shift) return [];
+    const notes = [];
+    function avgDailyOz(startDay, endDay){
+      let total = 0, days = 0;
+      const start = new Date(startDay + 'T00:00:00');
+      const end = new Date(endDay + 'T00:00:00');
+      for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)){
+        const key = formatDateKey(d);
+        try{
+          const raw = localStorage.getItem('todaysStatus_fluid_' + key);
+          if(!raw) continue;
+          const parsed = JSON.parse(raw);
+          const dayTotal = (parsed.entries || []).reduce((s,e) => s + (e.amount || 0), 0);
+          total += dayTotal;
+          days += 1;
+        }catch(err){}
+      }
+      return days ? total / days : null;
+    }
+    const recentAvg = avgDailyOz(shift.recentStart, shift.recentEnd);
+    const baselineAvg = avgDailyOz(shift.baselineStart, shift.baselineEnd);
+    if(recentAvg == null || baselineAvg == null) return notes;
+    const diff = recentAvg - baselineAvg;
+    if(Math.abs(diff) >= 8){
+      const dir = diff > 0 ? 'higher' : 'lower';
+      notes.push('Average daily fluid was ' + Math.round(Math.abs(diff)) + ' oz ' + dir + ' in the ' + (shift.direction === 'up' ? 'elevated' : 'lowered') + ' window.');
+    }
+    return notes;
+  }
+
+  function renderHRLevelShiftCard(){
+    const shift = detectHRLevelShift();
+    if(!shift){
+      return '<div class="trend-card" id="hrLevelShiftCard">' +
+        '<h4>HR Rate Detector</h4>' +
+        '<div class="trend-insufficient">No sustained level shift detected in the current data. Need at least 6 days of pulse readings in a recent window and 6 in a prior baseline window, with a mean difference of 8 bpm or more.</div>' +
+        '<div class="trend-sub" style="margin-top:8px">This is observational only. Worth discussing with your doctor if a shift appears.</div>' +
+        '</div>';
+    }
+    const arrow = shift.direction === 'up' ? '\u2191' : '\u2193';
+    const deltaLabel = (shift.delta > 0 ? '+' : '') + shift.delta + ' bpm ' + shift.direction;
+    const medNotes = getMedCorrelationNotes(shift);
+    const fluidNotes = getFluidCorrelationNotes(shift);
+    const extra = medNotes.concat(fluidNotes).map(n =>
+      '<div class="trend-sub" style="margin-top:4px">' + escapeHtml(n) + '</div>'
+    ).join('');
+    const findingText = 'HR Level Shift - ' + shift.recentStart +
+      '\nHR shifted ' + shift.baselineMean + ' -> ' + shift.recentMean +
+      ' bpm (delta ' + deltaLabel + ')' +
+      (medNotes.length || fluidNotes.length ? '\n' + medNotes.concat(fluidNotes).join(' ') : '') +
+      '\nWorth discussing with your doctor.';
+    return '<div class="trend-card" id="hrLevelShiftCard">' +
+      '<h4>HR Rate Detector</h4>' +
+      '<div class="trend-value" style="color:' + (shift.direction === 'up' ? '#dc2626' : '#059669') + ';font-size:18px;margin:6px 0">' +
+        arrow + ' HR Level Shift - ' + shift.recentStart +
+      '</div>' +
+      '<div class="trend-sub">HR shifted ' + shift.baselineMean + ' -> ' + shift.recentMean +
+        ' bpm (delta ' + deltaLabel + ')</div>' +
+      '<div class="trend-sub" style="margin-top:4px">Baseline window: ' + shift.baselineStart + ' to ' + shift.baselineEnd +
+        ' (' + shift.baselineDays + ' days) - Recent: ' + shift.recentStart + ' to ' + shift.recentEnd +
+        ' (' + shift.recentDays + ' days)</div>' +
+      extra +
+      '<div class="trend-sub" style="margin-top:8px;font-weight:600">Worth discussing with your doctor.</div>' +
+      '<button class="modal-btn primary" style="width:100%;margin-top:12px" onclick="window.saveHRFindingAsGotcha()">Save as Gotcha</button>' +
+      '<textarea id="hrFindingText" hidden>' + escapeHtml(findingText) + '</textarea>' +
+      '</div>';
+  }
+
+  window.saveHRFindingAsGotcha = function(){
+    const ta = document.getElementById('hrFindingText');
+    const note = ta ? ta.value : '';
+    if(!note){ showToast('No finding to save'); return; }
+    const list = loadGotchaEntries();
+    const entry = {
+      id: gotchaUid('gotcha_'),
+      createdAt: new Date().toISOString(),
+      note: note,
+      images: [],
+      link: '',
+      linkLabel: ''
+    };
+    list.unshift(entry);
+    saveGotchaEntries(list);
+    showToast('Saved as Gotcha');
+  };
 
   const SETTINGS_INFO = {
     fluidGoal: {
@@ -5546,7 +5717,8 @@
     const bpTrend = computeBPTrend(rangeArg);
     const scroll = document.getElementById('analyticsScroll');
 
-    scroll.innerHTML = renderBPTrendCard(rangeArg) +
+    scroll.innerHTML = renderHRLevelShiftCard() +
+      renderBPTrendCard(rangeArg) +
       (!bpTrend.sufficient ? '<div class="analytics-empty">Patterns show up here as you log more. Nothing has enough data yet.</div>' : '') +
       graphCardShell('anaBp', 'Blood Pressure Graph') +
       graphCardShell('anaHr', 'Heart Rate Graph');
@@ -6378,7 +6550,7 @@
     showToast('Data imported successfully.');
   };
 
-  const CURRENT_BUILD = 'v52';
+  const CURRENT_BUILD = 'v53';
 
   function _buildNum(v){
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
